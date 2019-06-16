@@ -70,18 +70,25 @@ add_library (imp STATIC ${IMP_SRC_FILES})
 
 
 
-include_directories (sorcer)
-file (GLOB SRC_FILES sorcer/*.h sorcer/*.c)
+file (GLOB SRC_FILES *.h *.c)
 source_group (src FILES ${SRC_FILES})
 add_library (sorcer ${SRC_FILES})
 
 
 
+file (GLOB TEST_SRC_FILES test/*.h test/*.c)
+source_group (src FILES ${TEST_SRC_FILES})
+add_executable (test ${TEST_SRC_FILES})
+target_link_libraries (test imp sorcer)
+if (WIN32)
+else ()
+    target_link_libraries (test m)
+endif ()
+
 file (GLOB SHELL_SRC_FILES shell/*.h shell/*.c)
 source_group (src FILES ${SHELL_SRC_FILES})
 add_executable (shell ${SHELL_SRC_FILES})
 target_link_libraries (shell imp sorcer)
-
 if (WIN32)
 else ()
     target_link_libraries (shell m)
