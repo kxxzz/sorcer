@@ -1,0 +1,15 @@
+[submodule "imp/txn"]
+	path = imp/txn
+	url = https://github.com/kxxzz/txn.git
+[submodule "imp/vec"]
+	path = imp/vec
+	url = https://github.com/kxxzz/vec.git
+[submodule "imp/upool"]
+	path = imp/upool
+	url = https://github.com/kxxzz/upool.git
+[submodule "imp/fileu"]
+	path = imp/fileu
+	url = https://github.com/kxxzz/fileu.git
+[submodule "imp/apnum"]
+	path = imp/apnum
+	url = https://github.com/kxxzz/apnum.git
