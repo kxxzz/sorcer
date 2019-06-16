@@ -1,10 +1,11 @@
+/*
 #include "sorcer_a.h"
 
 
 
 
 
-SORCER_Context* TXN_newEvalContext(const SORCER_AtomTable* addAtomTable)
+SORCER_Context* SORCER_ctxNew(const SORCER_AtomTable* addAtomTable)
 {
     SORCER_Context* ctx = zalloc(sizeof(*ctx));
     TXN_Space* space = ctx->space = TXN_spaceNew();
@@ -55,7 +56,7 @@ SORCER_Context* TXN_newEvalContext(const SORCER_AtomTable* addAtomTable)
 
 
 
-void TXN_evalContextFree(SORCER_Context* ctx)
+void SORCER_ctxFree(SORCER_Context* ctx)
 {
     APNUM_poolFree(ctx->numPool);
     vec_free(&ctx->fileInfoTable);
@@ -88,7 +89,7 @@ void TXN_evalContextFree(SORCER_Context* ctx)
 
 
 
-SORCER_Error TXN_evalLastError(SORCER_Context* ctx)
+SORCER_Error SORCER_ctxLastError(SORCER_Context* ctx)
 {
     return ctx->error;
 }
@@ -103,7 +104,7 @@ vec_u32* TXN_evalDataTypeStack(SORCER_Context* ctx)
     return &ctx->typeStack;
 }
 
-SORCER_ValueVec* TXN_evalDataStack(SORCER_Context* ctx)
+SORCER_ValueVec* SORCER_ctxDataStack(SORCER_Context* ctx)
 {
     return &ctx->dataStack;
 }
@@ -902,7 +903,7 @@ void TXN_evalAfunCall_Reduce(TXN_Space* space, SORCER_Value* ins, SORCER_Value* 
 
 
 
-void TXN_evalBlock(SORCER_Context* ctx, TXN_Node root)
+void SORCER_execBlock(SORCER_Context* ctx, TXN_Node root)
 {
     TXN_Space* space = ctx->space;
     u32 len = TXN_seqLen(space, root);
@@ -930,11 +931,11 @@ SORCER_Error TXN_evalCompile
 
 
 
-bool TXN_evalCode(SORCER_Context* ctx, const char* filename, const char* code, bool enableSrcInfo)
+bool SORCER_execCode(SORCER_Context* ctx, const char* filename, const char* code, bool enableSrcInfo)
 {
     if (enableSrcInfo)
     {
-        SORCER_FileInfo fileInfo = { 0 };
+        SORCER_SrcFileInfo fileInfo = { 0 };
         stzncpy(fileInfo.name, filename, SORCER_FileName_MAX);
         vec_push(&ctx->fileInfoTable, fileInfo);
     }
@@ -991,7 +992,7 @@ bool TXN_evalCode(SORCER_Context* ctx, const char* filename, const char* code, b
         ctx->error = error;
         return false;
     }
-    TXN_evalBlock(ctx, root);
+    SORCER_execBlock(ctx, root);
     if (ctx->error.code)
     {
         return false;
@@ -1001,7 +1002,7 @@ bool TXN_evalCode(SORCER_Context* ctx, const char* filename, const char* code, b
 
 
 
-bool TXN_evalFile(SORCER_Context* ctx, const char* fileName, bool enableSrcInfo)
+bool SORCER_execFile(SORCER_Context* ctx, const char* fileName, bool enableSrcInfo)
 {
     char* code = NULL;
     u32 codeSize = FILEU_readFile(fileName, &code);
@@ -1015,7 +1016,7 @@ bool TXN_evalFile(SORCER_Context* ctx, const char* fileName, bool enableSrcInfo)
     {
         return false;
     }
-    bool r = TXN_evalCode(ctx, fileName, code, enableSrcInfo);
+    bool r = SORCER_execCode(ctx, fileName, code, enableSrcInfo);
     free(code);
     return r;
 }
@@ -1044,7 +1045,7 @@ bool TXN_evalFile(SORCER_Context* ctx, const char* fileName, bool enableSrcInfo)
 
 
 
-const SORCER_FileInfoTable* TXN_evalFileInfoTable(SORCER_Context* ctx)
+const SORCER_FileInfoTable* SORCER_ctxSrcFileInfoTable(SORCER_Context* ctx)
 {
     return &ctx->fileInfoTable;
 }
@@ -1084,7 +1085,7 @@ const char** SORCER_ErrCodeNameTable(void)
 }
 
 
-
+*/
 
 
 

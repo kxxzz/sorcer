@@ -217,7 +217,195 @@ typedef vec_t(SORCER_Array*) SORCER_ArrayPtrVec;
 
 
 
-#include "exp_eval_object.h"
+
+typedef enum SORCER_Prim
+{
+    SORCER_Prim_Def = 0,
+    SORCER_Prim_Var,
+    SORCER_Prim_If,
+    SORCER_Prim_Apply,
+
+    SORCER_NumPrims
+} SORCER_Prim;
+
+const char** SORCER_PrimNameTable(void);
+
+
+
+
+
+
+typedef bool(*SORCER_AtypeCtorByStr)(SORCER_Value* pVal, const char* str, u32 len, void* ctx);
+typedef void(*SORCER_AtypeDtor)(void* ptr);
+
+typedef struct SORCER_AtypeInfo
+{
+    const char* name;
+    SORCER_AtypeCtorByStr ctorByStr;
+    SORCER_AtypeDtor dtor;
+    bool fromQuotedStr;
+} SORCER_AtypeInfo;
+
+
+
+
+
+enum
+{
+    SORCER_AfunIns_MAX = 16,
+    SORCER_AfunOuts_MAX = 16,
+};
+
+typedef void(*SORCER_AfunCall)(SORCER_Value* ins, SORCER_Value* outs);
+
+typedef struct SORCER_AfunInfo
+{
+    const char* name;
+    const char* typeDecl;
+    SORCER_AfunCall call;
+} SORCER_AfunInfo;
+
+
+
+
+
+
+
+
+
+
+
+typedef enum SORCER_Atype
+{
+    SORCER_Atype_BOOL = 0,
+    SORCER_Atype_NUMBER,
+    SORCER_Atype_STRING,
+
+    SORCER_NumAtypes
+} SORCER_Atype;
+
+const SORCER_AtypeInfo* SORCER_AtypeInfoTable(void);
+
+
+
+typedef enum SORCER_Afun
+{
+    SORCER_Afun_Not,
+
+    SORCER_Afun_Add,
+    SORCER_Afun_Sub,
+    SORCER_Afun_Mul,
+    SORCER_Afun_Div,
+
+    SORCER_Afun_Neg,
+
+    SORCER_Afun_EQ,
+
+    SORCER_Afun_GT,
+    SORCER_Afun_LT,
+    SORCER_Afun_GE,
+    SORCER_Afun_LE,
+
+    SORCER_NumAfuns
+} SORCER_Afun;
+
+const SORCER_AfunInfo* SORCER_AfunInfoTable(void);
+
+
+
+
+typedef struct SORCER_AtomTable
+{
+    u32 numTypes;
+    SORCER_AtypeInfo* types;
+    u32 numFuns;
+    SORCER_AfunInfo* funs;
+} SORCER_AtomTable;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+typedef enum SORCER_ErrCode
+{
+    SORCER_ErrCode_NONE,
+
+    SORCER_ErrCode_SrcFile,
+    SORCER_ErrCode_ExpSyntax,
+    SORCER_ErrCode_EvalSyntax,
+    SORCER_ErrCode_EvalUnkWord,
+    SORCER_ErrCode_EvalUnkCall,
+    SORCER_ErrCode_EvalUnkFunType,
+    SORCER_ErrCode_EvalUnkTypeDecl,
+    SORCER_ErrCode_EvalArgs,
+    SORCER_ErrCode_EvalBranchUneq,
+    SORCER_ErrCode_EvalRecurNoBaseCase,
+    SORCER_ErrCode_EvalUnification,
+    SORCER_ErrCode_EvalAtomCtorByStr,
+    SORCER_ErrCode_EvalTypeUnsolvable,
+
+    TXN_NumEvalErrorCodes
+} SORCER_ErrCode;
+
+const char** SORCER_ErrCodeNameTable(void);
+
+
+typedef struct SORCER_Error
+{
+    SORCER_ErrCode code;
+    u32 file;
+    u32 line;
+    u32 column;
+} SORCER_Error;
+
+
+
+
+
+
+
+SORCER_Error SORCER_ctxLastError(SORCER_Context* ctx);
+SORCER_ValueVec* SORCER_ctxDataStack(SORCER_Context* ctx);
+
+
+
+
+
+void SORCER_execBlock(SORCER_Context* ctx, TXN_Node block);
+bool SORCER_execCode(SORCER_Context* ctx, const char* filename, const char* code, bool enableSrcInfo);
+bool SORCER_execFile(SORCER_Context* ctx, const char* fileName, bool enableSrcInfo);
+
+
+
+
+
+
+enum
+{
+    SORCER_FileName_MAX = 255,
+};
+
+typedef struct SORCER_SrcFileInfo
+{
+    char name[SORCER_FileName_MAX];
+} SORCER_SrcFileInfo;
+
+typedef vec_t(SORCER_SrcFileInfo) SORCER_SrcFileInfoTable;
+
+const SORCER_SrcFileInfoTable* SORCER_ctxSrcFileInfoTable(SORCER_Context* ctx);
+
+
+
+
 
 
 

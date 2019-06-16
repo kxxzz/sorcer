@@ -14,11 +14,11 @@ enum
 
 
 
-void TXN_evalDataStackFprint(FILE* f, SORCER_Context* ctx);
-
-char* TXN_evalGetNowStr(char* timeBuf);
-
-void TXN_evalErrorFprint(FILE* f, const SORCER_FileInfoTable* fiTable, const SORCER_Error* err);
+//void TXN_evalDataStackFprint(FILE* f, SORCER_Context* ctx);
+//
+//char* TXN_evalGetNowStr(char* timeBuf);
+//
+//void TXN_evalErrorFprint(FILE* f, const SORCER_FileInfoTable* fiTable, const SORCER_Error* err);
 
 
 

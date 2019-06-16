@@ -1,6 +1,8 @@
+/*
 #include "sorcer_a.h"
 #include "sorcer_utils.h"
 #include <time.h>
+
 
 
 
@@ -265,7 +267,7 @@ next:
 void TXN_evalDataStackFprint(FILE* f, SORCER_Context* evalContext)
 {
     vec_u32* typeStack = TXN_evalDataTypeStack(evalContext);
-    SORCER_ValueVec* dataStack = TXN_evalDataStack(evalContext);
+    SORCER_ValueVec* dataStack = SORCER_ctxDataStack(evalContext);
     SORCER_ValueFprintContext ctx = TXN_newEvalValueFprintContext(f, evalContext);
     for (u32 i = 0; i < dataStack->length; ++i)
     {
@@ -314,7 +316,7 @@ void TXN_evalErrorFprint(FILE* f, const SORCER_FileInfoTable* fiTable, const SOR
 
 
 
-
+*/
 
 
 

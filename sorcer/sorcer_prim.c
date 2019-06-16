@@ -1,11 +1,12 @@
+/*
 #include "sorcer_a.h"
 
 
 
 
-const char** SORCER_KeyNameTable(void)
+const char** SORCER_PrimNameTable(void)
 {
-    static const char* a[TXN_NumEvalKeys] =
+    static const char* a[SORCER_NumPrims] =
     {
         "def",
         "var",
@@ -379,7 +380,7 @@ const SORCER_AfunInfo* SORCER_PrimFunInfoTable(void)
 
 
 
-
+*/
 
 
 
