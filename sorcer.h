@@ -26,7 +26,10 @@ const SORCER_Cell* SORCER_dsBase(SORCER_Context* ctx);
 
 void SORCER_dsPush(SORCER_Context* ctx, SORCER_Cell a);
 SORCER_Cell SORCER_dsPop(SORCER_Context* ctx);
-void SORCER_dsReduce(SORCER_Context* ctx);
+
+
+
+void SORCER_run(SORCER_Context* ctx, TXN_Node entry);
 
 
 
