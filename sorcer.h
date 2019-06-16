@@ -27,20 +27,23 @@ SORCER_Context* SORCER_ctxNew(void);
 void SORCER_ctxFree(SORCER_Context* ctx);
 
 
-typedef struct SORCER_Node { u32 id; } SORCER_Node;
-
-SORCER_Node SORCER_atomNew(SORCER_Context* ctx);
-SORCER_Node SORCER_seqGet(SORCER_Context* ctx, u32 len, const SORCER_Node* elms);
-SORCER_Node SORCER_funGet(SORCER_Context* ctx, u32 numIns, const SORCER_Node* ins, u32 numOuts, const SORCER_Node* outs);
+typedef struct SORCER_Cell
+{
+    union
+    {
+        uintptr_t val;
+        void* ptr;
+    } as;
+} SORCER_Cell;
 
 
 u32 SORCER_dsSize(SORCER_Context* ctx);
-const SORCER_Node* SORCER_dsBase(SORCER_Context* ctx);
+const SORCER_Cell* SORCER_dsBase(SORCER_Context* ctx);
 
 
-SORCER_dsPush(SORCER_Context* ctx, SORCER_Node a);
-SORCER_dsPop(SORCER_Context* ctx);
-SORCER_dsReduce(SORCER_Context* ctx);
+void SORCER_dsPush(SORCER_Context* ctx, SORCER_Cell a);
+SORCER_Cell SORCER_dsPop(SORCER_Context* ctx);
+void SORCER_dsReduce(SORCER_Context* ctx);
 
 
 
