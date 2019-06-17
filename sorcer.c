@@ -56,9 +56,18 @@ static void SORCER_blockInfoFree(SORCER_BlockInfo* a)
 
 
 
+typedef struct SORCER_Ret
+{
+    u32 address;
+    u32 varBase;
+} SORCER_Ret;
+
+
+
 typedef vec_t(SORCER_Cell) SORCER_CellVec;
 typedef vec_t(SORCER_StepInfo) SORCER_StepInfoVec;
 typedef vec_t(SORCER_BlockInfo) SORCER_BlockInfoVec;
+typedef vec_t(SORCER_Ret) SORCER_RetVec;
 
 
 typedef struct SORCER_Context
@@ -69,7 +78,7 @@ typedef struct SORCER_Context
 
     bool codeUpdated;
     SORCER_InstVec code[1];
-    vec_u32 retStack[1];
+    SORCER_RetVec retStack[1];
 
     SORCER_CellVec inBuf[1];
     SORCER_CellVec varTable[1];
@@ -352,7 +361,7 @@ void SORCER_blockCall(SORCER_Context* ctx, SORCER_Block blk)
     SORCER_InstVec* code = ctx->code;
     SORCER_BlockInfoVec* bt = ctx->blockInfoTable;
     SORCER_CellVec* ds = ctx->dataStack;
-    vec_u32* rs = ctx->retStack;
+    SORCER_RetVec* rs = ctx->retStack;
     SORCER_CellVec* vt = ctx->varTable;
 
     u32 p = bt->data[blk.id].baseAddress;
@@ -370,14 +379,25 @@ next:
     }
     case SORCER_OP_PushCell:
     {
+        vec_push(ds, inst->arg.cell);
         goto next;
     }
     case SORCER_OP_PushVar:
     {
+        u32 varBase = 0;
+        if (rs->length > 0)
+        {
+            SORCER_Ret ret = vec_last(rs);
+            varBase = ret.varBase;
+        }
+        SORCER_Cell cell = vt->data[varBase + inst->arg.var.id];
+        vec_push(ds, cell);
         goto next;
     }
     case SORCER_OP_PushBlock:
     {
+        SORCER_Cell cell = { .as.block = inst->arg.block };
+        vec_push(ds, cell);
         goto next;
     }
     case SORCER_OP_Step:
@@ -389,13 +409,15 @@ next:
     {
         SORCER_Cell top = vec_last(ds);
         vec_pop(ds);
-        vec_push(rs, p);
+        SORCER_Ret ret = { p, vt->length };
+        vec_push(rs, ret);
         p = top.as.address;
         goto next;
     }
     case SORCER_OP_Call:
     {
-        vec_push(rs, p);
+        SORCER_Ret ret = { p, vt->length };
+        vec_push(rs, ret);
         p = inst->arg.address;
         goto next;
     }
@@ -405,9 +427,11 @@ next:
         {
             return;
         }
-        u32 addr = vec_last(rs);
+        SORCER_Ret ret = vec_last(rs);
         vec_pop(rs);
-        p = addr;
+        p = ret.address;
+        assert(vt->length >= ret.varBase);
+        vec_resize(vt, ret.varBase);
         goto next;
     }
     case SORCER_OP_Jz:
