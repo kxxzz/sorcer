@@ -68,6 +68,7 @@ typedef struct SORCER_Context
 
     bool codeUpdated;
     SORCER_InstVec code[1];
+    vec_u32 retStack[1];
 
     SORCER_CellVec inBuf[1];
     SORCER_CellVec varTable[1];
@@ -86,7 +87,9 @@ void SORCER_ctxFree(SORCER_Context* ctx)
     vec_free(ctx->varTable);
     vec_free(ctx->inBuf);
 
+    vec_free(ctx->retStack);
     vec_free(ctx->code);
+
     for (u32 i = 0; i < ctx->blockInfoTable->length; ++i)
     {
         SORCER_blockInfoFree(ctx->blockInfoTable->data + i);
@@ -318,6 +321,68 @@ static void SORCER_codeUpdate(SORCER_Context* ctx)
 void SORCER_blockCall(SORCER_Context* ctx, SORCER_Block blk)
 {
     SORCER_codeUpdate(ctx);
+
+    SORCER_InstVec* code = ctx->code;
+    SORCER_BlockInfoVec* bt = ctx->blockInfoTable;
+    SORCER_CellVec* ds = ctx->dataStack;
+    vec_u32* rs = ctx->retStack;
+
+    u32 p = bt->data[blk.id].baseAddress;
+    SORCER_Inst* inst = NULL;
+next:
+    inst = code->data + p++;
+    switch (inst->op)
+    {
+    case SORCER_OP_PopVar:
+    {
+        goto next;
+    }
+    case SORCER_OP_PushCell:
+    {
+        goto next;
+    }
+    case SORCER_OP_PushVar:
+    {
+        goto next;
+    }
+    case SORCER_OP_Step:
+    {
+        goto next;
+    }
+    case SORCER_OP_Apply:
+    {
+        goto next;
+    }
+    case SORCER_OP_Call:
+    {
+        vec_push(rs, p);
+        p = inst->arg.address;
+        goto next;
+    }
+    case SORCER_OP_Ret:
+    {
+        if (!rs->length)
+        {
+            return;
+        }
+        u32 addr = vec_last(rs);
+        vec_pop(rs);
+        p = addr;
+        goto next;
+    }
+    case SORCER_OP_Jz:
+    {
+        goto next;
+    }
+    case SORCER_OP_Jmp:
+    {
+        p = inst->arg.address;
+        goto next;
+    }
+    default:
+        assert(false);
+        break;
+    }
 }
 
 
