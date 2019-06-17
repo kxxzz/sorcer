@@ -70,13 +70,13 @@ void SORCER_step(SORCER_Context* ctx, SORCER_Step step);
 
 SORCER_Block SORCER_blockNew(SORCER_Context* ctx);
 
+SORCER_Var SORCER_blockAddPopVar(SORCER_Context* ctx, SORCER_Block blk);
+
 void SORCER_blockAddPushCell(SORCER_Context* ctx, SORCER_Block blk, SORCER_Cell a);
 void SORCER_blockAddPushVar(SORCER_Context* ctx, SORCER_Block blk, SORCER_Var var);
 void SORCER_blockAddStep(SORCER_Context* ctx, SORCER_Block blk, SORCER_Step step);
 void SORCER_blockAddApply(SORCER_Context* ctx, SORCER_Block blk);
 void SORCER_blockAddCall(SORCER_Context* ctx, SORCER_Block blk, SORCER_Block callee);
-
-SORCER_Var SORCER_blockAddPopVar(SORCER_Context* ctx, SORCER_Block blk);
 
 
 

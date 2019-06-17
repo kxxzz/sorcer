@@ -2,10 +2,39 @@
 
 
 
+typedef enum SORCER_Op
+{
+    SORCER_Op_PopVar,
+    SORCER_Op_PushCell,
+    SORCER_Op_PushVar,
+    SORCER_Op_Step,
+    SORCER_Op_Apply,
+    SORCER_Op_Call,
+
+    SORCER_Op_Ret,
+    SORCER_Op_Jz,
+    SORCER_Op_Jmp,
+} SORCER_Op;
+
+typedef struct SORCER_Inst
+{
+    SORCER_Op op;
+    union
+    {
+        SORCER_Cell cell;
+        SORCER_Var var;
+        SORCER_Step step;
+        SORCER_Block block;
+        u32 address;
+    } arg;
+} SORCER_Inst;
+
+typedef vec_t(SORCER_Inst) SORCER_InstVec;
 
 typedef struct SORCER_BlockInfo
 {
-    int x;
+    u32 varCount;
+    SORCER_InstVec code[1];
 } SORCER_BlockInfo;
 
 
@@ -22,8 +51,10 @@ typedef struct SORCER_Context
     SORCER_CellVec dataStack[1];
     SORCER_StepInfoVec stepInfoTable[1];
     SORCER_BlockInfoVec blockInfoTable[1];
+    SORCER_InstVec code[1];
 
     SORCER_CellVec inBuf[1];
+    SORCER_CellVec varTable[1];
 } SORCER_Context;
 
 
@@ -38,8 +69,10 @@ SORCER_Context* SORCER_ctxNew(void)
 
 void SORCER_ctxFree(SORCER_Context* ctx)
 {
+    vec_free(ctx->varTable);
     vec_free(ctx->inBuf);
 
+    vec_free(ctx->code);
     vec_free(ctx->blockInfoTable);
     vec_free(ctx->stepInfoTable);
     vec_free(ctx->dataStack);
@@ -144,8 +177,10 @@ SORCER_Var SORCER_blockAddPopVar(SORCER_Context* ctx, SORCER_Block blk)
 {
     SORCER_BlockInfoVec* bt = ctx->blockInfoTable;
     SORCER_BlockInfo* info = bt->data + blk.id;
-    SORCER_Var a = { 0 };
-    return a;
+    SORCER_Var var = { info->varCount++ };
+    SORCER_Inst inst = { SORCER_Op_PopVar, .arg.var = var };
+    vec_push(info->code, inst);
+    return var;
 }
 
 
