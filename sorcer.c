@@ -372,6 +372,11 @@ next:
     }
     case SORCER_OP_Jz:
     {
+        SORCER_Cell* top = &vec_last(ds);
+        if (!top->as.val)
+        {
+            p = inst->arg.address;
+        }
         goto next;
     }
     case SORCER_OP_Jmp:
