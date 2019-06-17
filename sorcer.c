@@ -139,18 +139,6 @@ void SORCER_dsPop(SORCER_Context* ctx, u32 n, SORCER_Cell* out)
 
 
 
-static void SORCER_codeOutdate(SORCER_Context* ctx)
-{
-    if (ctx->codeUpdated)
-    {
-        ctx->codeUpdated = false;
-    }
-}
-
-
-
-
-
 
 
 
@@ -166,7 +154,6 @@ SORCER_Step SORCER_stepFromInfo(SORCER_Context* ctx, const SORCER_StepInfo* info
 
 void SORCER_step(SORCER_Context* ctx, SORCER_Step step)
 {
-    SORCER_codeOutdate(ctx);
     SORCER_StepInfoVec* st = ctx->stepInfoTable;
     const SORCER_StepInfo* info = st->data + step.id;
     SORCER_CellVec* inBuf = ctx->inBuf;
@@ -182,6 +169,26 @@ void SORCER_step(SORCER_Context* ctx, SORCER_Step step)
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+static void SORCER_codeOutdate(SORCER_Context* ctx)
+{
+    if (ctx->codeUpdated)
+    {
+        ctx->codeUpdated = false;
+    }
+}
 
 
 
@@ -346,6 +353,7 @@ void SORCER_blockCall(SORCER_Context* ctx, SORCER_Block blk)
     SORCER_BlockInfoVec* bt = ctx->blockInfoTable;
     SORCER_CellVec* ds = ctx->dataStack;
     vec_u32* rs = ctx->retStack;
+    SORCER_CellVec* vt = ctx->varTable;
 
     u32 p = bt->data[blk.id].baseAddress;
     SORCER_Inst* inst = NULL;
@@ -355,6 +363,9 @@ next:
     {
     case SORCER_OP_PopVar:
     {
+        SORCER_Cell top = vec_last(ds);
+        vec_pop(ds);
+        vec_push(vt, top);
         goto next;
     }
     case SORCER_OP_PushCell:
@@ -371,13 +382,15 @@ next:
     }
     case SORCER_OP_Step:
     {
+        SORCER_step(ctx, inst->arg.step);
         goto next;
     }
     case SORCER_OP_Apply:
     {
-        SORCER_Cell* top = &vec_last(ds);
+        SORCER_Cell top = vec_last(ds);
+        vec_pop(ds);
         vec_push(rs, p);
-        p = top->as.address;
+        p = top.as.address;
         goto next;
     }
     case SORCER_OP_Call:
@@ -399,8 +412,9 @@ next:
     }
     case SORCER_OP_Jz:
     {
-        SORCER_Cell* top = &vec_last(ds);
-        if (!top->as.val)
+        SORCER_Cell top = vec_last(ds);
+        vec_pop(ds);
+        if (!top.as.val)
         {
             p = inst->arg.address;
         }
