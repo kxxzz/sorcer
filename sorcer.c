@@ -316,6 +316,8 @@ static void SORCER_codeUpdate(SORCER_Context* ctx)
         {
         case SORCER_OP_PushBlock:
         case SORCER_OP_Call:
+        case SORCER_OP_Jz:
+        case SORCER_OP_Jmp:
         {
             SORCER_BlockInfo* blkInfo = bt->data + inst->arg.block.id;
             inst->arg.address = blkInfo->baseAddress;
@@ -373,6 +375,9 @@ next:
     }
     case SORCER_OP_Apply:
     {
+        SORCER_Cell* top = &vec_last(ds);
+        vec_push(rs, p);
+        p = top->as.address;
         goto next;
     }
     case SORCER_OP_Call:

@@ -41,7 +41,8 @@ typedef struct SORCER_Cell
     {
         u64 val;
         void* ptr;
-        SORCER_Block blk;
+        SORCER_Block block;
+        u32 address;
     } as;
 } SORCER_Cell;
 
