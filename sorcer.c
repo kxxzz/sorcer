@@ -9,6 +9,7 @@ typedef enum SORCER_OP
     SORCER_OP_PopVar = 0,
     SORCER_OP_PushCell,
     SORCER_OP_PushVar,
+    SORCER_OP_PushBlock,
     SORCER_OP_Step,
     SORCER_OP_Apply,
     SORCER_OP_Call,
@@ -209,12 +210,22 @@ void SORCER_blockAddInstPushCell(SORCER_Context* ctx, SORCER_Block blk, SORCER_C
 }
 
 
-void SORCER_blockAddInstPushVar(SORCER_Context* ctx, SORCER_Block blk, SORCER_Var var)
+void SORCER_blockAddInstPushVar(SORCER_Context* ctx, SORCER_Block blk, SORCER_Var v)
 {
     SORCER_codeOutdate(ctx);
     SORCER_BlockInfoVec* bt = ctx->blockInfoTable;
     SORCER_BlockInfo* info = bt->data + blk.id;
-    SORCER_Inst inst = { SORCER_OP_PushVar, .arg.var = var };
+    SORCER_Inst inst = { SORCER_OP_PushVar, .arg.var = v };
+    vec_push(info->code, inst);
+}
+
+
+void SORCER_blockAddInstPushBlock(SORCER_Context* ctx, SORCER_Block blk, SORCER_Block b)
+{
+    SORCER_codeOutdate(ctx);
+    SORCER_BlockInfoVec* bt = ctx->blockInfoTable;
+    SORCER_BlockInfo* info = bt->data + blk.id;
+    SORCER_Inst inst = { SORCER_OP_PushBlock, .arg.block = b };
     vec_push(info->code, inst);
 }
 
@@ -301,10 +312,17 @@ static void SORCER_codeUpdate(SORCER_Context* ctx)
     for (u32 i = 0; i < code->length; ++i)
     {
         SORCER_Inst* inst = code->data + i;
-        if (SORCER_OP_Call == inst->op)
+        switch (inst->op)
+        {
+        case SORCER_OP_PushBlock:
+        case SORCER_OP_Call:
         {
             SORCER_BlockInfo* blkInfo = bt->data + inst->arg.block.id;
             inst->arg.address = blkInfo->baseAddress;
+            break;
+        }
+        default:
+            break;
         }
     }
 }
@@ -342,6 +360,10 @@ next:
         goto next;
     }
     case SORCER_OP_PushVar:
+    {
+        goto next;
+    }
+    case SORCER_OP_PushBlock:
     {
         goto next;
     }
