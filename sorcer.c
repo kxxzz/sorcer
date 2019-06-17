@@ -4,23 +4,27 @@
 
 
 
-typedef enum SORCER_Op
+typedef enum SORCER_OP
 {
-    SORCER_Op_PopVar,
-    SORCER_Op_PushCell,
-    SORCER_Op_PushVar,
-    SORCER_Op_Step,
-    SORCER_Op_Apply,
-    SORCER_Op_Call,
+    SORCER_OP_PopVar = 0,
+    SORCER_OP_PushCell,
+    SORCER_OP_PushVar,
+    SORCER_OP_Step,
+    SORCER_OP_Apply,
+    SORCER_OP_Call,
 
-    SORCER_Op_Ret,
-    SORCER_Op_Jz,
-    SORCER_Op_Jmp,
-} SORCER_Op;
+    SORCER_OP_Ret,
+    SORCER_OP_Jz,
+    SORCER_OP_Jmp,
+
+    SORCER_NumOPs
+} SORCER_OP;
+
+
 
 typedef struct SORCER_Inst
 {
-    SORCER_Op op;
+    SORCER_OP op;
     union
     {
         SORCER_Cell cell;
@@ -40,6 +44,7 @@ typedef struct SORCER_BlockInfo
 {
     u32 varCount;
     SORCER_InstVec code[1];
+    u32 baseAddress;
 } SORCER_BlockInfo;
 
 static void SORCER_blockInfoFree(SORCER_BlockInfo* a)
@@ -179,6 +184,7 @@ void SORCER_step(SORCER_Context* ctx, SORCER_Step step)
 
 SORCER_Block SORCER_blockNew(SORCER_Context* ctx)
 {
+    SORCER_codeOutdate(ctx);
     SORCER_BlockInfoVec* bt = ctx->blockInfoTable;
     SORCER_BlockInfo info = { 0 };
     vec_push(bt, info);
@@ -190,52 +196,52 @@ SORCER_Block SORCER_blockNew(SORCER_Context* ctx)
 
 
 
-void SORCER_blockAddPushCell(SORCER_Context* ctx, SORCER_Block blk, SORCER_Cell x)
+void SORCER_blockAddInstPushCell(SORCER_Context* ctx, SORCER_Block blk, SORCER_Cell x)
 {
     SORCER_codeOutdate(ctx);
     SORCER_BlockInfoVec* bt = ctx->blockInfoTable;
     SORCER_BlockInfo* info = bt->data + blk.id;
-    SORCER_Inst inst = { SORCER_Op_PushCell, .arg.cell = x };
+    SORCER_Inst inst = { SORCER_OP_PushCell, .arg.cell = x };
     vec_push(info->code, inst);
 }
 
 
-void SORCER_blockAddPushVar(SORCER_Context* ctx, SORCER_Block blk, SORCER_Var var)
+void SORCER_blockAddInstPushVar(SORCER_Context* ctx, SORCER_Block blk, SORCER_Var var)
 {
     SORCER_codeOutdate(ctx);
     SORCER_BlockInfoVec* bt = ctx->blockInfoTable;
     SORCER_BlockInfo* info = bt->data + blk.id;
-    SORCER_Inst inst = { SORCER_Op_PushVar, .arg.var = var };
+    SORCER_Inst inst = { SORCER_OP_PushVar, .arg.var = var };
     vec_push(info->code, inst);
 }
 
 
-void SORCER_blockAddStep(SORCER_Context* ctx, SORCER_Block blk, SORCER_Step step)
+void SORCER_blockAddInstStep(SORCER_Context* ctx, SORCER_Block blk, SORCER_Step step)
 {
     SORCER_codeOutdate(ctx);
     SORCER_BlockInfoVec* bt = ctx->blockInfoTable;
     SORCER_BlockInfo* info = bt->data + blk.id;
-    SORCER_Inst inst = { SORCER_Op_Step, .arg.step = step };
+    SORCER_Inst inst = { SORCER_OP_Step, .arg.step = step };
     vec_push(info->code, inst);
 }
 
 
-void SORCER_blockAddApply(SORCER_Context* ctx, SORCER_Block blk)
+void SORCER_blockAddInstApply(SORCER_Context* ctx, SORCER_Block blk)
 {
     SORCER_codeOutdate(ctx);
     SORCER_BlockInfoVec* bt = ctx->blockInfoTable;
     SORCER_BlockInfo* info = bt->data + blk.id;
-    SORCER_Inst inst = { SORCER_Op_Apply };
+    SORCER_Inst inst = { SORCER_OP_Apply };
     vec_push(info->code, inst);
 }
 
 
-void SORCER_blockAddCall(SORCER_Context* ctx, SORCER_Block blk, SORCER_Block callee)
+void SORCER_blockAddInstCall(SORCER_Context* ctx, SORCER_Block blk, SORCER_Block callee)
 {
     SORCER_codeOutdate(ctx);
     SORCER_BlockInfoVec* bt = ctx->blockInfoTable;
     SORCER_BlockInfo* info = bt->data + blk.id;
-    SORCER_Inst inst = { SORCER_Op_Call, .arg.block = callee };
+    SORCER_Inst inst = { SORCER_OP_Call, .arg.block = callee };
     vec_push(info->code, inst);
 }
 
@@ -243,13 +249,13 @@ void SORCER_blockAddCall(SORCER_Context* ctx, SORCER_Block blk, SORCER_Block cal
 
 
 
-SORCER_Var SORCER_blockAddPopVar(SORCER_Context* ctx, SORCER_Block blk)
+SORCER_Var SORCER_blockAddInstPopVar(SORCER_Context* ctx, SORCER_Block blk)
 {
     SORCER_codeOutdate(ctx);
     SORCER_BlockInfoVec* bt = ctx->blockInfoTable;
     SORCER_BlockInfo* info = bt->data + blk.id;
     SORCER_Var var = { info->varCount++ };
-    SORCER_Inst inst = { SORCER_Op_PopVar, .arg.var = var };
+    SORCER_Inst inst = { SORCER_OP_PopVar, .arg.var = var };
     vec_push(info->code, inst);
     return var;
 }
@@ -265,6 +271,45 @@ SORCER_Var SORCER_blockAddPopVar(SORCER_Context* ctx, SORCER_Block blk)
 
 
 
+static void SORCER_codeUpdate(SORCER_Context* ctx)
+{
+    if (ctx->codeUpdated)
+    {
+        return;
+    }
+    ctx->codeUpdated = true;
+
+    SORCER_InstVec* code = ctx->code;
+    SORCER_BlockInfoVec* bt = ctx->blockInfoTable;
+
+    for (u32 bi = 0; bi < bt->length; ++bi)
+    {
+        SORCER_BlockInfo* blkInfo = bt->data + bi;
+        blkInfo->baseAddress = code->length;
+        for (u32 i = 0; i < blkInfo->code->length; ++i)
+        {
+            SORCER_Inst* inst = blkInfo->code->data + i;
+            vec_push(code, *inst);
+        }
+        SORCER_Inst ret = { SORCER_OP_Ret };
+        vec_push(code, ret);
+    }
+
+    for (u32 i = 0; i < code->length; ++i)
+    {
+        SORCER_Inst* inst = code->data + i;
+        if (SORCER_OP_Call == inst->op)
+        {
+            SORCER_BlockInfo* blkInfo = bt->data + inst->arg.block.id;
+            inst->arg.address = blkInfo->baseAddress;
+        }
+    }
+}
+
+
+
+
+
 
 
 
@@ -272,7 +317,7 @@ SORCER_Var SORCER_blockAddPopVar(SORCER_Context* ctx, SORCER_Block blk)
 
 void SORCER_blockCall(SORCER_Context* ctx, SORCER_Block blk)
 {
-
+    SORCER_codeUpdate(ctx);
 }
 
 
