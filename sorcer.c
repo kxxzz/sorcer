@@ -2,6 +2,8 @@
 
 
 
+
+
 typedef enum SORCER_Op
 {
     SORCER_Op_PopVar,
@@ -31,6 +33,9 @@ typedef struct SORCER_Inst
 
 typedef vec_t(SORCER_Inst) SORCER_InstVec;
 
+
+
+
 typedef struct SORCER_BlockInfo
 {
     u32 varCount;
@@ -43,10 +48,11 @@ static void SORCER_blockInfoFree(SORCER_BlockInfo* a)
 }
 
 
+
+
 typedef vec_t(SORCER_Cell) SORCER_CellVec;
 typedef vec_t(SORCER_StepInfo) SORCER_StepInfoVec;
 typedef vec_t(SORCER_BlockInfo) SORCER_BlockInfoVec;
-
 
 
 typedef struct SORCER_Context
@@ -62,13 +68,11 @@ typedef struct SORCER_Context
 
 
 
-
 SORCER_Context* SORCER_ctxNew(void)
 {
     SORCER_Context* ctx = zalloc(sizeof(SORCER_Context));
     return ctx;
 }
-
 
 void SORCER_ctxFree(SORCER_Context* ctx)
 {
@@ -85,6 +89,10 @@ void SORCER_ctxFree(SORCER_Context* ctx)
     vec_free(ctx->dataStack);
     free(ctx);
 }
+
+
+
+
 
 
 
@@ -117,6 +125,10 @@ void SORCER_dsPop(SORCER_Context* ctx, u32 n, SORCER_Cell* out)
 
 
 
+
+
+
+
 SORCER_Step SORCER_stepFromInfo(SORCER_Context* ctx, const SORCER_StepInfo* info)
 {
     SORCER_StepInfoVec* st = ctx->stepInfoTable;
@@ -143,6 +155,9 @@ void SORCER_step(SORCER_Context* ctx, SORCER_Step step)
 
 
 
+
+
+
 SORCER_Block SORCER_blockNew(SORCER_Context* ctx)
 {
     SORCER_BlockInfoVec* bt = ctx->blockInfoTable;
@@ -151,7 +166,6 @@ SORCER_Block SORCER_blockNew(SORCER_Context* ctx)
     SORCER_Block a = { bt->length - 1 };
     return a;
 }
-
 
 
 
