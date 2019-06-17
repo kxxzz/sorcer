@@ -37,7 +37,10 @@ typedef struct SORCER_BlockInfo
     SORCER_InstVec code[1];
 } SORCER_BlockInfo;
 
-
+static void SORCER_blockInfoFree(SORCER_BlockInfo* a)
+{
+    vec_free(a->code);
+}
 
 
 typedef vec_t(SORCER_Cell) SORCER_CellVec;
@@ -73,6 +76,10 @@ void SORCER_ctxFree(SORCER_Context* ctx)
     vec_free(ctx->inBuf);
 
     vec_free(ctx->code);
+    for (u32 i = 0; i < ctx->blockInfoTable->length; ++i)
+    {
+        SORCER_blockInfoFree(ctx->blockInfoTable->data + i);
+    }
     vec_free(ctx->blockInfoTable);
     vec_free(ctx->stepInfoTable);
     vec_free(ctx->dataStack);
@@ -139,6 +146,8 @@ void SORCER_step(SORCER_Context* ctx, SORCER_Step step)
 SORCER_Block SORCER_blockNew(SORCER_Context* ctx)
 {
     SORCER_BlockInfoVec* bt = ctx->blockInfoTable;
+    SORCER_BlockInfo info = { 0 };
+    vec_push(bt, info);
     SORCER_Block a = { bt->length - 1 };
     return a;
 }
