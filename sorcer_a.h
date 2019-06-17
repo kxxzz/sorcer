@@ -4,6 +4,7 @@
 
 #include "sorcer.h"
 
+#include <assert.h>
 
 #include <vec.h>
 

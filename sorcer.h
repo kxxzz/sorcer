@@ -64,7 +64,6 @@ typedef struct SORCER_StepInfo
 } SORCER_StepInfo;
 
 SORCER_Step SORCER_stepFromInfo(SORCER_Context* ctx, const SORCER_StepInfo* info);
-
 void SORCER_step(SORCER_Context* ctx, SORCER_Step step);
 
 
@@ -76,7 +75,6 @@ void SORCER_blockAddPushVar(SORCER_Context* ctx, SORCER_Block blk, SORCER_Var va
 void SORCER_blockAddStep(SORCER_Context* ctx, SORCER_Block blk, SORCER_Step step);
 void SORCER_blockAddApply(SORCER_Context* ctx, SORCER_Block blk);
 void SORCER_blockAddCall(SORCER_Context* ctx, SORCER_Block blk, SORCER_Block callee);
-void SORCER_blockAddIfte(SORCER_Context* ctx, SORCER_Block blk, SORCER_Block onTrue, SORCER_Block onFalse);
 
 SORCER_Var SORCER_blockAddPopVar(SORCER_Context* ctx, SORCER_Block blk);
 
