@@ -186,6 +186,21 @@ void SORCER_step(SORCER_Context* ctx, SORCER_Step step)
 
 
 
+void SORCER_ctxBlocksReset(SORCER_Context* ctx)
+{
+    for (u32 i = 0; i < ctx->blockInfoTable->length; ++i)
+    {
+        SORCER_blockInfoFree(ctx->blockInfoTable->data + i);
+    }
+    vec_resize(ctx->blockInfoTable, 0);
+}
+
+
+
+
+
+
+
 
 
 

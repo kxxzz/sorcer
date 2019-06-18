@@ -69,6 +69,12 @@ void SORCER_step(SORCER_Context* ctx, SORCER_Step step);
 
 
 
+
+void SORCER_ctxBlocksReset(SORCER_Context* ctx);
+
+
+
+
 SORCER_Block SORCER_blockNew(SORCER_Context* ctx);
 
 SORCER_Var SORCER_blockAddInstPopVar(SORCER_Context* ctx, SORCER_Block blk);

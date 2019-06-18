@@ -1,10 +1,24 @@
 #include "sorcer_a.h"
+#include "sorcer_txn.h"
 
 
 
 
 
 
+
+
+
+
+
+
+
+
+SORCER_Block SORCER_loadTXN(SORCER_Context* ctx, TXN_Space* space, TXN_Node node)
+{
+    SORCER_Block a = { 0 };
+    return a;
+}
 
 
 
