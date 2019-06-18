@@ -318,70 +318,6 @@ SORCER_Var SORCER_blockAddInstPopVar(SORCER_Context* ctx, SORCER_Block blk)
 
 
 
-
-
-static void SORCER_codeLink(SORCER_Context* ctx, SORCER_Block blk)
-{
-    SORCER_InstVec* code = ctx->code;
-    SORCER_BlockInfoVec* bt = ctx->blockInfoTable;
-
-    typedef struct BlockLevel
-    {
-        u32 bi;
-        u32 cp;
-    } BlockLevel;
-    typedef vec_t(BlockLevel) BlockLevelVec;
-
-    BlockLevelVec callStack[1] = { 0 };
-    BlockLevel top = { 0 };
-    SORCER_BlockInfo* blkInfo = bt->data + top.bi;
-    blkInfo->baseAddress = code->length;
-    vec_push(callStack, top);
-next:
-    top = vec_last(callStack);
-    if (top.bi == bt->length)
-    {
-        goto out;
-    }
-    if (top.cp == blkInfo->code->length)
-    {
-        SORCER_Inst ret = { SORCER_OP_Ret };
-        vec_push(code, ret);
-        vec_pop(callStack);
-
-        blkInfo = bt->data + top.bi + 1;
-        blkInfo->baseAddress = code->length;
-        BlockLevel l = { top.bi + 1 };
-        vec_push(callStack, l);
-        goto next;
-    }
-    if (top.bi != blk.id)
-    {
-        if (!blkInfo->calleeCount)
-        {
-            goto next;
-        }
-        if (1 == blkInfo->calleeCount)
-        {
-            goto next;
-        }
-    }
-    SORCER_Inst* inst = blkInfo->code->data + top.cp++;
-    vec_push(code, *inst);
-    goto next;
-out:
-    vec_free(callStack);
-}
-
-
-
-
-
-
-
-
-
-
 static void SORCER_codeUpdate(SORCER_Context* ctx, SORCER_Block blk)
 {
     if (ctx->codeUpdated)
@@ -393,7 +329,22 @@ static void SORCER_codeUpdate(SORCER_Context* ctx, SORCER_Block blk)
     SORCER_InstVec* code = ctx->code;
     SORCER_BlockInfoVec* bt = ctx->blockInfoTable;
 
-    SORCER_codeLink(ctx, blk);
+    for (u32 bi = 0; bi < bt->length; ++bi)
+    {
+        SORCER_BlockInfo* blkInfo = bt->data + bi;
+        if (!blkInfo->calleeCount && (bi != blk.id))
+        {
+            continue;
+        }
+        blkInfo->baseAddress = code->length;
+        for (u32 i = 0; i < blkInfo->code->length; ++i)
+        {
+            SORCER_Inst* inst = blkInfo->code->data + i;
+            vec_push(code, *inst);
+        }
+        SORCER_Inst ret = { SORCER_OP_Ret };
+        vec_push(code, ret);
+    }
 
     for (u32 i = 0; i < code->length; ++i)
     {
