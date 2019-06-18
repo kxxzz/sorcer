@@ -44,6 +44,7 @@ typedef struct SORCER_BlockInfo
 {
     u32 varCount;
     SORCER_InstVec code[1];
+    u32 calleeCount;
     u32 baseAddress;
 } SORCER_BlockInfo;
 
@@ -240,6 +241,7 @@ void SORCER_blockAddInstPushBlock(SORCER_Context* ctx, SORCER_Block blk, SORCER_
     SORCER_codeOutdate(ctx);
     SORCER_BlockInfoVec* bt = ctx->blockInfoTable;
     SORCER_BlockInfo* info = bt->data + blk.id;
+    ++info->calleeCount;
     SORCER_Inst inst = { SORCER_OP_PushBlock, .arg.block = b };
     vec_push(info->code, inst);
 }
@@ -270,6 +272,7 @@ void SORCER_blockAddInstCall(SORCER_Context* ctx, SORCER_Block blk, SORCER_Block
     SORCER_codeOutdate(ctx);
     SORCER_BlockInfoVec* bt = ctx->blockInfoTable;
     SORCER_BlockInfo* info = bt->data + blk.id;
+    ++info->calleeCount;
     SORCER_Inst inst = { SORCER_OP_Call, .arg.block = callee };
     vec_push(info->code, inst);
 }
