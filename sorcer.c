@@ -303,7 +303,7 @@ SORCER_Var SORCER_blockAddInstPopVar(SORCER_Context* ctx, SORCER_Block blk)
 
 
 
-static void SORCER_codeUpdate(SORCER_Context* ctx)
+static void SORCER_codeUpdate(SORCER_Context* ctx, SORCER_Block blk)
 {
     if (ctx->codeUpdated)
     {
@@ -317,6 +317,10 @@ static void SORCER_codeUpdate(SORCER_Context* ctx)
     for (u32 bi = 0; bi < bt->length; ++bi)
     {
         SORCER_BlockInfo* blkInfo = bt->data + bi;
+        if (!blkInfo->calleeCount && (bi != blk.id))
+        {
+            continue;
+        }
         blkInfo->baseAddress = code->length;
         for (u32 i = 0; i < blkInfo->code->length; ++i)
         {
@@ -357,7 +361,7 @@ static void SORCER_codeUpdate(SORCER_Context* ctx)
 
 void SORCER_blockCall(SORCER_Context* ctx, SORCER_Block blk)
 {
-    SORCER_codeUpdate(ctx);
+    SORCER_codeUpdate(ctx, blk);
 
     SORCER_InstVec* code = ctx->code;
     SORCER_BlockInfoVec* bt = ctx->blockInfoTable;
