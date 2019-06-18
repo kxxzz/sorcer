@@ -15,7 +15,6 @@ typedef enum SORCER_OP
     SORCER_OP_Call,
 
     SORCER_OP_Ret,
-    SORCER_OP_Jz,
     SORCER_OP_Jmp,
 
     SORCER_NumOPs
@@ -332,7 +331,6 @@ static void SORCER_codeUpdate(SORCER_Context* ctx)
         {
         case SORCER_OP_PushBlock:
         case SORCER_OP_Call:
-        case SORCER_OP_Jz:
         case SORCER_OP_Jmp:
         {
             SORCER_BlockInfo* blkInfo = bt->data + inst->arg.block.id;
@@ -432,16 +430,6 @@ next:
         p = ret.address;
         assert(vt->length >= ret.varBase);
         vec_resize(vt, ret.varBase);
-        goto next;
-    }
-    case SORCER_OP_Jz:
-    {
-        SORCER_Cell top = vec_last(ds);
-        vec_pop(ds);
-        if (!top.as.val)
-        {
-            p = inst->arg.address;
-        }
         goto next;
     }
     case SORCER_OP_Jmp:
