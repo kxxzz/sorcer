@@ -4,6 +4,53 @@
 
 
 
+typedef enum SORCER_TxnKeyExpr
+{
+    SORCER_TxnKeyExpr_Def,
+    SORCER_TxnKeyExpr_Var,
+    SORCER_TxnKeyExpr_Ifte,
+
+    SORCER_NumTxnKeyExprs
+} SORCER_TxnKeyExpr;
+
+const char** SORCER_TxnKeyExprHeadNameTable(void)
+{
+    static const char* a[SORCER_NumTxnKeyExprs] =
+    {
+        "def",
+        "var",
+        "ifte",
+    };
+    return a;
+}
+
+
+
+
+
+typedef struct SORCER_TxnContext
+{
+    SORCER_Context* sorcer;
+} SORCER_TxnContext;
+
+
+
+
+static SORCER_TxnKeyExpr SORCER_txnKeyExprFromHeadName(SORCER_TxnContext* ctx, const char* name)
+{
+    for (SORCER_TxnKeyExpr i = 0; i < SORCER_NumTxnKeyExprs; ++i)
+    {
+        SORCER_TxnKeyExpr k = SORCER_NumTxnKeyExprs - 1 - i;
+        const char* s = SORCER_TxnKeyExprHeadNameTable()[k];
+        if (0 == strcmp(s, name))
+        {
+            return k;
+        }
+    }
+    return -1;
+}
+
+
 
 
 SORCER_Block SORCER_loadTxnBlock(SORCER_Context* ctx, TXN_Space* space, const TXN_Node* seq, u32 len)
@@ -16,12 +63,17 @@ SORCER_Block SORCER_loadTxnBlock(SORCER_Context* ctx, TXN_Space* space, const TX
         if (TXN_isTok(space, node))
         {
             // todo
-            SORCER_Cell x = { 0 };
-            SORCER_blockAddInstPushCell(ctx, block, x);
+            SORCER_Cell str = { 0 };
+            SORCER_blockAddInstPushCell(ctx, block, str);
         }
         else if (TXN_isSeqCurly(space, node))
         {
-
+            const char* name = TXN_tokCstr(space, node);
+            if (0 == strcmp(name, "apply"))
+            {
+                SORCER_blockAddInstApply(ctx, block);
+                continue;
+            }
         }
         else if (TXN_isSeqSquare(space, node))
         {
