@@ -314,33 +314,57 @@ void SORCER_blockAddInstCall(SORCER_Context* ctx, SORCER_Block blk, SORCER_Block
 
 
 
-void SORCER_blockAddInstIfte(SORCER_Context* ctx, SORCER_Block blk, SORCER_Block onTrue, SORCER_Block onFalse)
+
+
+
+
+
+static void SORCER_blockAddInlineBlock(SORCER_Context* ctx, SORCER_Block blk, SORCER_Block ib)
 {
-    SORCER_codeOutdate(ctx);
     SORCER_BlockInfoVec* bt = ctx->blockInfoTable;
-    SORCER_BlockInfo* binfo = bt->data + blk.id;
-    SORCER_BlockInfo* onTrueInfo = bt->data + onTrue.id;
-    SORCER_BlockInfo* onFalseInfo = bt->data + onFalse.id;
-    u32 jnzOff = binfo->code->length;
-    SORCER_Inst inst = { SORCER_OP_Jnz };
-    vec_push(binfo->code, inst);
-    for (u32 i = 0; i < onFalseInfo->code->length; ++i)
+    SORCER_BlockInfo* bInfo = bt->data + blk.id;
+    SORCER_BlockInfo* iInfo = bt->data + ib.id;
+    for (u32 i = 0; i < iInfo->code->length; ++i)
     {
-        SORCER_Inst inst = onFalseInfo->code->data[i];
+        SORCER_Inst inst = iInfo->code->data[i];
         switch (inst.op)
         {
         case SORCER_OP_PopVar:
         case SORCER_OP_PushVar:
         {
-            inst.arg.var.id += binfo->varCount;
+            inst.arg.var.id += bInfo->varCount;
             break;
         }
         default:
             break;
         }
-        vec_push(binfo->code, inst);
+        vec_push(bInfo->code, inst);
     }
-    binfo->varCount += onFalseInfo->varCount;
+    bInfo->varCount += iInfo->varCount;
+}
+
+
+void SORCER_blockAddIfte(SORCER_Context* ctx, SORCER_Block blk, SORCER_Block onTrue, SORCER_Block onFalse)
+{
+    SORCER_codeOutdate(ctx);
+    SORCER_BlockInfoVec* bt = ctx->blockInfoTable;
+    SORCER_BlockInfo* bInfo = bt->data + blk.id;
+    SORCER_BlockInfo* onTrueInfo = bt->data + onTrue.id;
+    SORCER_BlockInfo* onFalseInfo = bt->data + onFalse.id;
+    u32 jnzOff = bInfo->code->length;
+    {
+        SORCER_Inst inst = { SORCER_OP_Jnz };
+        vec_push(bInfo->code, inst);
+    }
+    SORCER_blockAddInlineBlock(ctx, blk, onFalse);
+    u32 jmpOff = bInfo->code->length;
+    {
+        SORCER_Inst inst = { SORCER_OP_Jmp };
+        vec_push(bInfo->code, inst);
+    }
+    bInfo->code->data[jnzOff].arg.address = bInfo->code->length;
+    SORCER_blockAddInlineBlock(ctx, blk, onTrue);
+    bInfo->code->data[jmpOff].arg.address = bInfo->code->length;
 }
 
 
@@ -382,8 +406,19 @@ static void SORCER_codeUpdate(SORCER_Context* ctx, SORCER_Block blk)
         blkInfo->baseAddress = code->length;
         for (u32 i = 0; i < blkInfo->code->length; ++i)
         {
-            SORCER_Inst* inst = blkInfo->code->data + i;
-            vec_push(code, *inst);
+            SORCER_Inst inst = blkInfo->code->data[i];
+            switch (inst.op)
+            {
+            case SORCER_OP_Jmp:
+            case SORCER_OP_Jnz:
+            {
+                inst.arg.address += blkInfo->baseAddress;
+                break;
+            }
+            default:
+                break;
+            }
+            vec_push(code, inst);
         }
         SORCER_Inst ret = { SORCER_OP_Ret };
         vec_push(code, ret);
@@ -396,8 +431,6 @@ static void SORCER_codeUpdate(SORCER_Context* ctx, SORCER_Block blk)
         {
         case SORCER_OP_PushBlock:
         case SORCER_OP_Call:
-        case SORCER_OP_Jmp:
-        case SORCER_OP_Jnz:
         {
             SORCER_BlockInfo* blkInfo = bt->data + inst->arg.block.id;
             inst->arg.address = blkInfo->baseAddress;
