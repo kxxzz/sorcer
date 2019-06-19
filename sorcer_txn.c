@@ -15,7 +15,9 @@ SORCER_Block SORCER_loadTxnBlock(SORCER_Context* ctx, TXN_Space* space, const TX
         TXN_Node node = seq[i];
         if (TXN_isTok(space, node))
         {
-
+            // todo
+            SORCER_Cell x = { 0 };
+            SORCER_blockAddInstPushCell(ctx, block, x);
         }
         else if (TXN_isSeqCurly(space, node))
         {
