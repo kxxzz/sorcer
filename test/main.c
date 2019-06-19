@@ -32,25 +32,13 @@ static int mainReturn(int r)
 
 static void test(void)
 {
-    TXN_Node root;
-    char* text;
-
-    u32 textSize = FILEU_readFile("../1.txn", &text);
-    assert(textSize != -1);
-
-    TXN_Space* space = TXN_spaceNew();
-    TXN_SpaceSrcInfo srcInfo[1] = { 0 };
-    root = TXN_parseAsList(space, text, srcInfo);
-    assert(root.id != TXN_Node_Invalid.id);
-    free(text);
-
     SORCER_Context* ctx = SORCER_ctxNew();
-    SORCER_Block blockRoot = SORCER_loadTXN(ctx, space, root);
+
+    SORCER_Block blockRoot = SORCER_loadTxnFile(ctx, "../1.txn");
+    //assert(blockRoot.id != SORCER_Block_Invalid.id);
     //SORCER_blockCall(ctx, blockRoot);
 
     SORCER_ctxFree(ctx);
-    TXN_spaceSrcInfoFree(srcInfo);
-    TXN_spaceFree(space);
 }
 
 

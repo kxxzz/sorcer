@@ -33,6 +33,9 @@ typedef struct SORCER_Block { u32 id; } SORCER_Block;
 typedef struct SORCER_Var { u32 id; } SORCER_Var;
 
 
+static SORCER_Block SORCER_Block_Invalid = { (u32)-1 };
+
+
 
 
 typedef struct SORCER_Cell
