@@ -6,13 +6,45 @@
 
 
 
+SORCER_Block SORCER_loadTxnBlock(SORCER_Context* ctx, TXN_Space* space, const TXN_Node* seq, u32 len)
+{
+    SORCER_Block block = SORCER_blockNew(ctx);
+
+    for (u32 i = 0; i < len; ++i)
+    {
+        TXN_Node node = seq[i];
+        if (TXN_isTok(space, node))
+        {
+
+        }
+        else if (TXN_isSeqCurly(space, node))
+        {
+
+        }
+        else if (TXN_isSeqSquare(space, node))
+        {
+
+        }
+        else
+        {
+
+        }
+    }
+    return block;
+}
 
 
 
 SORCER_Block SORCER_loadTxnNode(SORCER_Context* ctx, TXN_Space* space, TXN_Node node)
 {
     SORCER_Block block = SORCER_Block_Invalid;
-    return block;
+    const TXN_Node* seq = TXN_seqElm(space, node);
+    u32 len = TXN_seqLen(space, node);
+    if (!len)
+    {
+        return block;
+    }
+    return SORCER_loadTxnBlock(ctx, space, seq, len);
 }
 
 
