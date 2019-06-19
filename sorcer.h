@@ -89,7 +89,7 @@ void SORCER_blockAddInstStep(SORCER_Context* ctx, SORCER_Block blk, SORCER_Step 
 void SORCER_blockAddInstApply(SORCER_Context* ctx, SORCER_Block blk);
 void SORCER_blockAddInstCall(SORCER_Context* ctx, SORCER_Block blk, SORCER_Block callee);
 
-void SORCER_blockAddIfte(SORCER_Context* ctx, SORCER_Block blk, SORCER_Block onTrue, SORCER_Block onFalse);
+void SORCER_blockAddPatIfte(SORCER_Context* ctx, SORCER_Block blk, SORCER_Block onTrue, SORCER_Block onFalse);
 
 
 

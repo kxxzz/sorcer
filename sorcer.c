@@ -319,6 +319,9 @@ void SORCER_blockAddInstCall(SORCER_Context* ctx, SORCER_Block blk, SORCER_Block
 
 
 
+
+
+
 static void SORCER_blockAddInlineBlock(SORCER_Context* ctx, SORCER_Block blk, SORCER_Block ib)
 {
     SORCER_BlockInfoVec* bt = ctx->blockInfoTable;
@@ -344,7 +347,10 @@ static void SORCER_blockAddInlineBlock(SORCER_Context* ctx, SORCER_Block blk, SO
 }
 
 
-void SORCER_blockAddIfte(SORCER_Context* ctx, SORCER_Block blk, SORCER_Block onTrue, SORCER_Block onFalse)
+
+
+
+void SORCER_blockAddPatIfte(SORCER_Context* ctx, SORCER_Block blk, SORCER_Block onTrue, SORCER_Block onFalse)
 {
     SORCER_codeOutdate(ctx);
     SORCER_BlockInfoVec* bt = ctx->blockInfoTable;
