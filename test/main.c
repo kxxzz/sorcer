@@ -34,9 +34,9 @@ static void test(void)
 {
     SORCER_Context* ctx = SORCER_ctxNew();
 
-    SORCER_Block blockRoot = SORCER_loadTxnFile(ctx, "../1.txn");
-    //assert(blockRoot.id != SORCER_Block_Invalid.id);
-    //SORCER_blockCall(ctx, blockRoot);
+    SORCER_Block blk = SORCER_loadTxnFile(ctx, "../1.txn");
+    assert(blk.id != SORCER_Block_Invalid.id);
+    SORCER_run(ctx, blk);
 
     SORCER_ctxFree(ctx);
 }

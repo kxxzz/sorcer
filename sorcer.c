@@ -457,7 +457,7 @@ static void SORCER_codeUpdate(SORCER_Context* ctx, SORCER_Block blk)
 
 
 
-void SORCER_blockCall(SORCER_Context* ctx, SORCER_Block blk)
+void SORCER_run(SORCER_Context* ctx, SORCER_Block blk)
 {
     SORCER_codeUpdate(ctx, blk);
 

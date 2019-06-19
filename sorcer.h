@@ -93,7 +93,7 @@ void SORCER_blockAddPatIfte(SORCER_Context* ctx, SORCER_Block blk, SORCER_Block 
 
 
 
-void SORCER_blockCall(SORCER_Context* ctx, SORCER_Block blk);
+void SORCER_run(SORCER_Context* ctx, SORCER_Block blk);
 
 
 
