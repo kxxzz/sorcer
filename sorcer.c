@@ -384,6 +384,7 @@ void SORCER_blockCall(SORCER_Context* ctx, SORCER_Block blk)
     SORCER_RetVec* rs = ctx->retStack;
     SORCER_CellVec* vt = ctx->varTable;
 
+    assert(blk.id < bt->length);
     u32 p = bt->data[blk.id].baseAddress;
     SORCER_Inst* inst = NULL;
 next:
