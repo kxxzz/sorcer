@@ -16,6 +16,7 @@ typedef enum SORCER_OP
 
     SORCER_OP_Ret,
     SORCER_OP_Jmp,
+    SORCER_OP_Jnz,
 
     SORCER_NumOPs
 } SORCER_OP;
@@ -231,6 +232,25 @@ SORCER_Block SORCER_blockNew(SORCER_Context* ctx)
 
 
 
+
+
+
+
+
+SORCER_Var SORCER_blockAddInstPopVar(SORCER_Context* ctx, SORCER_Block blk)
+{
+    SORCER_codeOutdate(ctx);
+    SORCER_BlockInfoVec* bt = ctx->blockInfoTable;
+    SORCER_BlockInfo* info = bt->data + blk.id;
+    SORCER_Var var = { info->varCount++ };
+    SORCER_Inst inst = { SORCER_OP_PopVar,.arg.var = var };
+    vec_push(info->code, inst);
+    return var;
+}
+
+
+
+
 void SORCER_blockAddInstPushCell(SORCER_Context* ctx, SORCER_Block blk, SORCER_Cell x)
 {
     SORCER_codeOutdate(ctx);
@@ -256,7 +276,7 @@ void SORCER_blockAddInstPushBlock(SORCER_Context* ctx, SORCER_Block blk, SORCER_
     SORCER_codeOutdate(ctx);
     SORCER_BlockInfoVec* bt = ctx->blockInfoTable;
     SORCER_BlockInfo* info = bt->data + blk.id;
-    ++info->calleeCount;
+    ++bt->data[b.id].calleeCount;
     SORCER_Inst inst = { SORCER_OP_PushBlock, .arg.block = b };
     vec_push(info->code, inst);
 }
@@ -287,25 +307,28 @@ void SORCER_blockAddInstCall(SORCER_Context* ctx, SORCER_Block blk, SORCER_Block
     SORCER_codeOutdate(ctx);
     SORCER_BlockInfoVec* bt = ctx->blockInfoTable;
     SORCER_BlockInfo* info = bt->data + blk.id;
-    ++info->calleeCount;
+    ++bt->data[callee.id].calleeCount;
     SORCER_Inst inst = { SORCER_OP_Call, .arg.block = callee };
     vec_push(info->code, inst);
 }
 
 
 
-
-
-SORCER_Var SORCER_blockAddInstPopVar(SORCER_Context* ctx, SORCER_Block blk)
+void SORCER_blockAddInstIfte(SORCER_Context* ctx, SORCER_Block blk, SORCER_Block onTrue, SORCER_Block onFalse)
 {
     SORCER_codeOutdate(ctx);
     SORCER_BlockInfoVec* bt = ctx->blockInfoTable;
     SORCER_BlockInfo* info = bt->data + blk.id;
-    SORCER_Var var = { info->varCount++ };
-    SORCER_Inst inst = { SORCER_OP_PopVar, .arg.var = var };
+    SORCER_Inst inst = { SORCER_OP_Call };
     vec_push(info->code, inst);
-    return var;
 }
+
+
+
+
+
+
+
 
 
 
@@ -354,6 +377,7 @@ static void SORCER_codeUpdate(SORCER_Context* ctx, SORCER_Block blk)
         case SORCER_OP_PushBlock:
         case SORCER_OP_Call:
         case SORCER_OP_Jmp:
+        case SORCER_OP_Jnz:
         {
             SORCER_BlockInfo* blkInfo = bt->data + inst->arg.block.id;
             inst->arg.address = blkInfo->baseAddress;
@@ -458,6 +482,16 @@ next:
     case SORCER_OP_Jmp:
     {
         p = inst->arg.address;
+        goto next;
+    }
+    case SORCER_OP_Jnz:
+    {
+        SORCER_Cell top = vec_last(ds);
+        vec_pop(ds);
+        if (!top.as.val)
+        {
+            p = inst->arg.address;
+        }
         goto next;
     }
     default:
