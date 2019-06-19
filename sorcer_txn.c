@@ -23,7 +23,6 @@ SORCER_Block SORCER_loadTxnNode(SORCER_Context* ctx, TXN_Space* space, TXN_Node 
 SORCER_Block SORCER_loadTxnFile(SORCER_Context* ctx, const char* path)
 {
     SORCER_Block block = SORCER_Block_Invalid;
-
     char* str;
     u32 strSize = FILEU_readFile(path, &str);
     if (-1 == strSize)
