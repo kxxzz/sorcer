@@ -27,16 +27,43 @@ const char** SORCER_TxnKeyExprHeadNameTable(void)
 
 
 
+typedef struct SORCER_TxnLoadVar
+{
+    const char* name;
+    SORCER_Block block;
+    SORCER_Var var;
+} SORCER_TxnLoadVar;
 
-typedef struct SORCER_TxnContext
+typedef vec_t(SORCER_TxnLoadVar) SORCER_TxnLoadVarVec;
+
+
+
+
+typedef struct SORCER_TxnLoadContext
 {
     SORCER_Context* sorcer;
-} SORCER_TxnContext;
+    const SORCER_StepTxnInfoVec* stiTable;
+    TXN_Space* space;
+    SORCER_TxnLoadVarVec varTable[1];
+} SORCER_TxnLoadContext;
+
+static SORCER_TxnLoadContext SORCER_txnLoadContextNew(SORCER_Context* sorcer, const SORCER_StepTxnInfoVec* stiTable, TXN_Space* space)
+{
+    SORCER_TxnLoadContext ctx[1] = { 0 };
+    ctx->sorcer = sorcer;
+    ctx->stiTable = stiTable;
+    ctx->space = space;
+    return *ctx;
+}
+
+static void SORCER_txnLoadContextFree(SORCER_TxnLoadContext* ctx)
+{
+    vec_free(ctx->varTable);
+}
 
 
 
-
-static SORCER_TxnKeyExpr SORCER_txnKeyExprFromHeadName(SORCER_TxnContext* ctx, const char* name)
+static SORCER_TxnKeyExpr SORCER_txnKeyExprFromHeadName(const char* name)
 {
     for (SORCER_TxnKeyExpr i = 0; i < SORCER_NumTxnKeyExprs; ++i)
     {
@@ -53,27 +80,36 @@ static SORCER_TxnKeyExpr SORCER_txnKeyExprFromHeadName(SORCER_TxnContext* ctx, c
 
 
 
-SORCER_Block SORCER_loadTxnBlock(SORCER_Context* ctx, TXN_Space* space, const TXN_Node* seq, u32 len)
+SORCER_Block SORCER_loadTxnBlock(SORCER_TxnLoadContext* ctx, const TXN_Node* seq, u32 len)
 {
-    SORCER_Block block = SORCER_blockNew(ctx);
+    SORCER_Context* sorcer = ctx->sorcer;
+    TXN_Space* space = ctx->space;
+    SORCER_Block block = SORCER_blockNew(sorcer);
 
     for (u32 i = 0; i < len; ++i)
     {
         TXN_Node node = seq[i];
         if (TXN_isTok(space, node))
         {
-            // todo
-            SORCER_Cell str = { 0 };
-            SORCER_blockAddInstPushCell(ctx, block, str);
+            if (TXN_tokQuoted(space, node))
+            {
+                // todo
+                SORCER_Cell str = { 0 };
+                SORCER_blockAddInstPushCell(sorcer, block, str);
+            }
+            else
+            {
+                const char* name = TXN_tokCstr(space, node);
+                if (0 == strcmp(name, "apply"))
+                {
+                    SORCER_blockAddInstApply(sorcer, block);
+                    continue;
+                }
+            }
         }
         else if (TXN_isSeqCurly(space, node))
         {
-            const char* name = TXN_tokCstr(space, node);
-            if (0 == strcmp(name, "apply"))
-            {
-                SORCER_blockAddInstApply(ctx, block);
-                continue;
-            }
+
         }
         else if (TXN_isSeqSquare(space, node))
         {
@@ -89,7 +125,7 @@ SORCER_Block SORCER_loadTxnBlock(SORCER_Context* ctx, TXN_Space* space, const TX
 
 
 
-SORCER_Block SORCER_loadTxnNode(SORCER_Context* ctx, TXN_Space* space, TXN_Node node)
+SORCER_Block SORCER_loadFromTxnNode(SORCER_Context* ctx, const SORCER_StepTxnInfoVec* stiTable, TXN_Space* space, TXN_Node node)
 {
     SORCER_Block block = SORCER_Block_Invalid;
     const TXN_Node* seq = TXN_seqElm(space, node);
@@ -98,7 +134,10 @@ SORCER_Block SORCER_loadTxnNode(SORCER_Context* ctx, TXN_Space* space, TXN_Node 
     {
         return block;
     }
-    return SORCER_loadTxnBlock(ctx, space, seq, len);
+    SORCER_TxnLoadContext tctx[1] = { SORCER_txnLoadContextNew(ctx, stiTable, space) };
+    SORCER_Block r = SORCER_loadTxnBlock(tctx, seq, len);
+    SORCER_txnLoadContextFree(tctx);
+    return r;
 }
 
 
@@ -106,7 +145,7 @@ SORCER_Block SORCER_loadTxnNode(SORCER_Context* ctx, TXN_Space* space, TXN_Node 
 
 
 
-SORCER_Block SORCER_loadTxnFile(SORCER_Context* ctx, const char* path)
+SORCER_Block SORCER_loadFromTxnFile(SORCER_Context* ctx, const SORCER_StepTxnInfoVec* stiTable, const char* path)
 {
     SORCER_Block block = SORCER_Block_Invalid;
     char* str;
@@ -123,7 +162,7 @@ SORCER_Block SORCER_loadTxnFile(SORCER_Context* ctx, const char* path)
     {
         goto out;
     }
-    block = SORCER_loadTxnNode(ctx, space, root);
+    block = SORCER_loadFromTxnNode(ctx, stiTable, space, root);
 out:
     TXN_spaceSrcInfoFree(srcInfo);
     TXN_spaceFree(space);

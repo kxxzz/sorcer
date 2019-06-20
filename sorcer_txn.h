@@ -9,11 +9,19 @@
 
 
 
-SORCER_Block SORCER_loadTxnNode(SORCER_Context* ctx, TXN_Space* space, TXN_Node node);
+typedef struct SORCER_StepTxnInfo
+{
+    const char* name;
+} SORCER_StepTxnInfo;
+
+typedef vec_t(SORCER_StepTxnInfo) SORCER_StepTxnInfoVec;
 
 
 
-SORCER_Block SORCER_loadTxnFile(SORCER_Context* ctx, const char* path);
+SORCER_Block SORCER_loadFromTxnNode(SORCER_Context* ctx, const SORCER_StepTxnInfoVec* stiTable, TXN_Space* space, TXN_Node node);
+
+
+SORCER_Block SORCER_loadFromTxnFile(SORCER_Context* ctx, const SORCER_StepTxnInfoVec* stiTable, const char* path);
 
 
 
