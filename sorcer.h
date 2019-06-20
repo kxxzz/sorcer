@@ -29,15 +29,7 @@ void SORCER_ctxFree(SORCER_Context* ctx);
 
 
 
-typedef enum SORCER_Step
-{
-    SORCER_Step_Invalid = -1,
-
-    SORCER_Step_Not,
-
-    SORCER_NumSteps
-} SORCER_Step;
-
+typedef enum SORCER_Step SORCER_Step;
 typedef struct SORCER_Block { u32 id; } SORCER_Block;
 typedef struct SORCER_Var { u32 id; } SORCER_Var;
 

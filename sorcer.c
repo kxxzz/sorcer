@@ -66,7 +66,6 @@ typedef struct SORCER_Ret
 
 
 typedef vec_t(SORCER_Cell) SORCER_CellVec;
-typedef vec_t(SORCER_StepInfo) SORCER_StepInfoVec;
 typedef vec_t(SORCER_BlockInfo) SORCER_BlockInfoVec;
 typedef vec_t(SORCER_Ret) SORCER_RetVec;
 

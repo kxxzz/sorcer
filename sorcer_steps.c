@@ -4,7 +4,6 @@
 
 
 
-
 static void SORCER_stepFunc_Not(const SORCER_Cell* ins, SORCER_Cell* outs)
 {
     outs[0].as.val = !ins[0].as.val;

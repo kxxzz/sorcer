@@ -43,6 +43,16 @@
 
 
 
+typedef enum SORCER_Step
+{
+    SORCER_Step_Invalid = -1,
+
+    SORCER_Step_Not,
+
+    SORCER_NumSteps
+} SORCER_Step;
+
+
 
 
 typedef void(*SORCER_StepFunc)(const SORCER_Cell* ins, SORCER_Cell* outs);
