@@ -45,6 +45,19 @@
 
 
 
+typedef void(*SORCER_StepFunc)(const SORCER_Cell* ins, SORCER_Cell* outs);
+
+typedef struct SORCER_StepInfo
+{
+    const char* name;
+    u32 numIns;
+    u32 numOuts;
+    SORCER_StepFunc func;
+} SORCER_StepInfo;
+
+const SORCER_StepInfo SORCER_StepInfoTable[SORCER_NumSteps];
+
+
 
 
 

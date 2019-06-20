@@ -4,6 +4,17 @@
 
 
 
+
+typedef struct SORCER_TxnLoadStepInfo
+{
+    const char* name;
+} SORCER_TxnLoadStepInfo;
+
+typedef vec_t(SORCER_TxnLoadStepInfo) SORCER_TxnStepInfoVec;
+
+
+
+
 typedef enum SORCER_TxnKeyExpr
 {
     SORCER_TxnKeyExpr_Def,
@@ -72,19 +83,15 @@ typedef vec_t(SORCER_TxnLoadBlock) SORCER_TxnLoadBlockVec;
 typedef struct SORCER_TxnLoadContext
 {
     SORCER_Context* sorcer;
-    SORCER_TxnStepInfoVec stepInfoTable[1];
-    SORCER_TxnLoadCellFromSym cellFromSym;
     TXN_Space* space;
     u32 blockBaseId;
     SORCER_TxnLoadBlockVec blockTable[1];
 } SORCER_TxnLoadContext;
 
-static SORCER_TxnLoadContext SORCER_txnLoadContextNew(SORCER_Context* sorcer, const SORCER_TxnLoadBase* base, TXN_Space* space)
+static SORCER_TxnLoadContext SORCER_txnLoadContextNew(SORCER_Context* sorcer, TXN_Space* space)
 {
     SORCER_TxnLoadContext ctx[1] = { 0 };
     ctx->sorcer = sorcer;
-    vec_dup(ctx->stepInfoTable, base->stepInfoTable);
-    ctx->cellFromSym = base->cellFromSym;
     ctx->space = space;
     ctx->blockBaseId = SORCER_ctxBlocksTotal(sorcer);
     return *ctx;
@@ -97,7 +104,6 @@ static void SORCER_txnLoadContextFree(SORCER_TxnLoadContext* ctx)
         SORCER_txnLoadBlockFree(ctx->blockTable->data + i);
     }
     vec_free(ctx->blockTable);
-    vec_free(ctx->stepInfoTable);
 }
 
 
@@ -161,10 +167,10 @@ static SORCER_Block SORCER_txnLoadFindDef(SORCER_TxnLoadContext* ctx, const char
 
 static SORCER_Step SORCER_txnLoadFindStep(SORCER_TxnLoadContext* ctx, const char* name)
 {
-    for (u32 i = 0; i < ctx->stepInfoTable->length; ++i)
+    for (u32 i = 0; i < SORCER_NumSteps; ++i)
     {
-        u32 idx = ctx->stepInfoTable->length - 1 - i;
-        const char* s = ctx->stepInfoTable->data[idx].name;
+        u32 idx = SORCER_NumSteps - 1 - i;
+        const char* s = SORCER_StepInfoTable[idx].name;
         if (0 == strcmp(s, name))
         {
             SORCER_Step step = { idx };
@@ -222,7 +228,7 @@ SORCER_Block SORCER_loadTxnBlock(SORCER_TxnLoadContext* ctx, const TXN_Node* seq
                     continue;
                 }
                 SORCER_Step step = SORCER_txnLoadFindStep(ctx, name);
-                if (step.id != SORCER_Step_Invalid.id)
+                if (step != SORCER_Step_Invalid)
                 {
                     SORCER_blockAddInstStep(sorcer, block, step);
                     continue;
@@ -247,7 +253,7 @@ SORCER_Block SORCER_loadTxnBlock(SORCER_TxnLoadContext* ctx, const TXN_Node* seq
 
 
 
-SORCER_Block SORCER_blockFromTxnNode(SORCER_Context* ctx, const SORCER_TxnLoadBase* base, TXN_Space* space, TXN_Node node)
+SORCER_Block SORCER_blockFromTxnNode(SORCER_Context* ctx, TXN_Space* space, TXN_Node node)
 {
     SORCER_Block block = SORCER_Block_Invalid;
     const TXN_Node* seq = TXN_seqElm(space, node);
@@ -256,7 +262,7 @@ SORCER_Block SORCER_blockFromTxnNode(SORCER_Context* ctx, const SORCER_TxnLoadBa
     {
         return block;
     }
-    SORCER_TxnLoadContext tctx[1] = { SORCER_txnLoadContextNew(ctx, base, space) };
+    SORCER_TxnLoadContext tctx[1] = { SORCER_txnLoadContextNew(ctx, space) };
     SORCER_Block r = SORCER_loadTxnBlock(tctx, seq, len);
     SORCER_txnLoadContextFree(tctx);
     return r;
@@ -267,7 +273,7 @@ SORCER_Block SORCER_blockFromTxnNode(SORCER_Context* ctx, const SORCER_TxnLoadBa
 
 
 
-SORCER_Block SORCER_blockFromTxnFile(SORCER_Context* ctx, const SORCER_TxnLoadBase* base, const char* path)
+SORCER_Block SORCER_blockFromTxnFile(SORCER_Context* ctx, const char* path)
 {
     SORCER_Block block = SORCER_Block_Invalid;
     char* str;
@@ -284,7 +290,7 @@ SORCER_Block SORCER_blockFromTxnFile(SORCER_Context* ctx, const SORCER_TxnLoadBa
     {
         goto out;
     }
-    block = SORCER_blockFromTxnNode(ctx, base, space, root);
+    block = SORCER_blockFromTxnNode(ctx, space, root);
 out:
     TXN_spaceSrcInfoFree(srcInfo);
     TXN_spaceFree(space);
