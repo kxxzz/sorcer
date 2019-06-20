@@ -33,8 +33,9 @@ static int mainReturn(int r)
 static void test(void)
 {
     SORCER_Context* ctx = SORCER_ctxNew();
+    SORCER_TxnErrInfo errInfo[1] = { 0 };
 
-    SORCER_Block blk = SORCER_blockFromTxnFile(ctx, "../1.txn");
+    SORCER_Block blk = SORCER_blockFromTxnFile(ctx, "../1.txn", errInfo);
     assert(blk.id != SORCER_Block_Invalid.id);
     SORCER_run(ctx, blk);
 
