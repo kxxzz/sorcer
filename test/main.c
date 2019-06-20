@@ -33,13 +33,13 @@ static int mainReturn(int r)
 static void test(void)
 {
     SORCER_Context* ctx = SORCER_ctxNew();
-    SORCER_TxnStepInfoVec tsiTable[1] = { 0 };
+    SORCER_TxnLoadBase baseEnv[1] = { 0 };
 
-    SORCER_Block blk = SORCER_blockFromTxnFile(ctx, tsiTable, "../1.txn");
+    SORCER_Block blk = SORCER_blockFromTxnFile(ctx, baseEnv, "../1.txn");
     assert(blk.id != SORCER_Block_Invalid.id);
     SORCER_run(ctx, blk);
 
-    vec_free(tsiTable);
+    //vec_free(baseEnv);
     SORCER_ctxFree(ctx);
 }
 
