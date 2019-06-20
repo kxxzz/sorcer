@@ -38,6 +38,17 @@ const char** SORCER_TxnKeyExprHeadNameTable(void)
 
 
 
+
+static bool SORCER_txnLoadCellFromSym(SORCER_Cell* out, const char* name)
+{
+    return true;
+}
+
+
+
+
+
+
 typedef struct SORCER_TxnLoadVar
 {
     const char* name;
@@ -188,9 +199,7 @@ static SORCER_Step SORCER_txnLoadFindStep(SORCER_TxnLoadContext* ctx, const char
 
 
 
-
-
-SORCER_Block SORCER_loadTxnBlock(SORCER_TxnLoadContext* ctx, const TXN_Node* seq, u32 len)
+SORCER_Block SORCER_txnLoadBlock(SORCER_TxnLoadContext* ctx, const TXN_Node* seq, u32 len)
 {
     SORCER_Context* sorcer = ctx->sorcer;
     TXN_Space* space = ctx->space;
@@ -204,7 +213,7 @@ SORCER_Block SORCER_loadTxnBlock(SORCER_TxnLoadContext* ctx, const TXN_Node* seq
             if (TXN_tokQuoted(space, node))
             {
                 // todo
-                SORCER_Cell str = { 0 };
+                SORCER_Cell str[1] = { 0 };
                 SORCER_blockAddInstPushCell(sorcer, block, str);
             }
             else
@@ -232,6 +241,15 @@ SORCER_Block SORCER_loadTxnBlock(SORCER_TxnLoadContext* ctx, const TXN_Node* seq
                 {
                     SORCER_blockAddInstStep(sorcer, block, step);
                     continue;
+                }
+                SORCER_Cell cell[1];
+                if (SORCER_txnLoadCellFromSym(cell, name))
+                {
+                    SORCER_blockAddInstPushCell(sorcer, block, cell);
+                }
+                else
+                {
+
                 }
             }
         }
@@ -263,7 +281,7 @@ SORCER_Block SORCER_blockFromTxnNode(SORCER_Context* ctx, TXN_Space* space, TXN_
         return block;
     }
     SORCER_TxnLoadContext tctx[1] = { SORCER_txnLoadContextNew(ctx, space) };
-    SORCER_Block r = SORCER_loadTxnBlock(tctx, seq, len);
+    SORCER_Block r = SORCER_txnLoadBlock(tctx, seq, len);
     SORCER_txnLoadContextFree(tctx);
     return r;
 }

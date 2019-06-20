@@ -127,9 +127,9 @@ const SORCER_Cell* SORCER_dsBase(SORCER_Context* ctx)
 
 
 
-void SORCER_dsPush(SORCER_Context* ctx, SORCER_Cell a)
+void SORCER_dsPush(SORCER_Context* ctx, const SORCER_Cell* x)
 {
-    vec_push(ctx->dataStack, a);
+    vec_push(ctx->dataStack, *x);
 }
 
 void SORCER_dsPop(SORCER_Context* ctx, u32 n, SORCER_Cell* out)
@@ -241,12 +241,12 @@ SORCER_Var SORCER_blockAddInstPopVar(SORCER_Context* ctx, SORCER_Block blk)
 
 
 
-void SORCER_blockAddInstPushCell(SORCER_Context* ctx, SORCER_Block blk, SORCER_Cell x)
+void SORCER_blockAddInstPushCell(SORCER_Context* ctx, SORCER_Block blk, const SORCER_Cell* x)
 {
     SORCER_codeOutdate(ctx);
     SORCER_BlockInfoVec* bt = ctx->blockInfoTable;
     SORCER_BlockInfo* binfo = bt->data + blk.id;
-    SORCER_Inst inst = { SORCER_OP_PushCell, .arg.cell = x };
+    SORCER_Inst inst = { SORCER_OP_PushCell, .arg.cell = *x };
     vec_push(binfo->code, inst);
 }
 
