@@ -30,11 +30,41 @@ const char** SORCER_TxnKeyExprHeadNameTable(void)
 typedef struct SORCER_TxnLoadVar
 {
     const char* name;
-    SORCER_Block block;
+    SORCER_Block scope;
     SORCER_Var var;
 } SORCER_TxnLoadVar;
 
 typedef vec_t(SORCER_TxnLoadVar) SORCER_TxnLoadVarVec;
+
+
+
+typedef struct SORCER_TxnLoadDef
+{
+    const char* name;
+    SORCER_Block scope;
+    SORCER_Block block;
+} SORCER_TxnLoadDef;
+
+typedef vec_t(SORCER_TxnLoadDef) SORCER_TxnLoadDefVec;
+
+
+
+typedef struct SORCER_TxnLoadBlock
+{
+    SORCER_Block scope;
+    SORCER_TxnLoadDefVec defTable[1];
+    SORCER_TxnLoadVarVec varTable[1];
+} SORCER_TxnLoadBlock;
+
+static void SORCER_txnLoadBlockFree(SORCER_TxnLoadBlock* b)
+{
+    vec_free(b->varTable);
+    vec_free(b->defTable);
+}
+
+
+typedef vec_t(SORCER_TxnLoadBlock) SORCER_TxnLoadBlockVec;
+
 
 
 
@@ -44,7 +74,8 @@ typedef struct SORCER_TxnLoadContext
     SORCER_Context* sorcer;
     const SORCER_StepTxnInfoVec* stiTable;
     TXN_Space* space;
-    SORCER_TxnLoadVarVec varTable[1];
+    u32 blockBaseId;
+    SORCER_TxnLoadBlockVec blockTable[1];
 } SORCER_TxnLoadContext;
 
 static SORCER_TxnLoadContext SORCER_txnLoadContextNew(SORCER_Context* sorcer, const SORCER_StepTxnInfoVec* stiTable, TXN_Space* space)
@@ -53,13 +84,20 @@ static SORCER_TxnLoadContext SORCER_txnLoadContextNew(SORCER_Context* sorcer, co
     ctx->sorcer = sorcer;
     ctx->stiTable = stiTable;
     ctx->space = space;
+    ctx->blockBaseId = SORCER_ctxBlocksTotal(sorcer);
     return *ctx;
 }
 
 static void SORCER_txnLoadContextFree(SORCER_TxnLoadContext* ctx)
 {
-    vec_free(ctx->varTable);
+    for (u32 i = 0; i < ctx->blockTable->length; ++i)
+    {
+        SORCER_txnLoadBlockFree(ctx->blockTable->data + i);
+    }
+    vec_free(ctx->blockTable);
 }
+
+
 
 
 
@@ -76,6 +114,69 @@ static SORCER_TxnKeyExpr SORCER_txnKeyExprFromHeadName(const char* name)
     }
     return -1;
 }
+
+
+
+
+static SORCER_Var SORCER_txnLoadFindVar(SORCER_TxnLoadContext* ctx, const char* name, SORCER_Block scope)
+{
+    SORCER_TxnLoadBlockVec* blockTable = ctx->blockTable;
+    while (scope.id != SORCER_Block_Invalid.id)
+    {
+        SORCER_TxnLoadBlock* blockInfo = blockTable->data + scope.id - ctx->blockBaseId;
+        for (u32 i = 0; i < blockInfo->varTable->length; ++i)
+        {
+            SORCER_TxnLoadVar* info = blockInfo->varTable->data + i;
+            if (info->name == name)
+            {
+                return info->var;
+            }
+        }
+        scope = blockInfo->scope;
+    }
+    return SORCER_Var_Invalid;
+}
+
+static SORCER_Block SORCER_txnLoadFindDef(SORCER_TxnLoadContext* ctx, const char* name, SORCER_Block scope)
+{
+    SORCER_TxnLoadBlockVec* blockTable = ctx->blockTable;
+    while (scope.id != SORCER_Block_Invalid.id)
+    {
+        SORCER_TxnLoadBlock* blockInfo = blockTable->data + scope.id - ctx->blockBaseId;
+        for (u32 i = 0; i < blockInfo->defTable->length; ++i)
+        {
+            SORCER_TxnLoadDef* info = blockInfo->defTable->data + i;
+            if (info->name == name)
+            {
+                return info->block;
+            }
+        }
+        scope = blockInfo->scope;
+    }
+    return SORCER_Block_Invalid;
+}
+
+static SORCER_Step SORCER_txnLoadFindStep(SORCER_TxnLoadContext* ctx, const char* name)
+{
+    for (u32 i = 0; i < ctx->stiTable->length; ++i)
+    {
+        u32 idx = ctx->stiTable->length - 1 - i;
+        const char* s = ctx->stiTable->data[idx].name;
+        if (0 == strcmp(s, name))
+        {
+            SORCER_Step step = { idx };
+            return step;
+        }
+    }
+    return SORCER_Step_Invalid;
+}
+
+
+
+
+
+
+
 
 
 
@@ -103,6 +204,24 @@ SORCER_Block SORCER_loadTxnBlock(SORCER_TxnLoadContext* ctx, const TXN_Node* seq
                 if (0 == strcmp(name, "apply"))
                 {
                     SORCER_blockAddInstApply(sorcer, block);
+                    continue;
+                }
+                SORCER_Var var = SORCER_txnLoadFindVar(ctx, name, block);
+                if (var.id != SORCER_Var_Invalid.id)
+                {
+                    SORCER_blockAddInstPushVar(sorcer, block, var);
+                    continue;
+                }
+                SORCER_Block def = SORCER_txnLoadFindDef(ctx, name, block);
+                if (def.id != SORCER_Block_Invalid.id)
+                {
+                    SORCER_blockAddInstPushBlock(sorcer, block, def);
+                    continue;
+                }
+                SORCER_Step step = SORCER_txnLoadFindStep(ctx, name);
+                if (step.id != SORCER_Step_Invalid.id)
+                {
+                    SORCER_blockAddInstStep(sorcer, block, step);
                     continue;
                 }
             }

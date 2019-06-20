@@ -186,6 +186,10 @@ void SORCER_step(SORCER_Context* ctx, SORCER_Step step)
 
 
 
+u32 SORCER_ctxBlocksTotal(SORCER_Context* ctx)
+{
+    return ctx->blockInfoTable->length;
+}
 
 void SORCER_ctxBlocksReset(SORCER_Context* ctx)
 {

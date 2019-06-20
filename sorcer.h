@@ -32,8 +32,9 @@ typedef struct SORCER_Step { u32 id; } SORCER_Step;
 typedef struct SORCER_Block { u32 id; } SORCER_Block;
 typedef struct SORCER_Var { u32 id; } SORCER_Var;
 
-
+static SORCER_Step SORCER_Step_Invalid = { (u32)-1 };
 static SORCER_Block SORCER_Block_Invalid = { (u32)-1 };
+static SORCER_Var SORCER_Var_Invalid = { (u32)-1 };
 
 
 
@@ -72,7 +73,7 @@ void SORCER_step(SORCER_Context* ctx, SORCER_Step step);
 
 
 
-
+u32 SORCER_ctxBlocksTotal(SORCER_Context* ctx);
 void SORCER_ctxBlocksReset(SORCER_Context* ctx);
 
 
