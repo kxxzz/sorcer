@@ -5,12 +5,25 @@
 
 
 
-typedef struct SORCER_TxnLoadStepInfo
+typedef enum SORCER_TxnPrimWord
 {
-    const char* name;
-} SORCER_TxnLoadStepInfo;
+    SORCER_TxnPrimWord_Invalid = -1,
 
-typedef vec_t(SORCER_TxnLoadStepInfo) SORCER_TxnStepInfoVec;
+    SORCER_TxnPrimWord_Apply,
+    SORCER_TxnPrimWord_Ifte,
+
+    SORCER_NumTxnPrimWords
+} SORCER_TxnPrimWord;
+
+const char** SORCER_TxnPrimWordNameTable(void)
+{
+    static const char* a[SORCER_NumTxnPrimWords] =
+    {
+        "apply",
+        "ifte",
+    };
+    return a;
+}
 
 
 
@@ -21,7 +34,6 @@ typedef enum SORCER_TxnKeyExpr
 
     SORCER_TxnKeyExpr_Def,
     SORCER_TxnKeyExpr_Var,
-    SORCER_TxnKeyExpr_Ifte,
 
     SORCER_NumTxnKeyExprs
 } SORCER_TxnKeyExpr;
@@ -32,10 +44,21 @@ const char** SORCER_TxnKeyExprHeadNameTable(void)
     {
         "def",
         "var",
-        "ifte",
     };
     return a;
 }
+
+
+
+
+
+typedef struct SORCER_TxnLoadStepInfo
+{
+    const char* name;
+} SORCER_TxnLoadStepInfo;
+
+typedef vec_t(SORCER_TxnLoadStepInfo) SORCER_TxnStepInfoVec;
+
 
 
 
@@ -184,7 +207,19 @@ static void SORCER_txnLoadErrorAtNode(SORCER_TxnLoadContext* ctx, TXN_Node node,
 
 
 
-
+static SORCER_TxnPrimWord SORCER_txnPrimWordFromName(const char* name)
+{
+    for (SORCER_TxnPrimWord i = 0; i < SORCER_NumTxnPrimWords; ++i)
+    {
+        SORCER_TxnPrimWord k = SORCER_NumTxnPrimWords - 1 - i;
+        const char* s = SORCER_TxnPrimWordNameTable()[k];
+        if (0 == strcmp(s, name))
+        {
+            return k;
+        }
+    }
+    return SORCER_TxnPrimWord_Invalid;
+}
 
 
 static SORCER_TxnKeyExpr SORCER_txnKeyExprFromHeadName(const char* name)
@@ -348,9 +383,24 @@ next:
         else
         {
             const char* name = TXN_tokCstr(space, node);
-            if (0 == strcmp(name, "apply"))
+            SORCER_TxnPrimWord primWord = SORCER_txnPrimWordFromName(name);
+            if (primWord != SORCER_TxnPrimWord_Invalid)
             {
-                SORCER_blockAddInstApply(sorcer, cur->block);
+                switch (primWord)
+                {
+                case SORCER_TxnPrimWord_Apply:
+                {
+                    SORCER_blockAddInstApply(sorcer, cur->block);
+                    break;
+                }
+                case SORCER_TxnPrimWord_Ifte:
+                {
+                    break;
+                }
+                default:
+                    assert(false);
+                    break;
+                }
                 goto next;
             }
             SORCER_Var var = SORCER_txnLoadFindVar(ctx, name, cur->block);
