@@ -284,7 +284,7 @@ static SORCER_Step SORCER_txnLoadFindStep(const char* name)
     for (u32 i = 0; i < SORCER_NumSteps; ++i)
     {
         u32 idx = SORCER_NumSteps - 1 - i;
-        const char* s = SORCER_StepInfoTable[idx].name;
+        const char* s = SORCER_StepInfoTable()[idx].name;
         if (0 == strcmp(s, name))
         {
             SORCER_Step step = { idx };
@@ -327,6 +327,32 @@ static bool SORCER_txnLoadCheckCall(TXN_Space* space, TXN_Node node)
 
 
 
+static SORCER_Block SORCER_txnLoadBlockNew(SORCER_TxnLoadContext* ctx, SORCER_Block scope)
+{
+    SORCER_Context* sorcer = ctx->sorcer;
+    SORCER_TxnLoadBlockVec* blockTable = ctx->blockTable;
+    SORCER_TxnLoadBlock b = { scope };
+    vec_push(blockTable, b);
+    return SORCER_blockNew(sorcer);
+}
+
+static void SORCER_txnLoadBlocksRollback(SORCER_TxnLoadContext* ctx, u32 n)
+{
+    SORCER_Context* sorcer = ctx->sorcer;
+    SORCER_TxnLoadBlockVec* blockTable = ctx->blockTable;
+    for (u32 i = n; i < blockTable->length; ++i)
+    {
+        SORCER_txnLoadBlockFree(blockTable->data + i);
+    }
+    vec_resize(blockTable, n);
+    SORCER_ctxBlocksRollback(sorcer, n);
+}
+
+
+
+
+
+
 
 
 SORCER_Block SORCER_txnLoadBlock(SORCER_TxnLoadContext* ctx, const TXN_Node* seq, u32 len)
@@ -338,7 +364,7 @@ SORCER_Block SORCER_txnLoadBlock(SORCER_TxnLoadContext* ctx, const TXN_Node* seq
     SORCER_TxnLoadCallStack* callStack = ctx->callStack;
     u32 blocksTotal0 = SORCER_ctxBlocksTotal(sorcer);
 
-    SORCER_TxnLoadCallLevel level = { SORCER_blockNew(sorcer), seq, len };
+    SORCER_TxnLoadCallLevel level = { SORCER_txnLoadBlockNew(ctx, SORCER_Block_Invalid), seq, len };
     vec_push(callStack, level);
     SORCER_TxnLoadCallLevel* cur = NULL;
 next:
@@ -441,13 +467,13 @@ next:
     {
         const TXN_Node* body = TXN_seqElm(space, node);
         u32 bodyLen = TXN_seqLen(space, node);
-        SORCER_TxnLoadCallLevel level = { SORCER_blockNew(sorcer), body, bodyLen };
+        SORCER_TxnLoadCallLevel level = { SORCER_txnLoadBlockNew(ctx, cur->block), body, bodyLen };
         vec_push(callStack, level);
         goto next;
     }
     else if (TXN_isSeqSquare(space, node))
     {
-        SORCER_Block block = SORCER_blockNew(sorcer);
+        SORCER_Block block = SORCER_txnLoadBlockNew(ctx, cur->block);
         SORCER_blockAddInstPushBlock(sorcer, cur->block, block);
         const TXN_Node* body = TXN_seqElm(space, node);
         u32 bodyLen = TXN_seqLen(space, node);
@@ -495,7 +521,7 @@ next:
     }
     SORCER_txnLoadErrorAtNode(ctx, node, SORCER_TxnErr_UnkFormat);
 failed:
-    SORCER_ctxBlocksRollback(sorcer, blocksTotal0);
+    SORCER_txnLoadBlocksRollback(ctx, blocksTotal0);
     return SORCER_Block_Invalid;
 }
 

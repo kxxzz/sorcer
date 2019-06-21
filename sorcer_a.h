@@ -65,7 +65,7 @@ typedef struct SORCER_StepInfo
     SORCER_StepFunc func;
 } SORCER_StepInfo;
 
-const SORCER_StepInfo SORCER_StepInfoTable[SORCER_NumSteps];
+const SORCER_StepInfo* SORCER_StepInfoTable(void);
 
 
 

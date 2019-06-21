@@ -152,7 +152,7 @@ void SORCER_dsPop(SORCER_Context* ctx, u32 n, SORCER_Cell* out)
 
 void SORCER_step(SORCER_Context* ctx, SORCER_Step step)
 {
-    const SORCER_StepInfo* info = SORCER_StepInfoTable + step;
+    const SORCER_StepInfo* info = SORCER_StepInfoTable() + step;
     SORCER_CellVec* inBuf = ctx->inBuf;
     SORCER_CellVec* ds = ctx->dataStack;
 
