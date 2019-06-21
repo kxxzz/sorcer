@@ -15,7 +15,7 @@ typedef enum SORCER_TxnErr
 
     SORCER_TxnErr_TxnFile,
     SORCER_TxnErr_TxnSyntex,
-    SORCER_TxnErr_Syntax,
+    SORCER_TxnErr_UnkFormat,
     SORCER_TxnErr_UnkWord,
     SORCER_TxnErr_UnkCall,
     SORCER_TxnErr_UnkFunType,

@@ -261,6 +261,33 @@ static SORCER_Step SORCER_txnLoadFindStep(SORCER_TxnLoadContext* ctx, const char
 
 
 
+static bool SORCER_txnLoadCheckCall(TXN_Space* space, TXN_Node node)
+{
+    if (!TXN_isSeqRound(space, node))
+    {
+        return false;
+    }
+    u32 len = TXN_seqLen(space, node);
+    if (!len)
+    {
+        return false;
+    }
+    const TXN_Node* elms = TXN_seqElm(space, node);
+    if (!TXN_isTok(space, elms[0]))
+    {
+        return false;
+    }
+    if (TXN_tokQuoted(space, elms[0]))
+    {
+        return false;
+    }
+    return true;
+}
+
+
+
+
+
 
 
 
@@ -373,11 +400,11 @@ next:
         vec_push(blockReqs, req);
         goto next;
     }
-    else
+    else if (SORCER_txnLoadCheckCall(space, node))
     {
 
     }
-    assert(false);
+    SORCER_txnLoadErrorAtNode(ctx, node, SORCER_TxnErr_UnkFormat);
 failed:
     SORCER_ctxBlocksRollback(sorcer, blocksTotal0);
     return SORCER_Block_Invalid;
