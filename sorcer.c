@@ -15,10 +15,10 @@ typedef enum SORCER_OP
     SORCER_OP_Apply,
     SORCER_OP_Ifte,
 
-    SORCER_OP_PopRet,
     SORCER_OP_Ret,
     SORCER_OP_Jmp,
     SORCER_OP_Jnz,
+    SORCER_OP_ApplyJmp,
 
     SORCER_NumOPs
 } SORCER_OP;
@@ -425,19 +425,27 @@ static void SORCER_codeUpdate(SORCER_Context* ctx, SORCER_Block blk)
                 inst.arg.address += blkInfo->baseAddress;
                 break;
             }
-            case SORCER_OP_Call:
-            case SORCER_OP_Apply:
-            {
-                // Tail Call Elimination
-                if (i + 1 == blkInfo->code->length)
-                {
-                    SORCER_Inst inst = { SORCER_OP_PopRet };
-                    vec_push(code, inst);
-                }
-                break;
-            }
             default:
                 break;
+            }
+            // Tail Call Elimination
+            if (i + 1 == blkInfo->code->length)
+            {
+                switch (inst.op)
+                {
+                case SORCER_OP_Call:
+                {
+                    inst.op = SORCER_OP_Jmp;
+                    break;
+                }
+                case SORCER_OP_Apply:
+                {
+                    inst.op = SORCER_OP_ApplyJmp;
+                    break;
+                }
+                default:
+                    break;
+                }
             }
             vec_push(code, inst);
         }
@@ -560,11 +568,6 @@ next:
         }
         goto next;
     }
-    case SORCER_OP_PopRet:
-    {
-        vec_pop(rs);
-        goto next;
-    }
     case SORCER_OP_Ret:
     {
         if (!rs->length)
@@ -591,6 +594,13 @@ next:
         {
             p = inst->arg.address;
         }
+        goto next;
+    }
+    case SORCER_OP_ApplyJmp:
+    {
+        SORCER_Cell top = vec_last(ds);
+        vec_pop(ds);
+        p = top.as.address;
         goto next;
     }
     default:
