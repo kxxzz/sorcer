@@ -61,7 +61,7 @@ void SORCER_step(SORCER_Context* ctx, SORCER_Step step);
 
 
 u32 SORCER_ctxBlocksTotal(SORCER_Context* ctx);
-void SORCER_ctxBlocksReset(SORCER_Context* ctx);
+void SORCER_ctxBlocksRollback(SORCER_Context* ctx, u32 n);
 
 
 
@@ -77,6 +77,7 @@ void SORCER_blockAddInstStep(SORCER_Context* ctx, SORCER_Block blk, SORCER_Step 
 void SORCER_blockAddInstApply(SORCER_Context* ctx, SORCER_Block blk);
 void SORCER_blockAddInstCall(SORCER_Context* ctx, SORCER_Block blk, SORCER_Block callee);
 
+void SORCER_blockAddInlineBlock(SORCER_Context* ctx, SORCER_Block blk, SORCER_Block ib);
 void SORCER_blockAddPatIfte(SORCER_Context* ctx, SORCER_Block blk, SORCER_Block onTrue, SORCER_Block onFalse);
 
 

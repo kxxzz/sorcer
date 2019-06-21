@@ -176,13 +176,13 @@ u32 SORCER_ctxBlocksTotal(SORCER_Context* ctx)
     return ctx->blockInfoTable->length;
 }
 
-void SORCER_ctxBlocksReset(SORCER_Context* ctx)
+void SORCER_ctxBlocksRollback(SORCER_Context* ctx, u32 n)
 {
-    for (u32 i = 0; i < ctx->blockInfoTable->length; ++i)
+    for (u32 i = n; i < ctx->blockInfoTable->length; ++i)
     {
         SORCER_blockInfoFree(ctx->blockInfoTable->data + i);
     }
-    vec_resize(ctx->blockInfoTable, 0);
+    vec_resize(ctx->blockInfoTable, n);
 }
 
 
@@ -311,7 +311,7 @@ void SORCER_blockAddInstCall(SORCER_Context* ctx, SORCER_Block blk, SORCER_Block
 
 
 
-static void SORCER_blockAddInlineBlock(SORCER_Context* ctx, SORCER_Block blk, SORCER_Block ib)
+void SORCER_blockAddInlineBlock(SORCER_Context* ctx, SORCER_Block blk, SORCER_Block ib)
 {
     SORCER_BlockInfoVec* bt = ctx->blockInfoTable;
     SORCER_BlockInfo* bInfo = bt->data + blk.id;

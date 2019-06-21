@@ -91,6 +91,21 @@ typedef vec_t(SORCER_TxnLoadBlock) SORCER_TxnLoadBlockVec;
 
 
 
+typedef struct SORCER_TxnLoadBlockLevel
+{
+    const TXN_Node* seq;
+    u32 len;
+    SORCER_Block block;
+    u32 p;
+} SORCER_TxnLoadBlockLevel;
+
+typedef vec_t(SORCER_TxnLoadBlockLevel) SORCER_TxnLoadBlockStack;
+
+
+
+
+
+
 typedef struct SORCER_TxnLoadContext
 {
     SORCER_Context* sorcer;
@@ -99,6 +114,7 @@ typedef struct SORCER_TxnLoadContext
     SORCER_TxnErrInfo* errInfo;
     u32 blockBaseId;
     SORCER_TxnLoadBlockVec blockTable[1];
+    SORCER_TxnLoadBlockStack blockStack[1];
 } SORCER_TxnLoadContext;
 
 static SORCER_TxnLoadContext SORCER_txnLoadContextNew
@@ -117,6 +133,7 @@ static SORCER_TxnLoadContext SORCER_txnLoadContextNew
 
 static void SORCER_txnLoadContextFree(SORCER_TxnLoadContext* ctx)
 {
+    vec_free(ctx->blockStack);
     for (u32 i = 0; i < ctx->blockTable->length; ++i)
     {
         SORCER_txnLoadBlockFree(ctx->blockTable->data + i);
@@ -238,71 +255,100 @@ SORCER_Block SORCER_txnLoadBlock(SORCER_TxnLoadContext* ctx, const TXN_Node* seq
 {
     SORCER_Context* sorcer = ctx->sorcer;
     TXN_Space* space = ctx->space;
-    SORCER_Block block = SORCER_blockNew(sorcer);
+    SORCER_TxnLoadBlockStack* blockStack = ctx->blockStack;
+    u32 blocksTotal0 = SORCER_ctxBlocksTotal(sorcer);
 
-    for (u32 i = 0; i < len; ++i)
+    SORCER_TxnLoadBlockLevel level = { seq, len, SORCER_blockNew(sorcer) };
+    vec_push(blockStack, level);
+    SORCER_TxnLoadBlockLevel* cur = NULL;
+next:
+    cur = &vec_last(blockStack);
+    if (level.p == level.len)
     {
-        TXN_Node node = seq[i];
-        if (TXN_isTok(space, node))
+        if (blockStack->length > 0)
         {
-            if (TXN_tokQuoted(space, node))
-            {
-                // todo
-                SORCER_Cell str[1] = { 0 };
-                SORCER_blockAddInstPushCell(sorcer, block, str);
-            }
-            else
-            {
-                const char* name = TXN_tokCstr(space, node);
-                if (0 == strcmp(name, "apply"))
-                {
-                    SORCER_blockAddInstApply(sorcer, block);
-                    continue;
-                }
-                SORCER_Var var = SORCER_txnLoadFindVar(ctx, name, block);
-                if (var.id != SORCER_Var_Invalid.id)
-                {
-                    SORCER_blockAddInstPushVar(sorcer, block, var);
-                    continue;
-                }
-                SORCER_Block def = SORCER_txnLoadFindDef(ctx, name, block);
-                if (def.id != SORCER_Block_Invalid.id)
-                {
-                    SORCER_blockAddInstPushBlock(sorcer, block, def);
-                    continue;
-                }
-                SORCER_Step step = SORCER_txnLoadFindStep(ctx, name);
-                if (step != SORCER_Step_Invalid)
-                {
-                    SORCER_blockAddInstStep(sorcer, block, step);
-                    continue;
-                }
-                SORCER_Cell cell[1];
-                if (SORCER_txnLoadCellFromSym(cell, name))
-                {
-                    SORCER_blockAddInstPushCell(sorcer, block, cell);
-                }
-                else
-                {
-                    SORCER_txnLoadErrorAtNode(ctx, node, SORCER_TxnErr_UnkWord);
-                    return SORCER_Block_Invalid;
-                }
-            }
-        }
-        else if (TXN_isSeqCurly(space, node))
-        {
-
-        }
-        else if (TXN_isSeqSquare(space, node))
-        {
-
+            SORCER_Block ib = cur->block;
+            vec_pop(blockStack);
+            SORCER_Block blk = vec_last(blockStack).block;
+            SORCER_blockAddInlineBlock(sorcer, blk, ib);
+            goto next;
         }
         else
         {
-
+            SORCER_Block b = cur->block;
+            vec_pop(blockStack);
+            return b;
         }
     }
-    return block;
+    TXN_Node node = seq[level.p++];
+    if (TXN_isTok(space, node))
+    {
+        if (TXN_tokQuoted(space, node))
+        {
+            // todo
+            SORCER_Cell str[1] = { 0 };
+            SORCER_blockAddInstPushCell(sorcer, cur->block, str);
+            goto next;
+        }
+        else
+        {
+            const char* name = TXN_tokCstr(space, node);
+            if (0 == strcmp(name, "apply"))
+            {
+                SORCER_blockAddInstApply(sorcer, cur->block);
+                goto next;
+            }
+            SORCER_Var var = SORCER_txnLoadFindVar(ctx, name, cur->block);
+            if (var.id != SORCER_Var_Invalid.id)
+            {
+                SORCER_blockAddInstPushVar(sorcer, cur->block, var);
+                goto next;
+            }
+            SORCER_Block def = SORCER_txnLoadFindDef(ctx, name, cur->block);
+            if (def.id != SORCER_Block_Invalid.id)
+            {
+                SORCER_blockAddInstPushBlock(sorcer, cur->block, def);
+                goto next;
+            }
+            SORCER_Step step = SORCER_txnLoadFindStep(ctx, name);
+            if (step != SORCER_Step_Invalid)
+            {
+                SORCER_blockAddInstStep(sorcer, cur->block, step);
+                goto next;
+            }
+            SORCER_Cell cell[1];
+            if (SORCER_txnLoadCellFromSym(cell, name))
+            {
+                SORCER_blockAddInstPushCell(sorcer, cur->block, cell);
+                goto next;
+            }
+            else
+            {
+                SORCER_txnLoadErrorAtNode(ctx, node, SORCER_TxnErr_UnkWord);
+                goto failed;
+            }
+        }
+    }
+    else if (TXN_isSeqCurly(space, node))
+    {
+        const TXN_Node* body = TXN_seqElm(space, node);
+        u32 bodyLen = TXN_seqLen(space, node);
+        SORCER_TxnLoadBlockLevel level = { body, bodyLen, SORCER_blockNew(sorcer) };
+        vec_push(blockStack, level);
+        goto next;
+    }
+    else if (TXN_isSeqSquare(space, node))
+    {
+
+    }
+    else
+    {
+
+    }
+    assert(false);
+failed:
+    SORCER_ctxBlocksRollback(sorcer, blocksTotal0);
+    return SORCER_Block_Invalid;
 }
 
 
