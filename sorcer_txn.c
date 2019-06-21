@@ -105,6 +105,18 @@ typedef vec_t(SORCER_TxnLoadBlockLevel) SORCER_TxnLoadBlockStack;
 
 
 
+typedef struct SORCER_TxnLoadBlockReq
+{
+    SORCER_Block block;
+    const TXN_Node* seq;
+    u32 len;
+} SORCER_TxnLoadBlockReq;
+
+typedef vec_t(SORCER_TxnLoadBlockReq) SORCER_TxnLoadBlockReqVec;
+
+
+
+
 
 typedef struct SORCER_TxnLoadContext
 {
@@ -114,6 +126,7 @@ typedef struct SORCER_TxnLoadContext
     SORCER_TxnErrInfo* errInfo;
     u32 blockBaseId;
     SORCER_TxnLoadBlockVec blockTable[1];
+    SORCER_TxnLoadBlockReqVec blockReqs[1];
     SORCER_TxnLoadBlockStack blockStack[1];
 } SORCER_TxnLoadContext;
 
@@ -138,6 +151,7 @@ static void SORCER_txnLoadContextFree(SORCER_TxnLoadContext* ctx)
     {
         SORCER_txnLoadBlockFree(ctx->blockTable->data + i);
     }
+    vec_free(ctx->blockReqs);
     vec_free(ctx->blockTable);
 }
 
@@ -255,6 +269,7 @@ SORCER_Block SORCER_txnLoadBlock(SORCER_TxnLoadContext* ctx, const TXN_Node* seq
 {
     SORCER_Context* sorcer = ctx->sorcer;
     TXN_Space* space = ctx->space;
+    SORCER_TxnLoadBlockReqVec* blockReqs = ctx->blockReqs;
     SORCER_TxnLoadBlockStack* blockStack = ctx->blockStack;
     u32 blocksTotal0 = SORCER_ctxBlocksTotal(sorcer);
 
@@ -275,9 +290,20 @@ next:
         }
         else
         {
-            SORCER_Block b = cur->block;
-            vec_pop(blockStack);
-            return b;
+            if (blockReqs->length > 0)
+            {
+                SORCER_TxnLoadBlockReq req = vec_last(blockReqs);
+                SORCER_TxnLoadBlockLevel level = { req.block, req.seq, req.len };
+                vec_push(blockStack, level);
+                vec_pop(blockReqs);
+                goto next;
+            }
+            else
+            {
+                SORCER_Block b = cur->block;
+                vec_pop(blockStack);
+                return b;
+            }
         }
     }
     TXN_Node node = seq[level.p++];
@@ -339,7 +365,13 @@ next:
     }
     else if (TXN_isSeqSquare(space, node))
     {
-
+        SORCER_Block block = SORCER_blockNew(sorcer);
+        SORCER_blockAddInstPushBlock(sorcer, cur->block, block);
+        const TXN_Node* body = TXN_seqElm(space, node);
+        u32 bodyLen = TXN_seqLen(space, node);
+        SORCER_TxnLoadBlockReq req = { block, body, bodyLen };
+        vec_push(blockReqs, req);
+        goto next;
     }
     else
     {
