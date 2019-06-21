@@ -553,6 +553,7 @@ next:
         }
         SORCER_TxnLoadCallLevel level = { block, body, bodyLen };
         vec_push(callStack, level);
+        SORCER_txnLoadBlockDefTree(ctx);
         goto next;
     }
     else if (TXN_isSeqSquare(space, node))
@@ -567,6 +568,7 @@ next:
         SORCER_blockAddInstPushBlock(sorcer, cur->block, block);
         SORCER_TxnLoadCallLevel level = { block, body, bodyLen };
         vec_push(callStack, level);
+        SORCER_txnLoadBlockDefTree(ctx);
         goto next;
     }
     else if (SORCER_txnLoadCheckCall(space, node))
