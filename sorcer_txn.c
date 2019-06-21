@@ -93,9 +93,9 @@ typedef vec_t(SORCER_TxnLoadBlock) SORCER_TxnLoadBlockVec;
 
 typedef struct SORCER_TxnLoadBlockLevel
 {
+    SORCER_Block block;
     const TXN_Node* seq;
     u32 len;
-    SORCER_Block block;
     u32 p;
 } SORCER_TxnLoadBlockLevel;
 
@@ -258,7 +258,7 @@ SORCER_Block SORCER_txnLoadBlock(SORCER_TxnLoadContext* ctx, const TXN_Node* seq
     SORCER_TxnLoadBlockStack* blockStack = ctx->blockStack;
     u32 blocksTotal0 = SORCER_ctxBlocksTotal(sorcer);
 
-    SORCER_TxnLoadBlockLevel level = { seq, len, SORCER_blockNew(sorcer) };
+    SORCER_TxnLoadBlockLevel level = { SORCER_blockNew(sorcer), seq, len };
     vec_push(blockStack, level);
     SORCER_TxnLoadBlockLevel* cur = NULL;
 next:
@@ -333,7 +333,7 @@ next:
     {
         const TXN_Node* body = TXN_seqElm(space, node);
         u32 bodyLen = TXN_seqLen(space, node);
-        SORCER_TxnLoadBlockLevel level = { body, bodyLen, SORCER_blockNew(sorcer) };
+        SORCER_TxnLoadBlockLevel level = { SORCER_blockNew(sorcer), body, bodyLen };
         vec_push(blockStack, level);
         goto next;
     }
