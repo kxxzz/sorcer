@@ -74,13 +74,14 @@ void SORCER_blockAddInstPushCell(SORCER_Context* ctx, SORCER_Block blk, const SO
 void SORCER_blockAddInstPushVar(SORCER_Context* ctx, SORCER_Block blk, SORCER_Var v);
 void SORCER_blockAddInstPushBlock(SORCER_Context* ctx, SORCER_Block blk, SORCER_Block b);
 void SORCER_blockAddInstStep(SORCER_Context* ctx, SORCER_Block blk, SORCER_Step step);
-void SORCER_blockAddInstApply(SORCER_Context* ctx, SORCER_Block blk);
 void SORCER_blockAddInstCall(SORCER_Context* ctx, SORCER_Block blk, SORCER_Block callee);
-
+void SORCER_blockAddInstApply(SORCER_Context* ctx, SORCER_Block blk);
+void SORCER_blockAddInstIfte(SORCER_Context* ctx, SORCER_Block blk);
 
 void SORCER_blockAddInlineBlock(SORCER_Context* ctx, SORCER_Block blk, SORCER_Block ib);
 
-void SORCER_blockAddPatIfte(SORCER_Context* ctx, SORCER_Block blk, SORCER_Block onTrue, SORCER_Block onFalse);
+void SORCER_blockAddPatIfteCT(SORCER_Context* ctx, SORCER_Block blk, SORCER_Block onTrue, SORCER_Block onFalse);
+
 
 
 

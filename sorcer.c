@@ -11,9 +11,11 @@ typedef enum SORCER_OP
     SORCER_OP_PushVar,
     SORCER_OP_PushBlock,
     SORCER_OP_Step,
-    SORCER_OP_Apply,
     SORCER_OP_Call,
+    SORCER_OP_Apply,
+    SORCER_OP_Ifte,
 
+    SORCER_OP_PopRet,
     SORCER_OP_Ret,
     SORCER_OP_Jmp,
     SORCER_OP_Jnz,
@@ -281,6 +283,17 @@ void SORCER_blockAddInstStep(SORCER_Context* ctx, SORCER_Block blk, SORCER_Step 
 }
 
 
+void SORCER_blockAddInstCall(SORCER_Context* ctx, SORCER_Block blk, SORCER_Block callee)
+{
+    SORCER_codeOutdate(ctx);
+    SORCER_BlockInfoVec* bt = ctx->blockInfoTable;
+    SORCER_BlockInfo* binfo = bt->data + blk.id;
+    ++bt->data[callee.id].calleeCount;
+    SORCER_Inst inst = { SORCER_OP_Call, .arg.block = callee };
+    vec_push(binfo->code, inst);
+}
+
+
 void SORCER_blockAddInstApply(SORCER_Context* ctx, SORCER_Block blk)
 {
     SORCER_codeOutdate(ctx);
@@ -291,15 +304,17 @@ void SORCER_blockAddInstApply(SORCER_Context* ctx, SORCER_Block blk)
 }
 
 
-void SORCER_blockAddInstCall(SORCER_Context* ctx, SORCER_Block blk, SORCER_Block callee)
+void SORCER_blockAddInstIfte(SORCER_Context* ctx, SORCER_Block blk)
 {
     SORCER_codeOutdate(ctx);
     SORCER_BlockInfoVec* bt = ctx->blockInfoTable;
     SORCER_BlockInfo* binfo = bt->data + blk.id;
-    ++bt->data[callee.id].calleeCount;
-    SORCER_Inst inst = { SORCER_OP_Call, .arg.block = callee };
+    SORCER_Inst inst = { SORCER_OP_Apply };
     vec_push(binfo->code, inst);
 }
+
+
+
 
 
 
@@ -339,7 +354,7 @@ void SORCER_blockAddInlineBlock(SORCER_Context* ctx, SORCER_Block blk, SORCER_Bl
 
 
 
-void SORCER_blockAddPatIfte(SORCER_Context* ctx, SORCER_Block blk, SORCER_Block onTrue, SORCER_Block onFalse)
+void SORCER_blockAddPatIfteCT(SORCER_Context* ctx, SORCER_Block blk, SORCER_Block onTrue, SORCER_Block onFalse)
 {
     SORCER_codeOutdate(ctx);
     SORCER_BlockInfoVec* bt = ctx->blockInfoTable;
@@ -408,6 +423,17 @@ static void SORCER_codeUpdate(SORCER_Context* ctx, SORCER_Block blk)
             case SORCER_OP_Jnz:
             {
                 inst.arg.address += blkInfo->baseAddress;
+                break;
+            }
+            case SORCER_OP_Call:
+            case SORCER_OP_Apply:
+            {
+                // Tail Call Elimination
+                if (i + 1 == blkInfo->code->length)
+                {
+                    SORCER_Inst inst = { SORCER_OP_PopRet };
+                    vec_push(code, inst);
+                }
                 break;
             }
             default:
@@ -498,6 +524,13 @@ next:
         SORCER_step(ctx, inst->arg.step);
         goto next;
     }
+    case SORCER_OP_Call:
+    {
+        SORCER_Ret ret = { p, vt->length };
+        vec_push(rs, ret);
+        p = inst->arg.address;
+        goto next;
+    }
     case SORCER_OP_Apply:
     {
         SORCER_Cell top = vec_last(ds);
@@ -507,11 +540,29 @@ next:
         p = top.as.address;
         goto next;
     }
-    case SORCER_OP_Call:
+    case SORCER_OP_Ifte:
     {
+        SORCER_Cell onFalse = vec_last(ds);
+        vec_pop(ds);
+        SORCER_Cell onTure = vec_last(ds);
+        vec_pop(ds);
+        SORCER_Cell cond = vec_last(ds);
+        vec_pop(ds);
         SORCER_Ret ret = { p, vt->length };
         vec_push(rs, ret);
-        p = inst->arg.address;
+        if (cond.as.val)
+        {
+            p = onTure.as.address;
+        }
+        else
+        {
+            p = onFalse.as.address;
+        }
+        goto next;
+    }
+    case SORCER_OP_PopRet:
+    {
+        vec_pop(rs);
         goto next;
     }
     case SORCER_OP_Ret:

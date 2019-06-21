@@ -395,6 +395,7 @@ next:
                 }
                 case SORCER_TxnPrimWord_Ifte:
                 {
+                    SORCER_blockAddInstIfte(sorcer, cur->block);
                     break;
                 }
                 default:
