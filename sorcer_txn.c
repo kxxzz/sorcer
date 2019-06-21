@@ -62,7 +62,9 @@ typedef vec_t(SORCER_TxnLoadStepInfo) SORCER_TxnStepInfoVec;
 
 
 
-
+static void SORCER_txnLoadBufferFromStr(SORCER_Cell* out, const char* str)
+{
+}
 
 static bool SORCER_txnLoadCellFromSym(SORCER_Cell* out, const char* name)
 {
@@ -375,9 +377,9 @@ next:
     {
         if (TXN_tokQuoted(space, node))
         {
-            // todo
-            SORCER_Cell str[1] = { 0 };
-            SORCER_blockAddInstPushCell(sorcer, cur->block, str);
+            SORCER_Cell cell[1] = { 0 };
+            SORCER_txnLoadBufferFromStr(cell, TXN_tokCstr(space, node));
+            SORCER_blockAddInstPushCell(sorcer, cur->block, cell);
             goto next;
         }
         else
