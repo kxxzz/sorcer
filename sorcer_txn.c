@@ -327,11 +327,48 @@ static bool SORCER_txnLoadCheckCall(TXN_Space* space, TXN_Node node)
 
 
 
-static SORCER_Block SORCER_txnLoadBlockNew(SORCER_TxnLoadContext* ctx, SORCER_Block scope)
+static SORCER_Block SORCER_txnLoadBlockNew(SORCER_TxnLoadContext* ctx, SORCER_Block scope, const TXN_Node* body, u32 bodyLen)
 {
     SORCER_Context* sorcer = ctx->sorcer;
+    TXN_Space* space = ctx->space;
     SORCER_TxnLoadBlockVec* blockTable = ctx->blockTable;
     SORCER_TxnLoadBlock b = { scope };
+    for (u32 i = 0; i < bodyLen; ++i)
+    {
+        TXN_Node node = body[i];
+        if (SORCER_txnLoadCheckCall(space, node))
+        {
+            const TXN_Node* elms = TXN_seqElm(space, node);
+            u32 len = TXN_seqLen(space, node);
+            if (len < 2)
+            {
+                SORCER_txnLoadErrorAtNode(ctx, node, SORCER_TxnErr_UnkFormat);
+                return SORCER_Block_Invalid;
+            }
+            const char* name = TXN_tokCstr(space, elms[0]);
+            SORCER_TxnKeyExpr expr = SORCER_txnKeyExprFromHeadName(name);
+            if (expr != SORCER_TxnKeyExpr_Invalid)
+            {
+                switch (expr)
+                {
+                case SORCER_TxnKeyExpr_Def:
+                {
+                    if (!TXN_isTok(space, elms[1]))
+                    {
+                        SORCER_txnLoadErrorAtNode(ctx, elms[1], SORCER_TxnErr_UnkFormat);
+                        return SORCER_Block_Invalid;
+                    }
+                    const char* defName = TXN_tokCstr(space, elms[1]);
+                    SORCER_TxnLoadDef def = { defName };
+                    vec_push(b.defTable, def);
+                    break;
+                }
+                default:
+                    break;
+                }
+            }
+        }
+    }
     vec_push(blockTable, b);
     return SORCER_blockNew(sorcer);
 }
@@ -355,7 +392,7 @@ static void SORCER_txnLoadBlocksRollback(SORCER_TxnLoadContext* ctx, u32 n)
 
 
 
-SORCER_Block SORCER_txnLoadBlock(SORCER_TxnLoadContext* ctx, const TXN_Node* seq, u32 len)
+SORCER_Block SORCER_txnLoadBlock(SORCER_TxnLoadContext* ctx, const TXN_Node* body, u32 bodyLen)
 {
     SORCER_Context* sorcer = ctx->sorcer;
     TXN_Space* space = ctx->space;
@@ -364,12 +401,17 @@ SORCER_Block SORCER_txnLoadBlock(SORCER_TxnLoadContext* ctx, const TXN_Node* seq
     SORCER_TxnLoadCallStack* callStack = ctx->callStack;
     u32 blocksTotal0 = SORCER_ctxBlocksTotal(sorcer);
 
-    SORCER_TxnLoadCallLevel level = { SORCER_txnLoadBlockNew(ctx, SORCER_Block_Invalid), seq, len };
-    vec_push(callStack, level);
+    SORCER_Block blockRoot = SORCER_txnLoadBlockNew(ctx, SORCER_Block_Invalid, body, bodyLen);
+    if (blockRoot.id == SORCER_Block_Invalid.id)
+    {
+        goto failed;
+    }
+    SORCER_TxnLoadCallLevel root = { blockRoot, body, bodyLen };
+    vec_push(callStack, root);
     SORCER_TxnLoadCallLevel* cur = NULL;
 next:
     cur = &vec_last(callStack);
-    if (level.p == level.len)
+    if (cur->p == cur->len)
     {
         if (callStack->length > 0)
         {
@@ -398,7 +440,7 @@ next:
             }
         }
     }
-    TXN_Node node = seq[level.p++];
+    TXN_Node node = body[cur->p++];
     if (TXN_isTok(space, node))
     {
         if (TXN_tokQuoted(space, node))
@@ -467,16 +509,25 @@ next:
     {
         const TXN_Node* body = TXN_seqElm(space, node);
         u32 bodyLen = TXN_seqLen(space, node);
-        SORCER_TxnLoadCallLevel level = { SORCER_txnLoadBlockNew(ctx, cur->block), body, bodyLen };
+        SORCER_Block block = SORCER_txnLoadBlockNew(ctx, cur->block, body, bodyLen);
+        if (block.id == SORCER_Block_Invalid.id)
+        {
+            goto failed;
+        }
+        SORCER_TxnLoadCallLevel level = { block, body, bodyLen };
         vec_push(callStack, level);
         goto next;
     }
     else if (TXN_isSeqSquare(space, node))
     {
-        SORCER_Block block = SORCER_txnLoadBlockNew(ctx, cur->block);
-        SORCER_blockAddInstPushBlock(sorcer, cur->block, block);
         const TXN_Node* body = TXN_seqElm(space, node);
         u32 bodyLen = TXN_seqLen(space, node);
+        SORCER_Block block = SORCER_txnLoadBlockNew(ctx, cur->block, body, bodyLen);
+        if (block.id == SORCER_Block_Invalid.id)
+        {
+            goto failed;
+        }
+        SORCER_blockAddInstPushBlock(sorcer, cur->block, block);
         SORCER_TxnLoadBlockReq req = { block, body, bodyLen };
         vec_push(blockReqs, req);
         goto next;
@@ -485,7 +536,6 @@ next:
     {
         const TXN_Node* elms = TXN_seqElm(space, node);
         u32 len = TXN_seqLen(space, node);
-        assert(len > 0);
         const char* name = TXN_tokCstr(space, elms[0]);
         SORCER_TxnKeyExpr expr = SORCER_txnKeyExprFromHeadName(name);
         if (expr != SORCER_TxnKeyExpr_Invalid)
