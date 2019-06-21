@@ -17,6 +17,8 @@ typedef vec_t(SORCER_TxnLoadStepInfo) SORCER_TxnStepInfoVec;
 
 typedef enum SORCER_TxnKeyExpr
 {
+    SORCER_TxnKeyExpr_Invalid = -1,
+
     SORCER_TxnKeyExpr_Def,
     SORCER_TxnKeyExpr_Var,
     SORCER_TxnKeyExpr_Ifte,
@@ -198,7 +200,7 @@ static SORCER_TxnKeyExpr SORCER_txnKeyExprFromHeadName(const char* name)
             return k;
         }
     }
-    return -1;
+    return SORCER_TxnKeyExpr_Invalid;
 }
 
 
@@ -242,7 +244,7 @@ static SORCER_Block SORCER_txnLoadFindDef(SORCER_TxnLoadContext* ctx, const char
     return SORCER_Block_Invalid;
 }
 
-static SORCER_Step SORCER_txnLoadFindStep(SORCER_TxnLoadContext* ctx, const char* name)
+static SORCER_Step SORCER_txnLoadFindStep(const char* name)
 {
     for (u32 i = 0; i < SORCER_NumSteps; ++i)
     {
@@ -363,7 +365,7 @@ next:
                 SORCER_blockAddInstPushBlock(sorcer, cur->block, def);
                 goto next;
             }
-            SORCER_Step step = SORCER_txnLoadFindStep(ctx, name);
+            SORCER_Step step = SORCER_txnLoadFindStep(name);
             if (step != SORCER_Step_Invalid)
             {
                 SORCER_blockAddInstStep(sorcer, cur->block, step);
@@ -402,7 +404,55 @@ next:
     }
     else if (SORCER_txnLoadCheckCall(space, node))
     {
+        const TXN_Node* elms = TXN_seqElm(space, node);
+        u32 len = TXN_seqLen(space, node);
+        assert(len > 0);
+        const char* name = TXN_tokCstr(space, elms[0]);
 
+        SORCER_Var var = SORCER_txnLoadFindVar(ctx, name, cur->block);
+        if (var.id != SORCER_Var_Invalid.id)
+        {
+            SORCER_blockAddInstPushVar(sorcer, cur->block, var);
+            goto next;
+        }
+        SORCER_Block def = SORCER_txnLoadFindDef(ctx, name, cur->block);
+        if (def.id != SORCER_Block_Invalid.id)
+        {
+            SORCER_blockAddInstPushBlock(sorcer, cur->block, def);
+            goto next;
+        }
+        SORCER_Step step = SORCER_txnLoadFindStep(name);
+        if (step != SORCER_Step_Invalid)
+        {
+            SORCER_blockAddInstStep(sorcer, cur->block, step);
+            goto next;
+        }
+        SORCER_TxnKeyExpr expr = SORCER_txnKeyExprFromHeadName(name);
+        if (expr != SORCER_TxnKeyExpr_Invalid)
+        {
+            switch (expr)
+            {
+            case SORCER_TxnKeyExpr_Def:
+            {
+                goto next;
+            }
+            case SORCER_TxnKeyExpr_Var:
+            {
+                goto next;
+            }
+            case SORCER_TxnKeyExpr_Ifte:
+            {
+                goto next;
+            }
+            default:
+            {
+                assert(false);
+                break;
+            }
+            }
+        }
+        SORCER_txnLoadErrorAtNode(ctx, node, SORCER_TxnErr_UnkCall);
+        goto failed;
     }
     SORCER_txnLoadErrorAtNode(ctx, node, SORCER_TxnErr_UnkFormat);
 failed:
