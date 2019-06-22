@@ -269,16 +269,16 @@ static SORCER_Block SORCER_txnLoadFindDef(SORCER_TxnLoadContext* ctx, const char
 
 static SORCER_Step SORCER_txnLoadFindStep(const char* name)
 {
-    for (u32 i = 0; i < SORCER_NumSteps; ++i)
-    {
-        u32 idx = SORCER_NumSteps - 1 - i;
-        const char* s = SORCER_StepInfoTable()[idx].name;
-        if (0 == strcmp(s, name))
-        {
-            SORCER_Step step = { idx };
-            return step;
-        }
-    }
+    //for (u32 i = 0; i < SORCER_NumSteps; ++i)
+    //{
+    //    u32 idx = SORCER_NumSteps - 1 - i;
+    //    const char* s = SORCER_StepInfoTable()[idx].name;
+    //    if (0 == strcmp(s, name))
+    //    {
+    //        SORCER_Step step = { idx };
+    //        return step;
+    //    }
+    //}
     return SORCER_Step_Invalid;
 }
 
@@ -526,7 +526,7 @@ next:
                 goto next;
             }
             SORCER_Step step = SORCER_txnLoadFindStep(name);
-            if (step != SORCER_Step_Invalid)
+            if (step.id != SORCER_Step_Invalid.id)
             {
                 SORCER_blockAddInstStep(sorcer, cur->block, step);
                 goto next;

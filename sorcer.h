@@ -29,10 +29,11 @@ void SORCER_ctxFree(SORCER_Context* ctx);
 
 
 
-typedef enum SORCER_Step SORCER_Step;
+typedef struct SORCER_Step { u32 id; } SORCER_Step;
 typedef struct SORCER_Block { u32 id; } SORCER_Block;
 typedef struct SORCER_Var { u32 id; } SORCER_Var;
 
+static SORCER_Step SORCER_Step_Invalid = { (u32)-1 };
 static SORCER_Block SORCER_Block_Invalid = { (u32)-1 };
 static SORCER_Var SORCER_Var_Invalid = { (u32)-1 };
 
@@ -57,6 +58,16 @@ void SORCER_dsPush(SORCER_Context* ctx, const SORCER_Cell* x);
 void SORCER_dsPop(SORCER_Context* ctx, u32 n, SORCER_Cell* out);
 
 
+typedef void(*SORCER_StepFunc)(const SORCER_Cell* ins, SORCER_Cell* outs);
+
+typedef struct SORCER_StepInfo
+{
+    u32 numIns;
+    u32 numOuts;
+    SORCER_StepFunc func;
+} SORCER_StepInfo;
+
+SORCER_Step SORCER_stepNew(SORCER_Context* ctx, const SORCER_StepInfo* info);
 void SORCER_step(SORCER_Context* ctx, SORCER_Step step);
 
 

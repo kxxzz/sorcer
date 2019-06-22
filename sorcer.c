@@ -68,6 +68,7 @@ typedef struct SORCER_Ret
 
 
 typedef vec_t(SORCER_Cell) SORCER_CellVec;
+typedef vec_t(SORCER_StepInfo) SORCER_StepInfoVec;
 typedef vec_t(SORCER_BlockInfo) SORCER_BlockInfoVec;
 typedef vec_t(SORCER_Ret) SORCER_RetVec;
 
@@ -75,6 +76,7 @@ typedef vec_t(SORCER_Ret) SORCER_RetVec;
 typedef struct SORCER_Context
 {
     SORCER_CellVec dataStack[1];
+    SORCER_StepInfoVec stepInfoTable[1];
     SORCER_BlockInfoVec blockInfoTable[1];
 
     bool codeUpdated;
@@ -106,6 +108,7 @@ void SORCER_ctxFree(SORCER_Context* ctx)
         SORCER_blockInfoFree(ctx->blockInfoTable->data + i);
     }
     vec_free(ctx->blockInfoTable);
+    vec_free(ctx->stepInfoTable);
     vec_free(ctx->dataStack);
     free(ctx);
 }
@@ -150,9 +153,20 @@ void SORCER_dsPop(SORCER_Context* ctx, u32 n, SORCER_Cell* out)
 
 
 
+
+
+
+SORCER_Step SORCER_stepNew(SORCER_Context* ctx, const SORCER_StepInfo* info)
+{
+    SORCER_StepInfoVec* st = ctx->stepInfoTable;
+    vec_push(st, *info);
+    SORCER_Step a = { st->length - 1 };
+    return a;
+}
+
 void SORCER_step(SORCER_Context* ctx, SORCER_Step step)
 {
-    const SORCER_StepInfo* info = SORCER_StepInfoTable() + step;
+    const SORCER_StepInfo* info = ctx->stepInfoTable->data + step.id;
     SORCER_CellVec* inBuf = ctx->inBuf;
     SORCER_CellVec* ds = ctx->dataStack;
 
