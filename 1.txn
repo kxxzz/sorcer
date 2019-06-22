@@ -51,12 +51,12 @@ drop8
 
 [fib] (var fib1)
 
-{ 20 fib1 ! }
+{ 20 fib1 apply }
 
 
-//(def apply121 (var f (num -> num)) f !)
+//(def apply121 (var f (num -> num)) f apply)
 
-(def apply121 (var f ({t} t -> t)) f !)
+(def apply121 (var f ({t} t -> t)) f apply)
 
 
 20 fib1 apply121
@@ -69,11 +69,11 @@ drop8
 // drop4
 
 
-50 & [5 +] map (var ary0)
+50 ary_new [5 +] map (var ary0)
 
 
-ary0 45 33 &<
-ary0 45 &>
+ary0 45 33 ary_set
+ary0 45 ary_get
 
 ary0 [20 gt] filter (var ary1)
 
