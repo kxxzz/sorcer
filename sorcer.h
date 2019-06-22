@@ -82,16 +82,16 @@ typedef void(*SORCER_OprFunc)(const SORCER_Cell* ins, SORCER_Cell* outs);
 
 enum
 {
-    SORCER_OprInOuts_MAX = 16,
+    SORCER_OprIO_MAX = 16,
 };
 
 typedef struct SORCER_OprInfo
 {
     const char* name;
     u32 numIns;
-    SORCER_Type ins[SORCER_OprInOuts_MAX];
+    SORCER_Type ins[SORCER_OprIO_MAX];
     u32 numOuts;
-    SORCER_Type outs[SORCER_OprInOuts_MAX];
+    SORCER_Type outs[SORCER_OprIO_MAX];
     SORCER_OprFunc func;
 } SORCER_OprInfo;
 
