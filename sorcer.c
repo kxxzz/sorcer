@@ -155,38 +155,6 @@ void SORCER_dsPop(SORCER_Context* ctx, u32 n, SORCER_Cell* out)
 
 
 
-
-SORCER_Step SORCER_stepNew(SORCER_Context* ctx, const SORCER_StepInfo* info)
-{
-    SORCER_StepInfoVec* st = ctx->stepInfoTable;
-    vec_push(st, *info);
-    SORCER_Step a = { st->length - 1 };
-    return a;
-}
-
-void SORCER_step(SORCER_Context* ctx, SORCER_Step step)
-{
-    const SORCER_StepInfo* info = ctx->stepInfoTable->data + step.id;
-    SORCER_CellVec* inBuf = ctx->inBuf;
-    SORCER_CellVec* ds = ctx->dataStack;
-
-    vec_resize(inBuf, info->numIns);
-    vec_resize(ds, ds->length + info->numOuts - info->numIns);
-
-    SORCER_dsPop(ctx, info->numIns, ctx->inBuf->data);
-    info->func(inBuf->data, ds->data + ds->length - info->numOuts);
-}
-
-
-
-
-
-
-
-
-
-
-
 u32 SORCER_ctxBlocksTotal(SORCER_Context* ctx)
 {
     return ctx->blockInfoTable->length;
@@ -394,6 +362,37 @@ void SORCER_blockAddPatIfteCT(SORCER_Context* ctx, SORCER_Block blk, SORCER_Bloc
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+SORCER_Step SORCER_stepNew(SORCER_Context* ctx, const SORCER_StepInfo* info)
+{
+    SORCER_StepInfoVec* st = ctx->stepInfoTable;
+    vec_push(st, *info);
+    SORCER_Step a = { st->length - 1 };
+    return a;
+}
+
+void SORCER_step(SORCER_Context* ctx, SORCER_Step step)
+{
+    const SORCER_StepInfo* info = ctx->stepInfoTable->data + step.id;
+    SORCER_CellVec* inBuf = ctx->inBuf;
+    SORCER_CellVec* ds = ctx->dataStack;
+
+    vec_resize(inBuf, info->numIns);
+    vec_resize(ds, ds->length + info->numOuts - info->numIns);
+
+    SORCER_dsPop(ctx, info->numIns, ctx->inBuf->data);
+    info->func(inBuf->data, ds->data + ds->length - info->numOuts);
+}
 
 
 

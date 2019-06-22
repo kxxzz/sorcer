@@ -29,13 +29,13 @@ void SORCER_ctxFree(SORCER_Context* ctx);
 
 
 
-typedef struct SORCER_Step { u32 id; } SORCER_Step;
 typedef struct SORCER_Block { u32 id; } SORCER_Block;
 typedef struct SORCER_Var { u32 id; } SORCER_Var;
+typedef struct SORCER_Step { u32 id; } SORCER_Step;
 
-static SORCER_Step SORCER_Step_Invalid = { (u32)-1 };
 static SORCER_Block SORCER_Block_Invalid = { (u32)-1 };
 static SORCER_Var SORCER_Var_Invalid = { (u32)-1 };
+static SORCER_Step SORCER_Step_Invalid = { (u32)-1 };
 
 
 
@@ -51,6 +51,11 @@ typedef struct SORCER_Cell
     } as;
 } SORCER_Cell;
 
+
+
+
+
+
 u32 SORCER_dsSize(SORCER_Context* ctx);
 const SORCER_Cell* SORCER_dsBase(SORCER_Context* ctx);
 
@@ -58,21 +63,12 @@ void SORCER_dsPush(SORCER_Context* ctx, const SORCER_Cell* x);
 void SORCER_dsPop(SORCER_Context* ctx, u32 n, SORCER_Cell* out);
 
 
-typedef void(*SORCER_StepFunc)(const SORCER_Cell* ins, SORCER_Cell* outs);
 
-typedef struct SORCER_StepInfo
-{
-    u32 numIns;
-    u32 numOuts;
-    SORCER_StepFunc func;
-} SORCER_StepInfo;
-
-SORCER_Step SORCER_stepNew(SORCER_Context* ctx, const SORCER_StepInfo* info);
-void SORCER_step(SORCER_Context* ctx, SORCER_Step step);
 
 
 u32 SORCER_ctxBlocksTotal(SORCER_Context* ctx);
 void SORCER_ctxBlocksRollback(SORCER_Context* ctx, u32 n);
+
 
 
 
@@ -92,6 +88,25 @@ void SORCER_blockAddInstIfte(SORCER_Context* ctx, SORCER_Block blk);
 void SORCER_blockAddInlineBlock(SORCER_Context* ctx, SORCER_Block blk, SORCER_Block ib);
 
 void SORCER_blockAddPatIfteCT(SORCER_Context* ctx, SORCER_Block blk, SORCER_Block onTrue, SORCER_Block onFalse);
+
+
+
+
+
+
+typedef void(*SORCER_StepFunc)(const SORCER_Cell* ins, SORCER_Cell* outs);
+
+typedef struct SORCER_StepInfo
+{
+    u32 numIns;
+    u32 numOuts;
+    SORCER_StepFunc func;
+} SORCER_StepInfo;
+
+SORCER_Step SORCER_stepNew(SORCER_Context* ctx, const SORCER_StepInfo* info);
+void SORCER_step(SORCER_Context* ctx, SORCER_Step step);
+
+
 
 
 
