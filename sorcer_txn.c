@@ -64,11 +64,13 @@ typedef vec_t(SORCER_TxnLoadStepInfo) SORCER_TxnStepInfoVec;
 
 static void SORCER_txnLoadBufferFromStr(SORCER_Cell* out, const char* str)
 {
+    // todo
 }
 
 static bool SORCER_txnLoadCellFromSym(SORCER_Cell* out, const char* name)
 {
-    return false;
+    // todo
+    return true;
 }
 
 
@@ -520,7 +522,7 @@ next:
             SORCER_Block def = SORCER_txnLoadFindDef(ctx, name, cur->block);
             if (def.id != SORCER_Block_Invalid.id)
             {
-                SORCER_blockAddInstPushBlock(sorcer, cur->block, def);
+                SORCER_blockAddInstCall(sorcer, cur->block, def);
                 goto next;
             }
             SORCER_Step step = SORCER_txnLoadFindStep(name);
