@@ -37,6 +37,7 @@ static void test(void)
 
     SORCER_Block blk = SORCER_blockFromTxnFile(ctx, "../1.txn", errInfo);
     assert(blk.id != SORCER_Block_Invalid.id);
+    assert(SORCER_TxnErr_NONE == errInfo->error);
     SORCER_run(ctx, blk);
 
     SORCER_ctxFree(ctx);
