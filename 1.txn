@@ -69,15 +69,15 @@ drop8
 // drop4
 
 
-50 & [5 +] map (var ary)
+50 & [5 +] map (var ary0)
 
 
-ary 45 33 &<
-ary 45 &>
+ary0 45 33 &<
+ary0 45 &>
 
-ary [20 gt] filter (var ary1)
+ary0 [20 gt] filter (var ary1)
 
-ary size
+ary0 size
 ary1 size
 
 ary1 [+] reduce
