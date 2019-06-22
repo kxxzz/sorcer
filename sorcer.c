@@ -146,11 +146,16 @@ u32 SORCER_ctxTypesTotal(SORCER_Context* ctx)
 
 
 
-bool SORCER_cellNew(SORCER_Context* ctx, SORCER_Type type, const char* str, SORCER_Cell* out)
+bool SORCER_cellNew(SORCER_Context* ctx, SORCER_Type type, const char* str, bool quoted, SORCER_Cell* out)
 {
     SORCER_TypeInfoVec* tt = ctx->typeTable;
     assert(type.id < tt->length);
-    return tt->data[type.id].ctor(str, out);
+    SORCER_TypeInfo* info = tt->data + type.id;
+    if (info->litQuoted != quoted)
+    {
+        return false;
+    }
+    return info->ctor(str, out);
 }
 
 

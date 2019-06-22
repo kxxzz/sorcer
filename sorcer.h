@@ -69,7 +69,7 @@ SORCER_Type SORCER_typeNew(SORCER_Context* ctx, const SORCER_TypeInfo* info);
 
 u32 SORCER_ctxTypesTotal(SORCER_Context* ctx);
 
-bool SORCER_cellNew(SORCER_Context* ctx, SORCER_Type type, const char* str, SORCER_Cell* out);
+bool SORCER_cellNew(SORCER_Context* ctx, SORCER_Type type, const char* str, bool quoted, SORCER_Cell* out);
 
 
 
