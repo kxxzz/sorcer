@@ -28,8 +28,8 @@ void SORCER_ctxFree(SORCER_Context* ctx);
 
 
 
-typedef struct SORCER_CellType { u32 id; } SORCER_CellType;
-static SORCER_CellType SORCER_CellType_Invalid = { (u32)-1 };
+typedef struct SORCER_Type { u32 id; } SORCER_Type;
+static SORCER_Type SORCER_Type_Invalid = { (u32)-1 };
 
 typedef struct SORCER_Block { u32 id; } SORCER_Block;
 static SORCER_Block SORCER_Block_Invalid = { (u32)-1 };
@@ -44,7 +44,7 @@ static SORCER_Opr SORCER_Opr_Invalid = { (u32)-1 };
 
 typedef struct SORCER_Cell
 {
-    SORCER_CellType type;
+    SORCER_Type type;
     union
     {
         u64 val;
@@ -54,20 +54,23 @@ typedef struct SORCER_Cell
     } as;
 } SORCER_Cell;
 
-typedef bool(*SORCER_CellTypeCtor)(const char* str, SORCER_Cell* out);
-typedef void(*SORCER_CellTypeDtor)(void* ptr);
+typedef bool(*SORCER_CellCtor)(const char* str, SORCER_Cell* out);
+typedef void(*SORCER_CellDtor)(void* ptr);
 
-typedef struct SORCER_CellTypeInfo
+typedef struct SORCER_TypeInfo
 {
     const char* name;
-    SORCER_CellTypeCtor ctor;
-    SORCER_CellTypeDtor dtor;
+    SORCER_CellCtor ctor;
+    SORCER_CellDtor dtor;
     bool litQuoted;
-} SORCER_CellTypeInfo;
+} SORCER_TypeInfo;
 
-SORCER_CellType SORCER_cellTypeNew(SORCER_Context* ctx, const SORCER_CellTypeInfo* info);
+SORCER_Type SORCER_typeNew(SORCER_Context* ctx, const SORCER_TypeInfo* info);
 
-bool SORCER_cellNew(SORCER_Context* ctx, SORCER_CellType type, const char* str, SORCER_Cell* out);
+u32 SORCER_ctxTypesTotal(SORCER_Context* ctx);
+
+bool SORCER_cellNew(SORCER_Context* ctx, SORCER_Type type, const char* str, SORCER_Cell* out);
+
 
 
 
@@ -83,9 +86,9 @@ typedef struct SORCER_OprInfo
 {
     const char* name;
     u32 numIns;
-    SORCER_CellType ins[SORCER_OprInOuts_MAX];
+    SORCER_Type ins[SORCER_OprInOuts_MAX];
     u32 numOuts;
-    SORCER_CellType outs[SORCER_OprInOuts_MAX];
+    SORCER_Type outs[SORCER_OprInOuts_MAX];
     SORCER_OprFunc func;
 } SORCER_OprInfo;
 
@@ -104,7 +107,7 @@ SORCER_Block SORCER_blockNew(SORCER_Context* ctx);
 
 SORCER_Var SORCER_blockAddInstPopVar(SORCER_Context* ctx, SORCER_Block blk);
 
-void SORCER_blockAddInstPushCell(SORCER_Context* ctx, SORCER_Block blk, SORCER_CellType type, const char* str);
+void SORCER_blockAddInstPushCell(SORCER_Context* ctx, SORCER_Block blk, const SORCER_Cell* x);
 void SORCER_blockAddInstPushVar(SORCER_Context* ctx, SORCER_Block blk, SORCER_Var v);
 void SORCER_blockAddInstPushBlock(SORCER_Context* ctx, SORCER_Block blk, SORCER_Block b);
 void SORCER_blockAddInstCall(SORCER_Context* ctx, SORCER_Block blk, SORCER_Block callee);
