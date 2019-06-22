@@ -267,19 +267,9 @@ static SORCER_Block SORCER_txnLoadFindDef(SORCER_TxnLoadContext* ctx, const char
     return SORCER_Block_Invalid;
 }
 
-static SORCER_Opr SORCER_txnLoadFindOpr(const char* name)
+static SORCER_Opr SORCER_txnLoadFindOpr(SORCER_TxnLoadContext* ctx, const char* name)
 {
-    //for (u32 i = 0; i < SORCER_NumSteps; ++i)
-    //{
-    //    u32 idx = SORCER_NumSteps - 1 - i;
-    //    const char* s = SORCER_StepInfoTable()[idx].name;
-    //    if (0 == strcmp(s, name))
-    //    {
-    //        SORCER_Step step = { idx };
-    //        return step;
-    //    }
-    //}
-    return SORCER_Opr_Invalid;
+    return SORCER_oprByName(ctx->sorcer, name);
 }
 
 
@@ -525,7 +515,7 @@ next:
                 SORCER_blockAddInstCall(sorcer, cur->block, def);
                 goto next;
             }
-            SORCER_Opr opr = SORCER_txnLoadFindOpr(name);
+            SORCER_Opr opr = SORCER_txnLoadFindOpr(ctx, name);
             if (opr.id != SORCER_Opr_Invalid.id)
             {
                 SORCER_blockAddInstOpr(sorcer, cur->block, opr);

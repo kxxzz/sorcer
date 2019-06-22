@@ -54,21 +54,24 @@ typedef struct SORCER_Cell
     } as;
 } SORCER_Cell;
 
-typedef bool(*SORCER_CellCtor)(const char* str, SORCER_Cell* out);
-typedef void(*SORCER_CellDtor)(void* ptr);
+typedef bool(*SORCER_CellCtor)(void* pool, const char* str, SORCER_Cell* out);
+typedef void(*SORCER_CellDtor)(void* pool, void* ptr);
+typedef void*(*SORCER_PoolCtor)(void);
+typedef void(*SORCER_PoolDtor)(void* pool);
 
 typedef struct SORCER_TypeInfo
 {
     const char* name;
-    SORCER_CellCtor ctor;
-    SORCER_CellDtor dtor;
+    SORCER_CellCtor cellCtor;
+    SORCER_CellDtor cellDtor;
+    SORCER_PoolCtor poolCtor;
+    SORCER_PoolDtor poolDtor;
     bool litQuoted;
 } SORCER_TypeInfo;
 
 SORCER_Type SORCER_typeNew(SORCER_Context* ctx, const SORCER_TypeInfo* info);
-
+SORCER_Type SORCER_typeByName(SORCER_Context* ctx, const char* name);
 u32 SORCER_ctxTypesTotal(SORCER_Context* ctx);
-
 bool SORCER_cellNew(SORCER_Context* ctx, SORCER_Type type, const char* str, bool quoted, SORCER_Cell* out);
 
 
@@ -93,7 +96,8 @@ typedef struct SORCER_OprInfo
 } SORCER_OprInfo;
 
 SORCER_Opr SORCER_oprNew(SORCER_Context* ctx, const SORCER_OprInfo* info);
-void SORCER_opr(SORCER_Context* ctx, SORCER_Opr opr);
+SORCER_Opr SORCER_oprByName(SORCER_Context* ctx, const char* name);
+
 
 
 
@@ -123,8 +127,16 @@ void SORCER_blockAddPatIfteCT(SORCER_Context* ctx, SORCER_Block blk, SORCER_Bloc
 
 
 
+typedef enum SORCER_RunErr
+{
+    SORCER_RunErr_NONE = 0,
 
-void SORCER_run(SORCER_Context* ctx, SORCER_Block blk);
+    SORCER_RunErr_TypeUnmatch,
+
+    SORCER_NumRunErrs
+} SORCER_RunErr;
+
+SORCER_RunErr SORCER_run(SORCER_Context* ctx, SORCER_Block blk);
 
 
 
