@@ -28,6 +28,9 @@ void SORCER_ctxFree(SORCER_Context* ctx);
 
 
 
+typedef struct SORCER_CellType { u32 id; } SORCER_CellType;
+static SORCER_CellType SORCER_CellType_Invalid = { (u32)-1 };
+
 typedef struct SORCER_Block { u32 id; } SORCER_Block;
 static SORCER_Block SORCER_Block_Invalid = { (u32)-1 };
 
@@ -39,9 +42,23 @@ static SORCER_Opr SORCER_Opr_Invalid = { (u32)-1 };
 
 
 
+typedef void*(*SORCER_CellTypeCtor)(const char* str);
+typedef void(*SORCER_CellTypeDtor)(void* ptr);
+
+typedef struct SORCER_CellTypeInfo
+{
+    const char* name;
+    SORCER_CellTypeCtor ctor;
+    SORCER_CellTypeDtor dtor;
+} SORCER_CellTypeInfo;
+
+SORCER_CellType SORCER_cellTypeNew(SORCER_Context* ctx, const SORCER_CellTypeInfo* info);
+
+
 
 typedef struct SORCER_Cell
 {
+    SORCER_CellType type;
     union
     {
         u64 val;
@@ -53,19 +70,11 @@ typedef struct SORCER_Cell
 
 
 
-
-u32 SORCER_dsSize(SORCER_Context* ctx);
-const SORCER_Cell* SORCER_dsBase(SORCER_Context* ctx);
-
-void SORCER_dsPush(SORCER_Context* ctx, const SORCER_Cell* x);
-void SORCER_dsPop(SORCER_Context* ctx, u32 n, SORCER_Cell* out);
-
-
-
 typedef void(*SORCER_OprFunc)(const SORCER_Cell* ins, SORCER_Cell* outs);
 
 typedef struct SORCER_OprInfo
 {
+    const char* name;
     u32 numIns;
     u32 numOuts;
     SORCER_OprFunc func;
@@ -86,7 +95,7 @@ SORCER_Block SORCER_blockNew(SORCER_Context* ctx);
 
 SORCER_Var SORCER_blockAddInstPopVar(SORCER_Context* ctx, SORCER_Block blk);
 
-void SORCER_blockAddInstPushCell(SORCER_Context* ctx, SORCER_Block blk, const SORCER_Cell* x);
+void SORCER_blockAddInstPushCell(SORCER_Context* ctx, SORCER_Block blk, SORCER_CellType type, const char* str);
 void SORCER_blockAddInstPushVar(SORCER_Context* ctx, SORCER_Block blk, SORCER_Var v);
 void SORCER_blockAddInstPushBlock(SORCER_Context* ctx, SORCER_Block blk, SORCER_Block b);
 void SORCER_blockAddInstCall(SORCER_Context* ctx, SORCER_Block blk, SORCER_Block callee);
@@ -110,8 +119,11 @@ void SORCER_run(SORCER_Context* ctx, SORCER_Block blk);
 
 
 
+u32 SORCER_dsSize(SORCER_Context* ctx);
+const SORCER_Cell* SORCER_dsBase(SORCER_Context* ctx);
 
-
+void SORCER_dsPush(SORCER_Context* ctx, const SORCER_Cell* x);
+void SORCER_dsPop(SORCER_Context* ctx, u32 n, SORCER_Cell* out);
 
 
 
