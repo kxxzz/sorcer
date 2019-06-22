@@ -42,20 +42,6 @@ static SORCER_Opr SORCER_Opr_Invalid = { (u32)-1 };
 
 
 
-typedef void*(*SORCER_CellTypeCtor)(const char* str);
-typedef void(*SORCER_CellTypeDtor)(void* ptr);
-
-typedef struct SORCER_CellTypeInfo
-{
-    const char* name;
-    SORCER_CellTypeCtor ctor;
-    SORCER_CellTypeDtor dtor;
-} SORCER_CellTypeInfo;
-
-SORCER_CellType SORCER_cellTypeNew(SORCER_Context* ctx, const SORCER_CellTypeInfo* info);
-
-
-
 typedef struct SORCER_Cell
 {
     SORCER_CellType type;
@@ -68,15 +54,38 @@ typedef struct SORCER_Cell
     } as;
 } SORCER_Cell;
 
+typedef bool(*SORCER_CellTypeCtor)(const char* str, SORCER_Cell* out);
+typedef void(*SORCER_CellTypeDtor)(void* ptr);
+
+typedef struct SORCER_CellTypeInfo
+{
+    const char* name;
+    SORCER_CellTypeCtor ctor;
+    SORCER_CellTypeDtor dtor;
+    bool litQuoted;
+} SORCER_CellTypeInfo;
+
+SORCER_CellType SORCER_cellTypeNew(SORCER_Context* ctx, const SORCER_CellTypeInfo* info);
+
+bool SORCER_cellNew(SORCER_Context* ctx, SORCER_CellType type, const char* str, SORCER_Cell* out);
+
+
 
 
 typedef void(*SORCER_OprFunc)(const SORCER_Cell* ins, SORCER_Cell* outs);
+
+enum
+{
+    SORCER_OprInOuts_MAX = 16,
+};
 
 typedef struct SORCER_OprInfo
 {
     const char* name;
     u32 numIns;
+    SORCER_CellType ins[SORCER_OprInOuts_MAX];
     u32 numOuts;
+    SORCER_CellType outs[SORCER_OprInOuts_MAX];
     SORCER_OprFunc func;
 } SORCER_OprInfo;
 

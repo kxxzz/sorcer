@@ -67,6 +67,7 @@ typedef struct SORCER_Ret
 
 
 
+typedef vec_t(SORCER_CellTypeInfo) SORCER_CellTypeInfoVec;
 typedef vec_t(SORCER_Cell) SORCER_CellVec;
 typedef vec_t(SORCER_OprInfo) SORCER_OprInfoVec;
 typedef vec_t(SORCER_BlockInfo) SORCER_BlockInfoVec;
@@ -75,9 +76,11 @@ typedef vec_t(SORCER_Ret) SORCER_RetVec;
 
 typedef struct SORCER_Context
 {
-    SORCER_CellVec dataStack[1];
+    SORCER_CellTypeInfoVec cellTypeTable[1];
     SORCER_OprInfoVec oprInfoTable[1];
     SORCER_BlockInfoVec blockInfoTable[1];
+
+    SORCER_CellVec dataStack[1];
 
     bool codeUpdated;
     SORCER_InstVec code[1];
@@ -103,13 +106,15 @@ void SORCER_ctxFree(SORCER_Context* ctx)
     vec_free(ctx->retStack);
     vec_free(ctx->code);
 
+    vec_free(ctx->dataStack);
+
     for (u32 i = 0; i < ctx->blockInfoTable->length; ++i)
     {
         SORCER_blockInfoFree(ctx->blockInfoTable->data + i);
     }
     vec_free(ctx->blockInfoTable);
     vec_free(ctx->oprInfoTable);
-    vec_free(ctx->dataStack);
+    vec_free(ctx->cellTypeTable);
     free(ctx);
 }
 
@@ -118,31 +123,63 @@ void SORCER_ctxFree(SORCER_Context* ctx)
 
 
 
-u32 SORCER_dsSize(SORCER_Context* ctx)
+
+
+
+SORCER_CellType SORCER_cellTypeNew(SORCER_Context* ctx, const SORCER_CellTypeInfo* info)
 {
-    return ctx->dataStack->length;
+    SORCER_CellTypeInfoVec* ct = ctx->oprInfoTable;
+    vec_push(ct, *info);
+    SORCER_CellType a = { ct->length - 1 };
+    return a;
 }
 
-const SORCER_Cell* SORCER_dsBase(SORCER_Context* ctx)
+
+
+
+bool SORCER_cellNew(SORCER_Context* ctx, SORCER_CellType type, const char* str, SORCER_Cell* out)
 {
-    return ctx->dataStack->data;
+    SORCER_CellTypeInfoVec* ct = ctx->cellTypeTable;
+    SORCER_BlockInfoVec* bt = ctx->blockInfoTable;
+    assert(type.id < ct->length);
+    return ct->data[type.id].ctor(str, out);
 }
 
 
 
 
-void SORCER_dsPush(SORCER_Context* ctx, const SORCER_Cell* x)
+
+
+
+
+
+SORCER_Opr SORCER_oprNew(SORCER_Context* ctx, const SORCER_OprInfo* info)
 {
-    vec_push(ctx->dataStack, *x);
+    SORCER_OprInfoVec* st = ctx->oprInfoTable;
+    vec_push(st, *info);
+    SORCER_Opr a = { st->length - 1 };
+    return a;
 }
 
-void SORCER_dsPop(SORCER_Context* ctx, u32 n, SORCER_Cell* out)
+void SORCER_opr(SORCER_Context* ctx, SORCER_Opr opr)
 {
+    const SORCER_OprInfo* info = ctx->oprInfoTable->data + opr.id;
+    SORCER_CellVec* inBuf = ctx->inBuf;
     SORCER_CellVec* ds = ctx->dataStack;
-    assert(ds->length >= n);
-    memcpy(out, ds->data + ds->length - n, sizeof(SORCER_Cell)*n);
-    vec_resize(ds, ds->length - n);
+
+    vec_resize(inBuf, info->numIns);
+    vec_resize(ds, ds->length + info->numOuts - info->numIns);
+
+    SORCER_dsPop(ctx, info->numIns, ctx->inBuf->data);
+    info->func(inBuf->data, ds->data + ds->length - info->numOuts);
 }
+
+
+
+
+
+
+
 
 
 
@@ -372,34 +409,6 @@ void SORCER_blockAddPatIfteCT(SORCER_Context* ctx, SORCER_Block blk, SORCER_Bloc
 
 
 
-SORCER_Opr SORCER_oprNew(SORCER_Context* ctx, const SORCER_OprInfo* info)
-{
-    SORCER_OprInfoVec* st = ctx->oprInfoTable;
-    vec_push(st, *info);
-    SORCER_Opr a = { st->length - 1 };
-    return a;
-}
-
-void SORCER_opr(SORCER_Context* ctx, SORCER_Opr opr)
-{
-    const SORCER_OprInfo* info = ctx->oprInfoTable->data + opr.id;
-    SORCER_CellVec* inBuf = ctx->inBuf;
-    SORCER_CellVec* ds = ctx->dataStack;
-
-    vec_resize(inBuf, info->numIns);
-    vec_resize(ds, ds->length + info->numOuts - info->numIns);
-
-    SORCER_dsPop(ctx, info->numIns, ctx->inBuf->data);
-    info->func(inBuf->data, ds->data + ds->length - info->numOuts);
-}
-
-
-
-
-
-
-
-
 
 
 
@@ -539,11 +548,6 @@ next:
         vec_push(ds, cell);
         goto next;
     }
-    case SORCER_OP_Opr:
-    {
-        SORCER_opr(ctx, inst->arg.opr);
-        goto next;
-    }
     case SORCER_OP_Call:
     {
         SORCER_Ret ret = { p, vt->length };
@@ -578,6 +582,11 @@ next:
         {
             p = onFalse.as.address;
         }
+        goto next;
+    }
+    case SORCER_OP_Opr:
+    {
+        SORCER_opr(ctx, inst->arg.opr);
         goto next;
     }
     case SORCER_OP_Ret:
@@ -621,6 +630,50 @@ next:
     }
 }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+u32 SORCER_dsSize(SORCER_Context* ctx)
+{
+    return ctx->dataStack->length;
+}
+
+const SORCER_Cell* SORCER_dsBase(SORCER_Context* ctx)
+{
+    return ctx->dataStack->data;
+}
+
+
+
+
+void SORCER_dsPush(SORCER_Context* ctx, const SORCER_Cell* x)
+{
+    vec_push(ctx->dataStack, *x);
+}
+
+void SORCER_dsPop(SORCER_Context* ctx, u32 n, SORCER_Cell* out)
+{
+    SORCER_CellVec* ds = ctx->dataStack;
+    assert(ds->length >= n);
+    memcpy(out, ds->data + ds->length - n, sizeof(SORCER_Cell)*n);
+    vec_resize(ds, ds->length - n);
+}
 
 
 
