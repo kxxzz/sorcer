@@ -12,13 +12,14 @@ typedef enum SORCER_OP
     SORCER_OP_PushBlock,
     SORCER_OP_Call,
     SORCER_OP_Apply,
+
     SORCER_OP_Ifte,
     SORCER_OP_Opr,
 
     SORCER_OP_Ret,
     SORCER_OP_Jmp,
     SORCER_OP_Jnz,
-    SORCER_OP_ApplyJmp,
+    SORCER_OP_JmpDS,
 
     SORCER_NumOPs
 } SORCER_OP;
@@ -524,7 +525,7 @@ static void SORCER_codeUpdate(SORCER_Context* ctx, SORCER_Block blk)
                 }
                 case SORCER_OP_Apply:
                 {
-                    inst.op = SORCER_OP_ApplyJmp;
+                    inst.op = SORCER_OP_JmpDS;
                     break;
                 }
                 default:
@@ -709,7 +710,7 @@ next:
         }
         goto next;
     }
-    case SORCER_OP_ApplyJmp:
+    case SORCER_OP_JmpDS:
     {
         SORCER_Cell top = vec_last(ds);
         vec_pop(ds);
