@@ -68,7 +68,7 @@ static void SORCER_txnLoadBufferFromStr(SORCER_Cell* out, const char* str)
 
 static bool SORCER_txnLoadCellFromSym(SORCER_Cell* out, const char* name)
 {
-    return true;
+    return false;
 }
 
 
