@@ -52,12 +52,12 @@ const char** SORCER_TxnKeyExprHeadNameTable(void)
 
 
 
-typedef struct SORCER_TxnLoadStepInfo
+typedef struct SORCER_TxnLoadOprInfo
 {
     const char* name;
-} SORCER_TxnLoadStepInfo;
+} SORCER_TxnLoadOprInfo;
 
-typedef vec_t(SORCER_TxnLoadStepInfo) SORCER_TxnStepInfoVec;
+typedef vec_t(SORCER_TxnLoadOprInfo) SORCER_TxnOprInfoVec;
 
 
 
@@ -267,7 +267,7 @@ static SORCER_Block SORCER_txnLoadFindDef(SORCER_TxnLoadContext* ctx, const char
     return SORCER_Block_Invalid;
 }
 
-static SORCER_Step SORCER_txnLoadFindStep(const char* name)
+static SORCER_Opr SORCER_txnLoadFindOpr(const char* name)
 {
     //for (u32 i = 0; i < SORCER_NumSteps; ++i)
     //{
@@ -279,7 +279,7 @@ static SORCER_Step SORCER_txnLoadFindStep(const char* name)
     //        return step;
     //    }
     //}
-    return SORCER_Step_Invalid;
+    return SORCER_Opr_Invalid;
 }
 
 
@@ -525,10 +525,10 @@ next:
                 SORCER_blockAddInstCall(sorcer, cur->block, def);
                 goto next;
             }
-            SORCER_Step step = SORCER_txnLoadFindStep(name);
-            if (step.id != SORCER_Step_Invalid.id)
+            SORCER_Opr opr = SORCER_txnLoadFindOpr(name);
+            if (opr.id != SORCER_Opr_Invalid.id)
             {
-                SORCER_blockAddInstStep(sorcer, cur->block, step);
+                SORCER_blockAddInstOpr(sorcer, cur->block, opr);
                 goto next;
             }
             SORCER_Cell cell[1];

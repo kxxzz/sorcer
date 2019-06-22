@@ -34,8 +34,8 @@ static SORCER_Block SORCER_Block_Invalid = { (u32)-1 };
 typedef struct SORCER_Var { u32 id; } SORCER_Var;
 static SORCER_Var SORCER_Var_Invalid = { (u32)-1 };
 
-typedef struct SORCER_Step { u32 id; } SORCER_Step;
-static SORCER_Step SORCER_Step_Invalid = { (u32)-1 };
+typedef struct SORCER_Opr { u32 id; } SORCER_Opr;
+static SORCER_Opr SORCER_Opr_Invalid = { (u32)-1 };
 
 
 
@@ -62,17 +62,17 @@ void SORCER_dsPop(SORCER_Context* ctx, u32 n, SORCER_Cell* out);
 
 
 
-typedef void(*SORCER_StepFunc)(const SORCER_Cell* ins, SORCER_Cell* outs);
+typedef void(*SORCER_OprFunc)(const SORCER_Cell* ins, SORCER_Cell* outs);
 
-typedef struct SORCER_StepInfo
+typedef struct SORCER_OprInfo
 {
     u32 numIns;
     u32 numOuts;
-    SORCER_StepFunc func;
-} SORCER_StepInfo;
+    SORCER_OprFunc func;
+} SORCER_OprInfo;
 
-SORCER_Step SORCER_stepNew(SORCER_Context* ctx, const SORCER_StepInfo* info);
-void SORCER_step(SORCER_Context* ctx, SORCER_Step step);
+SORCER_Opr SORCER_oprNew(SORCER_Context* ctx, const SORCER_OprInfo* info);
+void SORCER_opr(SORCER_Context* ctx, SORCER_Opr opr);
 
 
 
@@ -89,10 +89,10 @@ SORCER_Var SORCER_blockAddInstPopVar(SORCER_Context* ctx, SORCER_Block blk);
 void SORCER_blockAddInstPushCell(SORCER_Context* ctx, SORCER_Block blk, const SORCER_Cell* x);
 void SORCER_blockAddInstPushVar(SORCER_Context* ctx, SORCER_Block blk, SORCER_Var v);
 void SORCER_blockAddInstPushBlock(SORCER_Context* ctx, SORCER_Block blk, SORCER_Block b);
-void SORCER_blockAddInstStep(SORCER_Context* ctx, SORCER_Block blk, SORCER_Step step);
 void SORCER_blockAddInstCall(SORCER_Context* ctx, SORCER_Block blk, SORCER_Block callee);
 void SORCER_blockAddInstApply(SORCER_Context* ctx, SORCER_Block blk);
 void SORCER_blockAddInstIfte(SORCER_Context* ctx, SORCER_Block blk);
+void SORCER_blockAddInstOpr(SORCER_Context* ctx, SORCER_Block blk, SORCER_Opr opr);
 
 void SORCER_blockAddInlineBlock(SORCER_Context* ctx, SORCER_Block blk, SORCER_Block ib);
 

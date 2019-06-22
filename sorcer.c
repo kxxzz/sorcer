@@ -10,10 +10,10 @@ typedef enum SORCER_OP
     SORCER_OP_PushCell,
     SORCER_OP_PushVar,
     SORCER_OP_PushBlock,
-    SORCER_OP_Step,
     SORCER_OP_Call,
     SORCER_OP_Apply,
     SORCER_OP_Ifte,
+    SORCER_OP_Opr,
 
     SORCER_OP_Ret,
     SORCER_OP_Jmp,
@@ -32,8 +32,8 @@ typedef struct SORCER_Inst
     {
         SORCER_Cell cell;
         SORCER_Var var;
-        SORCER_Step step;
         SORCER_Block block;
+        SORCER_Opr opr;
         u32 address;
     } arg;
 } SORCER_Inst;
@@ -68,7 +68,7 @@ typedef struct SORCER_Ret
 
 
 typedef vec_t(SORCER_Cell) SORCER_CellVec;
-typedef vec_t(SORCER_StepInfo) SORCER_StepInfoVec;
+typedef vec_t(SORCER_OprInfo) SORCER_OprInfoVec;
 typedef vec_t(SORCER_BlockInfo) SORCER_BlockInfoVec;
 typedef vec_t(SORCER_Ret) SORCER_RetVec;
 
@@ -76,7 +76,7 @@ typedef vec_t(SORCER_Ret) SORCER_RetVec;
 typedef struct SORCER_Context
 {
     SORCER_CellVec dataStack[1];
-    SORCER_StepInfoVec stepInfoTable[1];
+    SORCER_OprInfoVec oprInfoTable[1];
     SORCER_BlockInfoVec blockInfoTable[1];
 
     bool codeUpdated;
@@ -108,7 +108,7 @@ void SORCER_ctxFree(SORCER_Context* ctx)
         SORCER_blockInfoFree(ctx->blockInfoTable->data + i);
     }
     vec_free(ctx->blockInfoTable);
-    vec_free(ctx->stepInfoTable);
+    vec_free(ctx->oprInfoTable);
     vec_free(ctx->dataStack);
     free(ctx);
 }
@@ -255,16 +255,6 @@ void SORCER_blockAddInstPushBlock(SORCER_Context* ctx, SORCER_Block blk, SORCER_
 }
 
 
-void SORCER_blockAddInstStep(SORCER_Context* ctx, SORCER_Block blk, SORCER_Step step)
-{
-    SORCER_codeOutdate(ctx);
-    SORCER_BlockInfoVec* bt = ctx->blockInfoTable;
-    SORCER_BlockInfo* binfo = bt->data + blk.id;
-    SORCER_Inst inst = { SORCER_OP_Step, .arg.step = step };
-    vec_push(binfo->code, inst);
-}
-
-
 void SORCER_blockAddInstCall(SORCER_Context* ctx, SORCER_Block blk, SORCER_Block callee)
 {
     SORCER_codeOutdate(ctx);
@@ -295,6 +285,15 @@ void SORCER_blockAddInstIfte(SORCER_Context* ctx, SORCER_Block blk)
     vec_push(binfo->code, inst);
 }
 
+
+void SORCER_blockAddInstOpr(SORCER_Context* ctx, SORCER_Block blk, SORCER_Opr opr)
+{
+    SORCER_codeOutdate(ctx);
+    SORCER_BlockInfoVec* bt = ctx->blockInfoTable;
+    SORCER_BlockInfo* binfo = bt->data + blk.id;
+    SORCER_Inst inst = { SORCER_OP_Opr,.arg.opr = opr };
+    vec_push(binfo->code, inst);
+}
 
 
 
@@ -373,17 +372,17 @@ void SORCER_blockAddPatIfteCT(SORCER_Context* ctx, SORCER_Block blk, SORCER_Bloc
 
 
 
-SORCER_Step SORCER_stepNew(SORCER_Context* ctx, const SORCER_StepInfo* info)
+SORCER_Opr SORCER_oprNew(SORCER_Context* ctx, const SORCER_OprInfo* info)
 {
-    SORCER_StepInfoVec* st = ctx->stepInfoTable;
+    SORCER_OprInfoVec* st = ctx->oprInfoTable;
     vec_push(st, *info);
-    SORCER_Step a = { st->length - 1 };
+    SORCER_Opr a = { st->length - 1 };
     return a;
 }
 
-void SORCER_step(SORCER_Context* ctx, SORCER_Step step)
+void SORCER_opr(SORCER_Context* ctx, SORCER_Opr opr)
 {
-    const SORCER_StepInfo* info = ctx->stepInfoTable->data + step.id;
+    const SORCER_OprInfo* info = ctx->oprInfoTable->data + opr.id;
     SORCER_CellVec* inBuf = ctx->inBuf;
     SORCER_CellVec* ds = ctx->dataStack;
 
@@ -540,9 +539,9 @@ next:
         vec_push(ds, cell);
         goto next;
     }
-    case SORCER_OP_Step:
+    case SORCER_OP_Opr:
     {
-        SORCER_step(ctx, inst->arg.step);
+        SORCER_opr(ctx, inst->arg.opr);
         goto next;
     }
     case SORCER_OP_Call:
