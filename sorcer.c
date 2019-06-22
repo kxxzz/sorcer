@@ -172,6 +172,15 @@ SORCER_Type SORCER_typeByName(SORCER_Context* ctx, const char* name)
 }
 
 
+SORCER_Type SORCER_typeByIndex(SORCER_Context* ctx, u32 idx)
+{
+    SORCER_TypeInfoVec* tt = ctx->typeTable;
+    assert(idx < tt->length);
+    SORCER_Type type = { idx };
+    return type;
+}
+
+
 
 
 u32 SORCER_ctxTypesTotal(SORCER_Context* ctx)
@@ -230,6 +239,14 @@ SORCER_Opr SORCER_oprByName(SORCER_Context* ctx, const char* name)
     return SORCER_Opr_Invalid;
 }
 
+
+SORCER_Opr SORCER_oprByIndex(SORCER_Context* ctx, u32 idx)
+{
+    SORCER_OprInfoVec* ot = ctx->oprTable;
+    assert(idx < ot->length);
+    SORCER_Opr opr = { idx };
+    return opr;
+}
 
 
 

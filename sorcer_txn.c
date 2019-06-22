@@ -51,33 +51,6 @@ const char** SORCER_TxnKeyExprHeadNameTable(void)
 
 
 
-
-typedef struct SORCER_TxnLoadOprInfo
-{
-    const char* name;
-} SORCER_TxnLoadOprInfo;
-
-typedef vec_t(SORCER_TxnLoadOprInfo) SORCER_TxnOprInfoVec;
-
-
-
-
-static void SORCER_txnLoadBufferFromStr(SORCER_Cell* out, const char* str)
-{
-    // todo
-}
-
-static bool SORCER_txnLoadCellFromSym(SORCER_Cell* out, const char* name)
-{
-    // todo
-    return true;
-}
-
-
-
-
-
-
 typedef struct SORCER_TxnLoadVar
 {
     const char* name;
@@ -472,12 +445,21 @@ next:
     TXN_Node node = body[cur->p++];
     if (TXN_isTok(space, node))
     {
+        u32 numTypes = SORCER_ctxTypesTotal(sorcer);
         if (TXN_tokQuoted(space, node))
         {
-            SORCER_Cell cell[1] = { 0 };
-            SORCER_txnLoadBufferFromStr(cell, TXN_tokCstr(space, node));
-            SORCER_blockAddInstPushCell(sorcer, cur->block, cell);
-            goto next;
+            for (u32 i = 0; i < numTypes; ++i)
+            {
+                SORCER_Type type = SORCER_typeByIndex(sorcer, i);
+                SORCER_Cell cell[1] = { 0 };
+                if (SORCER_cellNew(sorcer, type, TXN_tokCstr(space, node), true, cell))
+                {
+                    SORCER_blockAddInstPushCell(sorcer, cur->block, cell);
+                    goto next;
+                }
+            }
+            SORCER_txnLoadErrorAtNode(ctx, node, SORCER_TxnErr_UnkWord);
+            goto failed;
         }
         else
         {
@@ -521,17 +503,19 @@ next:
                 SORCER_blockAddInstOpr(sorcer, cur->block, opr);
                 goto next;
             }
-            SORCER_Cell cell[1];
-            if (SORCER_txnLoadCellFromSym(cell, name))
+
+            for (u32 i = 0; i < numTypes; ++i)
             {
-                SORCER_blockAddInstPushCell(sorcer, cur->block, cell);
-                goto next;
+                SORCER_Type type = SORCER_typeByIndex(sorcer, i);
+                SORCER_Cell cell[1] = { 0 };
+                if (SORCER_cellNew(sorcer, type, TXN_tokCstr(space, node), false, cell))
+                {
+                    SORCER_blockAddInstPushCell(sorcer, cur->block, cell);
+                    goto next;
+                }
             }
-            else
-            {
-                SORCER_txnLoadErrorAtNode(ctx, node, SORCER_TxnErr_UnkWord);
-                goto failed;
-            }
+            SORCER_txnLoadErrorAtNode(ctx, node, SORCER_TxnErr_UnkWord);
+            goto failed;
         }
     }
     else if (TXN_isSeqCurly(space, node))
