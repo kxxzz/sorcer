@@ -75,13 +75,16 @@ SORCER_Type SORCER_typeNew(SORCER_Context* ctx, const SORCER_TypeInfo* info);
 SORCER_Type SORCER_typeByName(SORCER_Context* ctx, const char* name);
 SORCER_Type SORCER_typeByIndex(SORCER_Context* ctx, u32 idx);
 u32 SORCER_ctxTypesTotal(SORCER_Context* ctx);
+
+void* SORCER_pool(SORCER_Context* ctx, SORCER_Type type);
+
 bool SORCER_cellNew(SORCER_Context* ctx, SORCER_Type type, const char* str, bool quoted, SORCER_Cell* out);
 
 
 
 
 
-typedef void(*SORCER_OprFunc)(const SORCER_Cell* ins, SORCER_Cell* outs);
+typedef void(*SORCER_OprFunc)(SORCER_Context* ctx, const SORCER_Cell* ins, SORCER_Cell* outs);
 
 enum
 {

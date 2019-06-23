@@ -189,6 +189,15 @@ u32 SORCER_ctxTypesTotal(SORCER_Context* ctx)
 
 
 
+void* SORCER_pool(SORCER_Context* ctx, SORCER_Type type)
+{
+    vec_ptr* tp = ctx->typePool;
+    assert(type.id < tp->length);
+    return tp->data[type.id];
+}
+
+
+
 
 bool SORCER_cellNew(SORCER_Context* ctx, SORCER_Type type, const char* str, bool quoted, SORCER_Cell* out)
 {
@@ -540,7 +549,7 @@ static void SORCER_runOpr(SORCER_Context* ctx, SORCER_Opr opr)
     vec_resize(ds, ds->length + info->numOuts - info->numIns);
 
     SORCER_dsPop(ctx, info->numIns, ctx->inBuf->data);
-    info->func(inBuf->data, ds->data + ds->length - info->numOuts);
+    info->func(ctx, inBuf->data, ds->data + ds->length - info->numOuts);
 }
 
 
