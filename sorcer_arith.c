@@ -37,8 +37,15 @@ static void SORCER_poolDtor_Num(void* pool)
 
 
 
+
+
+
+
 void SORCER_arith(SORCER_Context* ctx)
 {
+    SORCER_Type typeNum = SORCER_typeByName(ctx, "num");
+    assert(SORCER_Type_Invalid.id == typeNum.id);
+
     SORCER_TypeInfo typeInfo[1] =
     {
         {
@@ -49,7 +56,12 @@ void SORCER_arith(SORCER_Context* ctx)
             SORCER_poolDtor_Num,
         }
     };
-    //SORCER_Type typeNum = SORCER_typeNew(ctx, typeInfo);
+    typeNum = SORCER_typeNew(ctx, typeInfo);
+
+
+
+
+
 
 }
 
