@@ -24,18 +24,18 @@ typedef enum SORCER_ArithOpr
     SORCER_NumArithOprs
 } SORCER_ArithOpr;
 
-typedef struct SORCER_ArithTable
+typedef struct SORCER_ArithContext
 {
     SORCER_Type type[SORCER_NumArithTypes];
     SORCER_Opr opr[SORCER_NumArithOprs];
-} SORCER_ArithTable;
+} SORCER_ArithContext;
 
-SORCER_Type SORCER_ArithTypeTable(SORCER_ArithTable* table, SORCER_ArithType at);
-SORCER_Opr SORCER_ArithOprTable(SORCER_ArithTable* table, SORCER_ArithOpr aop);
+SORCER_Type SORCER_ArithTypeTable(SORCER_ArithContext* ctx, SORCER_ArithType at);
+SORCER_Opr SORCER_ArithOprTable(SORCER_ArithContext* ctx, SORCER_ArithOpr aop);
 
 
 
-void SORCER_arith(SORCER_Context* ctx, SORCER_ArithTable* table);
+void SORCER_arith(SORCER_Context* ctx, SORCER_ArithContext* arithCtx);
 
 
 

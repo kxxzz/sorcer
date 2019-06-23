@@ -550,7 +550,7 @@ static void SORCER_runOpr(SORCER_Context* ctx, SORCER_Opr opr)
 
     memcpy(inBuf->data, ds->data + ds->length - info->numIns, sizeof(SORCER_Cell)*info->numIns);
 
-    info->func(ctx, info->table, inBuf->data, ds->data + ds->length - info->numOuts);
+    info->func(ctx, info->funcCtx, inBuf->data, ds->data + ds->length - info->numOuts);
 }
 
 

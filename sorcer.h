@@ -84,7 +84,7 @@ bool SORCER_cellNew(SORCER_Context* ctx, SORCER_Type type, const char* str, bool
 
 
 
-typedef void(*SORCER_OprFunc)(SORCER_Context* ctx, void* table, const SORCER_Cell* ins, SORCER_Cell* outs);
+typedef void(*SORCER_OprFunc)(SORCER_Context* ctx, void* funcCtx, const SORCER_Cell* ins, SORCER_Cell* outs);
 
 enum
 {
@@ -99,7 +99,7 @@ typedef struct SORCER_OprInfo
     u32 numOuts;
     SORCER_Type outs[SORCER_OprIO_MAX];
     SORCER_OprFunc func;
-    void* table;
+    void* funcCtx;
     bool hasSideEffect;
 } SORCER_OprInfo;
 

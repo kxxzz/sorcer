@@ -64,8 +64,8 @@ static void execCode(const char* filename, const char* code)
     char timeBuf[TimeStrBuf_MAX];
     printf("[COMP START] \"%s\" [%s]\n", filename, nowStr(timeBuf));
     SORCER_Context* ctx = SORCER_ctxNew();
-    SORCER_ArithTable arithTable[1] = { 0 };
-    SORCER_arith(ctx, arithTable);
+    SORCER_ArithContext arithCtx[1] = { 0 };
+    SORCER_arith(ctx, arithCtx);
     SORCER_TxnErrorInfo txnErrInfo[1] = { 0 };
     SORCER_Block blk;
     if (code)
