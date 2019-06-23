@@ -34,7 +34,8 @@ static int mainReturn(int r)
 static void test(void)
 {
     SORCER_Context* ctx = SORCER_ctxNew();
-    SORCER_arith(ctx);
+    SORCER_ArithTable arithTable[1] = { 0 };
+    SORCER_arith(ctx, arithTable);
     SORCER_TxnErrorInfo errInfo[1] = { 0 };
 
     SORCER_Block blk = SORCER_blockFromTxnFile(ctx, "../1.txn", errInfo);
