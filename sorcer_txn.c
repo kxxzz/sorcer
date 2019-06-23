@@ -72,8 +72,11 @@ typedef vec_t(SORCER_TxnLoadDef) SORCER_TxnLoadDefVec;
 typedef struct SORCER_TxnLoadBlock
 {
     SORCER_Block scope;
+    const TXN_Node* body;
+    u32 bodyLen;
     SORCER_TxnLoadDefVec defTable[1];
     SORCER_TxnLoadVarVec varTable[1];
+    bool loaded;
 } SORCER_TxnLoadBlock;
 
 static void SORCER_txnLoadBlockFree(SORCER_TxnLoadBlock* b)
@@ -95,7 +98,6 @@ typedef struct SORCER_TxnLoadCallLevel
     const TXN_Node* seq;
     u32 len;
     u32 p;
-    bool doInline;
 } SORCER_TxnLoadCallLevel;
 
 typedef vec_t(SORCER_TxnLoadCallLevel) SORCER_TxnLoadCallStack;
@@ -285,7 +287,7 @@ static SORCER_Block SORCER_txnLoadBlockNew(SORCER_TxnLoadContext* ctx, SORCER_Bl
     SORCER_Context* sorcer = ctx->sorcer;
     SORCER_TxnLoadBlockVec* blockTable = ctx->blockTable;
 
-    SORCER_TxnLoadBlock info = { scope };
+    SORCER_TxnLoadBlock info = { scope, body, bodyLen };
     vec_push(blockTable, info);
     return SORCER_blockNew(sorcer);
 }
@@ -386,6 +388,13 @@ next:
 
 
 
+static void SORCER_txnLoadBlockSetLoaded(SORCER_TxnLoadContext* ctx, SORCER_Block block)
+{
+    SORCER_TxnLoadBlockVec* blockTable = ctx->blockTable;
+    SORCER_TxnLoadBlock* blkInfo = blockTable->data + block.id - ctx->blockBaseId;
+    assert(!blkInfo->loaded);
+    blkInfo->loaded = true;
+}
 
 
 
@@ -393,9 +402,7 @@ next:
 
 
 
-
-
-SORCER_Block SORCER_txnLoadBlock(SORCER_TxnLoadContext* ctx, const TXN_Node* body, u32 bodyLen)
+SORCER_Block SORCER_txnLoadBlock(SORCER_TxnLoadContext* ctx, const TXN_Node* rootBody, u32 rootBodyLen)
 {
     SORCER_Context* sorcer = ctx->sorcer;
     TXN_Space* space = ctx->space;
@@ -403,14 +410,15 @@ SORCER_Block SORCER_txnLoadBlock(SORCER_TxnLoadContext* ctx, const TXN_Node* bod
     SORCER_TxnLoadCallStack* callStack = ctx->callStack;
     u32 blocksTotal0 = SORCER_ctxBlocksTotal(sorcer);
     {
-        SORCER_Block blockRoot = SORCER_txnLoadBlockNew(ctx, SORCER_Block_Invalid, body, bodyLen);
+        SORCER_Block blockRoot = SORCER_txnLoadBlockNew(ctx, SORCER_Block_Invalid, rootBody, rootBodyLen);
         if (blockRoot.id == SORCER_Block_Invalid.id)
         {
             goto failed;
         }
-        SORCER_TxnLoadCallLevel root = { blockRoot, body, bodyLen };
+        SORCER_TxnLoadCallLevel root = { blockRoot, rootBody, rootBodyLen };
         vec_push(callStack, root);
         SORCER_txnLoadBlockDefTree(ctx);
+        SORCER_txnLoadBlockSetLoaded(ctx, blockRoot);
     }
     u32 begin = callStack->length;
     SORCER_TxnLoadCallLevel* cur = NULL;
@@ -420,15 +428,7 @@ next:
     {
         if (callStack->length > begin)
         {
-            bool doInline = cur->doInline;
-            SORCER_Block blk1 = cur->block;
             vec_pop(callStack);
-            SORCER_Block blk0 = vec_last(callStack).block;
-            assert(blk1.id != blk0.id);
-            if (doInline)
-            {
-                SORCER_blockAddInlineBlock(sorcer, blk0, blk1);
-            }
             goto next;
         }
         else
@@ -438,7 +438,7 @@ next:
             return blk;
         }
     }
-    TXN_Node node = body[cur->p++];
+    TXN_Node node = cur->seq[cur->p++];
     if (TXN_isTok(space, node))
     {
         u32 numTypes = SORCER_ctxTypesTotal(sorcer);
@@ -486,6 +486,13 @@ next:
             if (def.id != SORCER_Block_Invalid.id)
             {
                 SORCER_blockAddInstCall(sorcer, cur->block, def);
+                SORCER_TxnLoadBlock* blkInfo = blockTable->data + def.id - ctx->blockBaseId;
+                if (!blkInfo->loaded)
+                {
+                    SORCER_txnLoadBlockSetLoaded(ctx, def);
+                    SORCER_TxnLoadCallLevel level = { def, blkInfo->body, blkInfo->bodyLen };
+                    vec_push(callStack, level);
+                }
                 goto next;
             }
             SORCER_Opr opr = SORCER_txnLoadFindOpr(ctx, name);
@@ -518,9 +525,11 @@ next:
         {
             goto failed;
         }
-        SORCER_TxnLoadCallLevel level = { block, body, bodyLen };
+        SORCER_blockAddInstCall(sorcer, cur->block, block);
+        SORCER_TxnLoadCallLevel level = { block, body, bodyLen, };
         vec_push(callStack, level);
         SORCER_txnLoadBlockDefTree(ctx);
+        SORCER_txnLoadBlockSetLoaded(ctx, block);
         goto next;
     }
     else if (TXN_isSeqSquare(space, node))
@@ -536,6 +545,7 @@ next:
         SORCER_TxnLoadCallLevel level = { block, body, bodyLen };
         vec_push(callStack, level);
         SORCER_txnLoadBlockDefTree(ctx);
+        SORCER_txnLoadBlockSetLoaded(ctx, block);
         goto next;
     }
     else if (SORCER_txnLoadCheckCall(space, node))

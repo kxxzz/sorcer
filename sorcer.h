@@ -96,6 +96,7 @@ typedef struct SORCER_OprInfo
     u32 numOuts;
     SORCER_Type outs[SORCER_OprIO_MAX];
     SORCER_OprFunc func;
+    bool hasSideEffect;
 } SORCER_OprInfo;
 
 SORCER_Opr SORCER_oprNew(SORCER_Context* ctx, const SORCER_OprInfo* info);

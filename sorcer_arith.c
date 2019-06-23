@@ -40,6 +40,36 @@ static void SORCER_poolDtor_Num(void* pool)
 
 
 
+static void SORCER_oprFunc_Neg(const SORCER_Cell* ins, SORCER_Cell* outs)
+{
+    APNUM_ratDup(outs[0].as.ptr, ins[0].as.ptr);
+    APNUM_ratNeg(outs[0].as.ptr);
+}
+
+static void SORCER_oprFunc_Add(const SORCER_Cell* ins, SORCER_Cell* outs)
+{
+    //APNUM_ratAdd(pool, outs[0].as.ptr, ins[0].as.ptr, ins[1].as.ptr);
+}
+
+static void SORCER_oprFunc_Sub(const SORCER_Cell* ins, SORCER_Cell* outs)
+{
+    //APNUM_ratSub(pool, outs[0].as.ptr, ins[0].as.ptr, ins[1].as.ptr);
+}
+
+static void SORCER_oprFunc_Mul(const SORCER_Cell* ins, SORCER_Cell* outs)
+{
+    //APNUM_ratMul(pool, outs[0].as.ptr, ins[0].as.ptr, ins[1].as.ptr);
+}
+
+static void SORCER_oprFunc_Div(const SORCER_Cell* ins, SORCER_Cell* outs)
+{
+    //APNUM_ratDiv(pool, outs[0].as.ptr, ins[0].as.ptr, ins[1].as.ptr);
+}
+
+
+
+
+
 
 void SORCER_arith(SORCER_Context* ctx)
 {
@@ -59,8 +89,43 @@ void SORCER_arith(SORCER_Context* ctx)
     typeNum = SORCER_typeNew(ctx, typeInfo);
 
 
-
-
+    SORCER_OprInfo ops[] =
+    {
+        {
+            "neg",
+            1, { typeNum },
+            1, { typeNum },
+            SORCER_oprFunc_Neg,
+        },
+        {
+            "+",
+            2, { typeNum, typeNum },
+            1, { typeNum },
+            SORCER_oprFunc_Add,
+        },
+        {
+            "-",
+            2, { typeNum, typeNum },
+            1, { typeNum },
+            SORCER_oprFunc_Sub,
+        },
+        {
+            "*",
+            2, { typeNum, typeNum },
+            1, { typeNum },
+            SORCER_oprFunc_Mul,
+        },
+        {
+            "/",
+            2, { typeNum, typeNum },
+            1, { typeNum },
+            SORCER_oprFunc_Div,
+        },
+    };
+    for (u32 i = 0; i < ARYLEN(ops); ++i)
+    {
+        SORCER_oprNew(ctx, ops + i);
+    }
 
 
 }

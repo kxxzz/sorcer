@@ -14,6 +14,7 @@
 
 #include <sorcer.h>
 #include <sorcer_txn.h>
+#include <sorcer_arith.h>
 
 
 
@@ -33,6 +34,7 @@ static int mainReturn(int r)
 static void test(void)
 {
     SORCER_Context* ctx = SORCER_ctxNew();
+    SORCER_arith(ctx);
     SORCER_TxnErrInfo errInfo[1] = { 0 };
 
     SORCER_Block blk = SORCER_blockFromTxnFile(ctx, "../1.txn", errInfo);
