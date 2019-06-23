@@ -59,10 +59,10 @@ static void execCode(const char* filename, const char* code)
     {
         blk = SORCER_blockFromTxnFile(ctx, filename, txnErrInfo);
     }
+    printf("[COMP DONE] \"%s\" [%s]\n", filename, SORCER_nowStr(timeBuf));
     if (blk.id != SORCER_Block_Invalid.id)
     {
         assert(SORCER_TxnErr_NONE == txnErrInfo->error);
-        printf("[COMP DONE] \"%s\" [%s]\n", filename, SORCER_nowStr(timeBuf));
     }
     else
     {
@@ -71,7 +71,8 @@ static void execCode(const char* filename, const char* code)
     }
     printf("[EXEC START] \"%s\" [%s]\n", filename, SORCER_nowStr(timeBuf));
     SORCER_RunErr err = SORCER_run(ctx, blk);
-    if (err != SORCER_RunErr_NONE)
+    printf("[EXEC DONE] \"%s\" [%s]\n", filename, SORCER_nowStr(timeBuf));
+    if (SORCER_RunErr_NONE == err)
     {
         printf("<DataStack>\n");
         printf("-------------\n");
