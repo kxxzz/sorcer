@@ -7,7 +7,7 @@
 
 
 
-static bool SORCER_cellCtor_Num(void* pool, const char* str, SORCER_Cell* out)
+static bool SORCER_cellCtor_Num(void* pool, const char* str, void** pOut)
 {
     APNUM_rat* a = APNUM_ratNew(pool);
     size_t n = APNUM_ratFromStrWithBaseFmt(pool, a, str);
@@ -16,13 +16,13 @@ static bool SORCER_cellCtor_Num(void* pool, const char* str, SORCER_Cell* out)
         APNUM_ratFree(pool, a);
         return false;
     }
-    out->as.ptr = a;
+    *pOut = a;
     return true;
 }
 
-static void SORCER_cellDtor_Num(void* pool, SORCER_Cell* x)
+static void SORCER_cellDtor_Num(void* pool, void* x)
 {
-    APNUM_ratFree(pool, x->as.ptr);
+    APNUM_ratFree(pool, x);
 }
 
 static void* SORCER_poolCtor_Num(void)

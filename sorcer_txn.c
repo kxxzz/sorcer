@@ -451,11 +451,11 @@ next:
                 SORCER_Type type = SORCER_typeByIndex(sorcer, i);
                 SORCER_Cell cell[1] = { 0 };
                 const char* str = TXN_tokData(space, node);
-                bool r = SORCER_cellNew(sorcer, type, str, true, cell);
+                bool r = SORCER_cellNew(sorcer, type, str, cell);
                 SORCER_cellFree(sorcer, cell);
                 if (r)
                 {
-                    SORCER_blockAddInstPushImm(sorcer, cur->block, type, str, true);
+                    SORCER_blockAddInstPushImm(sorcer, cur->block, type, str);
                     goto next;
                 }
             }
@@ -512,11 +512,11 @@ next:
                 SORCER_Type type = SORCER_typeByIndex(sorcer, i);
                 SORCER_Cell cell[1] = { 0 };
                 const char* str = TXN_tokData(space, node);
-                bool r = SORCER_cellNew(sorcer, type, str, false, cell);
+                bool r = SORCER_cellNew(sorcer, type, str, cell);
                 SORCER_cellFree(sorcer, cell);
                 if (r)
                 {
-                    SORCER_blockAddInstPushImm(sorcer, cur->block, type, str, false);
+                    SORCER_blockAddInstPushImm(sorcer, cur->block, type, str);
                     goto next;
                 }
             }
