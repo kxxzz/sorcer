@@ -38,62 +38,60 @@ static void SORCER_poolDtor_Num(void* pool)
 
 
 
-static bool s_ArithTypeTableInited = false;
-static SORCER_Type s_ArithTypeTable[SORCER_NumArithTypes] = { 0 };
 
-SORCER_Type SORCER_ArithTypeTable(SORCER_ArithType at)
+
+
+SORCER_Type SORCER_ArithTypeTable(SORCER_ArithTable* table, SORCER_ArithType at)
 {
-    assert(s_ArithTypeTableInited);
     assert(at < SORCER_NumArithTypes);
-    return s_ArithTypeTable[at];
+    return table->type[at];
 }
 
 
-static s_ArithOprTableInited = false;
-static SORCER_Opr s_ArithOprTable[SORCER_NumArithOprs] = { 0 };
-
-SORCER_Opr SORCER_ArithOprTable(SORCER_ArithOpr aop)
+SORCER_Opr SORCER_ArithOprTable(SORCER_ArithTable* table, SORCER_ArithOpr aop)
 {
-    assert(s_ArithOprTableInited);
     assert(aop < SORCER_NumArithOprs);
-    return s_ArithOprTable[aop];
+    return table->opr[aop];
 }
 
 
 
 
-static void SORCER_oprFunc_Neg(SORCER_Context* ctx, const SORCER_Cell* ins, SORCER_Cell* outs)
+
+
+
+static void SORCER_oprFunc_Neg(SORCER_Context* ctx, const SORCER_Cell* ins, SORCER_Cell* outs, void* funcCtx)
 {
-    APNUM_pool_t pool = SORCER_pool(ctx, SORCER_ArithTypeTable(SORCER_ArithType_NUM));
+    APNUM_pool_t pool = SORCER_pool(ctx, SORCER_ArithTypeTable(funcCtx, SORCER_ArithType_NUM));
     outs[0].as.ptr = APNUM_ratNew(pool);
     APNUM_ratDup(outs[0].as.ptr, ins[0].as.ptr);
     APNUM_ratNeg(outs[0].as.ptr);
 }
 
-static void SORCER_oprFunc_Add(SORCER_Context* ctx, const SORCER_Cell* ins, SORCER_Cell* outs)
+static void SORCER_oprFunc_Add(SORCER_Context* ctx, const SORCER_Cell* ins, SORCER_Cell* outs, void* funcCtx)
 {
-    APNUM_pool_t pool = SORCER_pool(ctx, SORCER_ArithTypeTable(SORCER_ArithType_NUM));
+    APNUM_pool_t pool = SORCER_pool(ctx, SORCER_ArithTypeTable(funcCtx, SORCER_ArithType_NUM));
     outs[0].as.ptr = APNUM_ratNew(pool);
     APNUM_ratAdd(pool, outs[0].as.ptr, ins[0].as.ptr, ins[1].as.ptr);
 }
 
-static void SORCER_oprFunc_Sub(SORCER_Context* ctx, const SORCER_Cell* ins, SORCER_Cell* outs)
+static void SORCER_oprFunc_Sub(SORCER_Context* ctx, const SORCER_Cell* ins, SORCER_Cell* outs, void* funcCtx)
 {
-    APNUM_pool_t pool = SORCER_pool(ctx, SORCER_ArithTypeTable(SORCER_ArithType_NUM));
+    APNUM_pool_t pool = SORCER_pool(ctx, SORCER_ArithTypeTable(funcCtx, SORCER_ArithType_NUM));
     outs[0].as.ptr = APNUM_ratNew(pool);
     APNUM_ratSub(pool, outs[0].as.ptr, ins[0].as.ptr, ins[1].as.ptr);
 }
 
-static void SORCER_oprFunc_Mul(SORCER_Context* ctx, const SORCER_Cell* ins, SORCER_Cell* outs)
+static void SORCER_oprFunc_Mul(SORCER_Context* ctx, const SORCER_Cell* ins, SORCER_Cell* outs, void* funcCtx)
 {
-    APNUM_pool_t pool = SORCER_pool(ctx, SORCER_ArithTypeTable(SORCER_ArithType_NUM));
+    APNUM_pool_t pool = SORCER_pool(ctx, SORCER_ArithTypeTable(funcCtx, SORCER_ArithType_NUM));
     outs[0].as.ptr = APNUM_ratNew(pool);
     APNUM_ratMul(pool, outs[0].as.ptr, ins[0].as.ptr, ins[1].as.ptr);
 }
 
-static void SORCER_oprFunc_Div(SORCER_Context* ctx, const SORCER_Cell* ins, SORCER_Cell* outs)
+static void SORCER_oprFunc_Div(SORCER_Context* ctx, const SORCER_Cell* ins, SORCER_Cell* outs, void* funcCtx)
 {
-    APNUM_pool_t pool = SORCER_pool(ctx, SORCER_ArithTypeTable(SORCER_ArithType_NUM));
+    APNUM_pool_t pool = SORCER_pool(ctx, SORCER_ArithTypeTable(funcCtx, SORCER_ArithType_NUM));
     outs[0].as.ptr = APNUM_ratNew(pool);
     APNUM_ratDiv(pool, outs[0].as.ptr, ins[0].as.ptr, ins[1].as.ptr);
 }
@@ -103,7 +101,7 @@ static void SORCER_oprFunc_Div(SORCER_Context* ctx, const SORCER_Cell* ins, SORC
 
 
 
-void SORCER_arith(SORCER_Context* ctx)
+void SORCER_arith(SORCER_Context* ctx, SORCER_ArithTable* table)
 {
     SORCER_Type typeNum = SORCER_typeByName(ctx, "num");
     assert(SORCER_Type_Invalid.id == typeNum.id);
@@ -120,10 +118,9 @@ void SORCER_arith(SORCER_Context* ctx)
     };
     for (u32 i = 0; i < ARYLEN(typeInfo); ++i)
     {
-        s_ArithTypeTable[i] = SORCER_typeNew(ctx, typeInfo + i);
+        table->type[i] = SORCER_typeNew(ctx, typeInfo + i);
     }
-    s_ArithTypeTableInited = true;
-    typeNum = SORCER_ArithTypeTable(SORCER_ArithType_NUM);
+    typeNum = SORCER_ArithTypeTable(table, SORCER_ArithType_NUM);
 
 
     SORCER_OprInfo ops[] =
@@ -133,37 +130,41 @@ void SORCER_arith(SORCER_Context* ctx)
             1, { typeNum },
             1, { typeNum },
             SORCER_oprFunc_Neg,
+            table,
         },
         {
             "+",
             2, { typeNum, typeNum },
             1, { typeNum },
             SORCER_oprFunc_Add,
+            table,
         },
         {
             "-",
             2, { typeNum, typeNum },
             1, { typeNum },
             SORCER_oprFunc_Sub,
+            table,
         },
         {
             "*",
             2, { typeNum, typeNum },
             1, { typeNum },
             SORCER_oprFunc_Mul,
+            table,
         },
         {
             "/",
             2, { typeNum, typeNum },
             1, { typeNum },
             SORCER_oprFunc_Div,
+            table,
         },
     };
     for (u32 i = 0; i < ARYLEN(ops); ++i)
     {
-        s_ArithOprTable[i] = SORCER_oprNew(ctx, ops + i);
+        table->opr[i] = SORCER_oprNew(ctx, ops + i);
     }
-    s_ArithOprTableInited = true;
 
 }
 
