@@ -10,6 +10,7 @@
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
+#include <time.h>
 
 #include <sys/stat.h>
 #include <signal.h>
@@ -40,13 +41,26 @@ static int mainReturn(int r)
 
 
 
+enum
+{
+    TimeStrBuf_MAX = 16,
+};
+
+static char* nowStr(char* timeBuf)
+{
+    time_t t = time(NULL);
+    struct tm *lt = localtime(&t);
+    timeBuf[strftime(timeBuf, TimeStrBuf_MAX, "%H:%M:%S", lt)] = '\0';
+    return timeBuf;
+}
+
 
 
 
 static void execCode(const char* filename, const char* code)
 {
-    char timeBuf[SORCER_TimeStrBuf_MAX];
-    printf("[COMP START] \"%s\" [%s]\n", filename, SORCER_nowStr(timeBuf));
+    char timeBuf[TimeStrBuf_MAX];
+    printf("[COMP START] \"%s\" [%s]\n", filename, nowStr(timeBuf));
     SORCER_Context* ctx = SORCER_ctxNew();
     SORCER_arith(ctx);
     SORCER_TxnErrInfo txnErrInfo[1] = { 0 };
@@ -59,7 +73,7 @@ static void execCode(const char* filename, const char* code)
     {
         blk = SORCER_blockFromTxnFile(ctx, filename, txnErrInfo);
     }
-    printf("[COMP DONE] \"%s\" [%s]\n", filename, SORCER_nowStr(timeBuf));
+    printf("[COMP DONE] \"%s\" [%s]\n", filename, nowStr(timeBuf));
     if (blk.id != SORCER_Block_Invalid.id)
     {
         assert(SORCER_TxnErr_NONE == txnErrInfo->error);
@@ -69,9 +83,9 @@ static void execCode(const char* filename, const char* code)
         //const SORCER_FileInfoTable* fiTable = SORCER_ctxSrcFileInfoTable(ctx);
         //TXN_evalErrorFprint(stderr, fiTable, &err);
     }
-    printf("[EXEC START] \"%s\" [%s]\n", filename, SORCER_nowStr(timeBuf));
+    printf("[EXEC START] \"%s\" [%s]\n", filename, nowStr(timeBuf));
     SORCER_RunErr err = SORCER_run(ctx, blk);
-    printf("[EXEC DONE] \"%s\" [%s]\n", filename, SORCER_nowStr(timeBuf));
+    printf("[EXEC DONE] \"%s\" [%s]\n", filename, nowStr(timeBuf));
     if (SORCER_RunErr_NONE == err)
     {
         printf("<DataStack>\n");
@@ -102,7 +116,7 @@ int main(int argc, char* argv[])
     _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
 #endif
 
-    char timeBuf[SORCER_TimeStrBuf_MAX];
+    char timeBuf[TimeStrBuf_MAX];
 
     char* entryFile = NULL;
     int watchFlag = false;
@@ -135,7 +149,7 @@ int main(int argc, char* argv[])
                 stat(entryFile, &st);
                 if (lastMtime != st.st_mtime)
                 {
-                    printf("[CHANGE] \"%s\" [%s]\n", entryFile, SORCER_nowStr(timeBuf));
+                    printf("[CHANGE] \"%s\" [%s]\n", entryFile, nowStr(timeBuf));
                     execCode(entryFile, NULL);
                 }
                 lastMtime = st.st_mtime;

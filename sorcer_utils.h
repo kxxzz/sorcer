@@ -8,20 +8,13 @@
 
 
 
-#include <stdio.h>
 
 
 
 
 
-enum
-{
-    SORCER_TimeStrBuf_MAX = 16,
-};
 
 
-
-char* SORCER_nowStr(char* timeBuf);
 
 
 
