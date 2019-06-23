@@ -63,7 +63,7 @@ SORCER_Block SORCER_blockFromTxnNode
 (
     SORCER_Context* ctx, TXN_Space* space, TXN_Node node, const TXN_SpaceSrcInfo* srcInfo, SORCER_TxnErrInfo* errInfo
 );
-
+SORCER_Block SORCER_blockFromTxnCode(SORCER_Context* ctx, const char* path, SORCER_TxnErrInfo* errInfo);
 SORCER_Block SORCER_blockFromTxnFile(SORCER_Context* ctx, const char* path, SORCER_TxnErrInfo* errInfo);
 
 

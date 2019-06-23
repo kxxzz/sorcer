@@ -612,25 +612,12 @@ SORCER_Block SORCER_blockFromTxnNode
 
 
 
-
-
-SORCER_Block SORCER_blockFromTxnFile(SORCER_Context* ctx, const char* path, SORCER_TxnErrInfo* errInfo)
+SORCER_Block SORCER_blockFromTxnCode(SORCER_Context* ctx, const char* code, SORCER_TxnErrInfo* errInfo)
 {
     SORCER_Block block = SORCER_Block_Invalid;
-    char* str;
-    u32 strSize = FILEU_readFile(path, &str);
-    if (-1 == strSize)
-    {
-        errInfo->error = SORCER_TxnErr_TxnFile;
-        errInfo->file = 0;
-        errInfo->line = 0;
-        errInfo->column = 0;
-        return block;
-    }
     TXN_Space* space = TXN_spaceNew();
     TXN_SpaceSrcInfo srcInfo[1] = { 0 };
-    TXN_Node root = TXN_parseAsList(space, str, srcInfo);
-    free(str);
+    TXN_Node root = TXN_parseAsList(space, code, srcInfo);
     if (TXN_Node_Invalid.id == root.id)
     {
         errInfo->error = SORCER_TxnErr_TxnSyntex;
@@ -645,6 +632,26 @@ out:
     TXN_spaceSrcInfoFree(srcInfo);
     TXN_spaceFree(space);
     return block;
+}
+
+
+
+
+SORCER_Block SORCER_blockFromTxnFile(SORCER_Context* ctx, const char* path, SORCER_TxnErrInfo* errInfo)
+{
+    char* str;
+    u32 strSize = FILEU_readFile(path, &str);
+    if (-1 == strSize)
+    {
+        errInfo->error = SORCER_TxnErr_TxnFile;
+        errInfo->file = 0;
+        errInfo->line = 0;
+        errInfo->column = 0;
+        return SORCER_Block_Invalid;
+    }
+    SORCER_Block blk = SORCER_blockFromTxnCode(ctx, str, errInfo);
+    free(str);
+    return blk;
 }
 
 

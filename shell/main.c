@@ -46,29 +46,30 @@ static int mainReturn(int r)
 static void execCode(const char* filename, const char* code)
 {
     char timeBuf[SORCER_TimeStrBuf_MAX];
-    printf("[EXEC] \"%s\" [%s]\n", filename, SORCER_nowStr(timeBuf));
+    printf("[COMP START] \"%s\" [%s]\n", filename, SORCER_nowStr(timeBuf));
     SORCER_Context* ctx = SORCER_ctxNew();
+    SORCER_arith(ctx);
     SORCER_TxnErrInfo txnErrInfo[1] = { 0 };
     SORCER_Block blk;
     if (code)
     {
-        //r = SORCER_execCode(ctx, filename, code, true);
+        blk = SORCER_blockFromTxnCode(ctx, code, txnErrInfo);
     }
     else
     {
         blk = SORCER_blockFromTxnFile(ctx, filename, txnErrInfo);
     }
-    //SORCER_Error err = SORCER_ctxLastError(ctx);
     if (blk.id != SORCER_Block_Invalid.id)
     {
-        //assert(SORCER_ErrCode_NONE == err.code);
-        printf("[DONE] \"%s\" [%s]\n", filename, SORCER_nowStr(timeBuf));
+        assert(SORCER_TxnErr_NONE == txnErrInfo->error);
+        printf("[COMP DONE] \"%s\" [%s]\n", filename, SORCER_nowStr(timeBuf));
     }
     else
     {
         //const SORCER_FileInfoTable* fiTable = SORCER_ctxSrcFileInfoTable(ctx);
         //TXN_evalErrorFprint(stderr, fiTable, &err);
     }
+    printf("[EXEC START] \"%s\" [%s]\n", filename, SORCER_nowStr(timeBuf));
     SORCER_RunErr err = SORCER_run(ctx, blk);
     if (err != SORCER_RunErr_NONE)
     {
