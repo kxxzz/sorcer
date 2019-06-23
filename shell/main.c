@@ -45,37 +45,39 @@ static int mainReturn(int r)
 
 static void execCode(const char* filename, const char* code)
 {
-    //char timeBuf[SORCER_TimeStrBuf_MAX];
-    //printf("[EXEC] \"%s\" [%s]\n", filename, TXN_evalGetNowStr(timeBuf));
-    //SORCER_Context* ctx = SORCER_ctxNew(NULL);
-    //bool r;
-    //if (code)
-    //{
-    //    r = SORCER_execCode(ctx, filename, code, true);
-    //}
-    //else
-    //{
-    //    r = SORCER_execFile(ctx, filename, true);
-    //}
+    char timeBuf[SORCER_TimeStrBuf_MAX];
+    printf("[EXEC] \"%s\" [%s]\n", filename, SORCER_nowStr(timeBuf));
+    SORCER_Context* ctx = SORCER_ctxNew();
+    SORCER_TxnErrInfo txnErrInfo[1] = { 0 };
+    SORCER_Block blk;
+    if (code)
+    {
+        //r = SORCER_execCode(ctx, filename, code, true);
+    }
+    else
+    {
+        blk = SORCER_blockFromTxnFile(ctx, filename, txnErrInfo);
+    }
     //SORCER_Error err = SORCER_ctxLastError(ctx);
-    //if (r)
-    //{
-    //    assert(SORCER_ErrCode_NONE == err.code);
-    //    printf("[DONE] \"%s\" [%s]\n", filename, TXN_evalGetNowStr(timeBuf));
-    //}
-    //else
-    //{
-    //    const SORCER_FileInfoTable* fiTable = SORCER_ctxSrcFileInfoTable(ctx);
-    //    TXN_evalErrorFprint(stderr, fiTable, &err);
-    //}
-    //if (r)
-    //{
-    //    printf("<DataStack>\n");
-    //    printf("-------------\n");
-    //    TXN_evalDataStackFprint(stdout, ctx);
-    //    printf("-------------\n");
-    //}
-    //SORCER_ctxFree(ctx);
+    if (blk.id != SORCER_Block_Invalid.id)
+    {
+        //assert(SORCER_ErrCode_NONE == err.code);
+        printf("[DONE] \"%s\" [%s]\n", filename, SORCER_nowStr(timeBuf));
+    }
+    else
+    {
+        //const SORCER_FileInfoTable* fiTable = SORCER_ctxSrcFileInfoTable(ctx);
+        //TXN_evalErrorFprint(stderr, fiTable, &err);
+    }
+    SORCER_RunErr err = SORCER_run(ctx, blk);
+    if (err != SORCER_RunErr_NONE)
+    {
+        printf("<DataStack>\n");
+        printf("-------------\n");
+        //TXN_evalDataStackFprint(stdout, ctx);
+        printf("-------------\n");
+    }
+    SORCER_ctxFree(ctx);
 }
 
 
@@ -132,7 +134,7 @@ int main(int argc, char* argv[])
                 if (lastMtime != st.st_mtime)
                 {
                     printf("[CHANGE] \"%s\" [%s]\n", entryFile, SORCER_nowStr(timeBuf));
-                    //execCode(entryFile, NULL);
+                    execCode(entryFile, NULL);
                 }
                 lastMtime = st.st_mtime;
             }
