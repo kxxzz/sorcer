@@ -2,15 +2,32 @@
 
 
 
+
 #include "sorcer.h"
 
 
-#include <stdio.h>
+
+enum
+{
+    SORCER_TypeFlag_String = 1U << 0,
+};
 
 
 
 
-void SORCER_dsFprint(FILE* f, SORCER_Context* ctx);
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

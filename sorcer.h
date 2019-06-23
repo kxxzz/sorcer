@@ -70,11 +70,13 @@ typedef struct SORCER_TypeInfo
     SORCER_PoolCtor poolCtor;
     SORCER_PoolDtor poolDtor;
     SORCER_CellToStr toStr;
+    u64 flags;
 } SORCER_TypeInfo;
 
 SORCER_Type SORCER_typeNew(SORCER_Context* ctx, const SORCER_TypeInfo* info);
 SORCER_Type SORCER_typeByName(SORCER_Context* ctx, const char* name);
 SORCER_Type SORCER_typeByIndex(SORCER_Context* ctx, u32 idx);
+const SORCER_TypeInfo* SORCER_typeInfo(SORCER_Context* ctx, SORCER_Type type);
 u32 SORCER_ctxTypesTotal(SORCER_Context* ctx);
 
 void* SORCER_pool(SORCER_Context* ctx, SORCER_Type type);

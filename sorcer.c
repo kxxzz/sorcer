@@ -188,6 +188,14 @@ SORCER_Type SORCER_typeByIndex(SORCER_Context* ctx, u32 idx)
 }
 
 
+const SORCER_TypeInfo* SORCER_typeInfo(SORCER_Context* ctx, SORCER_Type type)
+{
+    SORCER_TypeInfoVec* tt = ctx->typeTable;
+    assert(type.id < tt->length);
+    return tt->data + type.id;
+}
+
+
 
 
 u32 SORCER_ctxTypesTotal(SORCER_Context* ctx)

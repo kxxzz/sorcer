@@ -1,5 +1,6 @@
 #include "sorcer_a.h"
 #include "sorcer_txn.h"
+#include "sorcer_typeflag.h"
 #include <fileu.h>
 
 
@@ -449,6 +450,11 @@ next:
             for (u32 i = 0; i < numTypes; ++i)
             {
                 SORCER_Type type = SORCER_typeByIndex(sorcer, i);
+                const SORCER_TypeInfo* info = SORCER_typeInfo(sorcer, type);
+                if (!(info->flags & SORCER_TypeFlag_String))
+                {
+                    continue;
+                }
                 SORCER_Cell cell[1] = { 0 };
                 const char* str = TXN_tokData(space, node);
                 bool r = SORCER_cellNew(sorcer, type, str, cell);
@@ -510,6 +516,11 @@ next:
             for (u32 i = 0; i < numTypes; ++i)
             {
                 SORCER_Type type = SORCER_typeByIndex(sorcer, i);
+                const SORCER_TypeInfo* info = SORCER_typeInfo(sorcer, type);
+                if (info->flags & SORCER_TypeFlag_String)
+                {
+                    continue;
+                }
                 SORCER_Cell cell[1] = { 0 };
                 const char* str = TXN_tokData(space, node);
                 bool r = SORCER_cellNew(sorcer, type, str, cell);
