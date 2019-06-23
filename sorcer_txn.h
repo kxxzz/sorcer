@@ -15,16 +15,13 @@ typedef enum SORCER_TxnErr
 
     SORCER_TxnErr_TxnFile,
     SORCER_TxnErr_TxnSyntex,
-    SORCER_TxnErr_UnkFormat,
+    SORCER_TxnErr_Syntax,
     SORCER_TxnErr_UnkWord,
     SORCER_TxnErr_UnkCall,
     SORCER_TxnErr_UnkFunType,
     SORCER_TxnErr_UnkTypeDecl,
-    SORCER_TxnErr_Args,
     SORCER_TxnErr_BranchUneq,
     SORCER_TxnErr_RecurNoBaseCase,
-    SORCER_TxnErr_Unification,
-    SORCER_TxnErr_CellFromSym,
     SORCER_TxnErr_TypeUnsolvable,
 
     SORCER_NumTxnErrs
@@ -42,11 +39,8 @@ static const char** SORCER_TxnErrNameTable(void)
         "UnkCall",
         "UnkFunType",
         "UnkTypeDecl",
-        "Args",
         "BranchUneq",
         "RecurNoBaseCase",
-        "Unification",
-        "CellFromSym",
         "TypeUnsolvable",
     };
     return a;
