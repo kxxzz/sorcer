@@ -65,7 +65,7 @@ static void execCode(const char* filename, const char* code)
     printf("[COMP START] \"%s\" [%s]\n", filename, nowStr(timeBuf));
     SORCER_Context* ctx = SORCER_ctxNew();
     SORCER_arith(ctx);
-    SORCER_TxnErrInfo txnErrInfo[1] = { 0 };
+    SORCER_TxnErrorInfo txnErrInfo[1] = { 0 };
     SORCER_Block blk;
     if (code)
     {
@@ -78,7 +78,7 @@ static void execCode(const char* filename, const char* code)
     printf("[COMP DONE] \"%s\" [%s]\n", filename, nowStr(timeBuf));
     if (blk.id != SORCER_Block_Invalid.id)
     {
-        assert(SORCER_TxnErr_NONE == txnErrInfo->error);
+        assert(SORCER_TxnError_NONE == txnErrInfo->error);
     }
     else
     {
@@ -86,15 +86,14 @@ static void execCode(const char* filename, const char* code)
         //TXN_evalErrorFprint(stderr, fiTable, &err);
     }
     printf("[EXEC START] \"%s\" [%s]\n", filename, nowStr(timeBuf));
-    SORCER_RunErr err = SORCER_run(ctx, blk);
+    SORCER_run(ctx, blk);
     printf("[EXEC DONE] \"%s\" [%s]\n", filename, nowStr(timeBuf));
-    if (SORCER_RunErr_NONE == err)
-    {
-        printf("<DataStack>\n");
-        printf("-------------\n");
-        SORCER_dsFprint(stdout, ctx);
-        printf("-------------\n");
-    }
+
+    printf("<DataStack>\n");
+    printf("-------------\n");
+    SORCER_dsFprint(stdout, ctx);
+    printf("-------------\n");
+
     SORCER_ctxFree(ctx);
 }
 

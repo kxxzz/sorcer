@@ -565,7 +565,7 @@ static void SORCER_runOpr(SORCER_Context* ctx, SORCER_Opr opr)
 
 
 
-SORCER_RunErr SORCER_run(SORCER_Context* ctx, SORCER_Block blk)
+void SORCER_run(SORCER_Context* ctx, SORCER_Block blk)
 {
     SORCER_codeUpdate(ctx, blk);
 
@@ -637,7 +637,7 @@ next:
     {
         if (!rs->length)
         {
-            return SORCER_RunErr_NONE;
+            return;
         }
         SORCER_Ret ret = vec_last(rs);
         vec_pop(rs);

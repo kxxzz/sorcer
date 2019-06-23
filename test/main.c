@@ -35,11 +35,11 @@ static void test(void)
 {
     SORCER_Context* ctx = SORCER_ctxNew();
     SORCER_arith(ctx);
-    SORCER_TxnErrInfo errInfo[1] = { 0 };
+    SORCER_TxnErrorInfo errInfo[1] = { 0 };
 
     SORCER_Block blk = SORCER_blockFromTxnFile(ctx, "../1.txn", errInfo);
     assert(blk.id != SORCER_Block_Invalid.id);
-    assert(SORCER_TxnErr_NONE == errInfo->error);
+    assert(SORCER_TxnError_NONE == errInfo->error);
     SORCER_run(ctx, blk);
 
     SORCER_ctxFree(ctx);

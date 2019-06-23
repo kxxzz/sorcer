@@ -131,16 +131,7 @@ void SORCER_blockAddInlineBlock(SORCER_Context* ctx, SORCER_Block blk, SORCER_Bl
 
 
 
-typedef enum SORCER_RunErr
-{
-    SORCER_RunErr_NONE = 0,
-
-    SORCER_RunErr_TypeUnmatch,
-
-    SORCER_NumRunErrs
-} SORCER_RunErr;
-
-SORCER_RunErr SORCER_run(SORCER_Context* ctx, SORCER_Block blk);
+void SORCER_run(SORCER_Context* ctx, SORCER_Block blk);
 
 
 

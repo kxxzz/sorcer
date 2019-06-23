@@ -111,7 +111,7 @@ typedef struct SORCER_TxnLoadContext
     SORCER_Context* sorcer;
     TXN_Space* space;
     const TXN_SpaceSrcInfo* srcInfo;
-    SORCER_TxnErrInfo* errInfo;
+    SORCER_TxnErrorInfo* errInfo;
     u32 blockBaseId;
     SORCER_TxnLoadBlockVec blockTable[1];
     SORCER_TxnLoadCallStack callStack[1];
@@ -119,7 +119,7 @@ typedef struct SORCER_TxnLoadContext
 
 static SORCER_TxnLoadContext SORCER_txnLoadContextNew
 (
-    SORCER_Context* sorcer, TXN_Space* space, const TXN_SpaceSrcInfo* srcInfo, SORCER_TxnErrInfo* errInfo
+    SORCER_Context* sorcer, TXN_Space* space, const TXN_SpaceSrcInfo* srcInfo, SORCER_TxnErrorInfo* errInfo
 )
 {
     SORCER_TxnLoadContext ctx[1] = { 0 };
@@ -146,10 +146,10 @@ static void SORCER_txnLoadContextFree(SORCER_TxnLoadContext* ctx)
 
 
 
-static void SORCER_txnLoadErrorAtNode(SORCER_TxnLoadContext* ctx, TXN_Node node, SORCER_TxnErr err)
+static void SORCER_txnLoadErrorAtNode(SORCER_TxnLoadContext* ctx, TXN_Node node, SORCER_TxnError err)
 {
     const TXN_SpaceSrcInfo* srcInfo = ctx->srcInfo;
-    SORCER_TxnErrInfo* errInfo = ctx->errInfo;
+    SORCER_TxnErrorInfo* errInfo = ctx->errInfo;
     if (errInfo && srcInfo)
     {
         errInfo->error = err;
@@ -346,7 +346,7 @@ next:
         u32 len = TXN_seqLen(space, node);
         if (len < 2)
         {
-            SORCER_txnLoadErrorAtNode(ctx, node, SORCER_TxnErr_Syntax);
+            SORCER_txnLoadErrorAtNode(ctx, node, SORCER_TxnError_Syntax);
             return SORCER_Block_Invalid;
         }
         const char* name = TXN_tokCstr(space, elms[0]);
@@ -359,7 +359,7 @@ next:
             {
                 if (!TXN_isTok(space, elms[1]))
                 {
-                    SORCER_txnLoadErrorAtNode(ctx, elms[1], SORCER_TxnErr_Syntax);
+                    SORCER_txnLoadErrorAtNode(ctx, elms[1], SORCER_TxnError_Syntax);
                     return SORCER_Block_Invalid;
                 }
                 const char* defName = TXN_tokCstr(space, elms[1]);
@@ -454,7 +454,7 @@ next:
                     goto next;
                 }
             }
-            SORCER_txnLoadErrorAtNode(ctx, node, SORCER_TxnErr_UnkWord);
+            SORCER_txnLoadErrorAtNode(ctx, node, SORCER_TxnError_UnkWord);
             goto failed;
         }
         else
@@ -512,7 +512,7 @@ next:
                     goto next;
                 }
             }
-            SORCER_txnLoadErrorAtNode(ctx, node, SORCER_TxnErr_UnkWord);
+            SORCER_txnLoadErrorAtNode(ctx, node, SORCER_TxnError_UnkWord);
             goto failed;
         }
     }
@@ -582,10 +582,10 @@ next:
             }
             }
         }
-        SORCER_txnLoadErrorAtNode(ctx, node, SORCER_TxnErr_UnkCall);
+        SORCER_txnLoadErrorAtNode(ctx, node, SORCER_TxnError_UnkCall);
         goto failed;
     }
-    SORCER_txnLoadErrorAtNode(ctx, node, SORCER_TxnErr_Syntax);
+    SORCER_txnLoadErrorAtNode(ctx, node, SORCER_TxnError_Syntax);
 failed:
     SORCER_txnLoadBlocksRollback(ctx, blocksTotal0);
     return SORCER_Block_Invalid;
@@ -598,7 +598,7 @@ failed:
 
 SORCER_Block SORCER_blockFromTxnNode
 (
-    SORCER_Context* ctx, TXN_Space* space, TXN_Node node, const TXN_SpaceSrcInfo* srcInfo, SORCER_TxnErrInfo* errInfo
+    SORCER_Context* ctx, TXN_Space* space, TXN_Node node, const TXN_SpaceSrcInfo* srcInfo, SORCER_TxnErrorInfo* errInfo
 )
 {
     const TXN_Node* seq = TXN_seqElm(space, node);
@@ -612,7 +612,7 @@ SORCER_Block SORCER_blockFromTxnNode
 
 
 
-SORCER_Block SORCER_blockFromTxnCode(SORCER_Context* ctx, const char* code, SORCER_TxnErrInfo* errInfo)
+SORCER_Block SORCER_blockFromTxnCode(SORCER_Context* ctx, const char* code, SORCER_TxnErrorInfo* errInfo)
 {
     SORCER_Block block = SORCER_Block_Invalid;
     TXN_Space* space = TXN_spaceNew();
@@ -620,7 +620,7 @@ SORCER_Block SORCER_blockFromTxnCode(SORCER_Context* ctx, const char* code, SORC
     TXN_Node root = TXN_parseAsList(space, code, srcInfo);
     if (TXN_Node_Invalid.id == root.id)
     {
-        errInfo->error = SORCER_TxnErr_TxnSyntex;
+        errInfo->error = SORCER_TxnError_TxnSyntex;
         const TXN_NodeSrcInfo* nodeSrcInfo = &vec_last(srcInfo->nodes);
         errInfo->file = nodeSrcInfo->file;
         errInfo->line = nodeSrcInfo->line;
@@ -637,13 +637,13 @@ out:
 
 
 
-SORCER_Block SORCER_blockFromTxnFile(SORCER_Context* ctx, const char* path, SORCER_TxnErrInfo* errInfo)
+SORCER_Block SORCER_blockFromTxnFile(SORCER_Context* ctx, const char* path, SORCER_TxnErrorInfo* errInfo)
 {
     char* str;
     u32 strSize = FILEU_readFile(path, &str);
     if (-1 == strSize)
     {
-        errInfo->error = SORCER_TxnErr_TxnFile;
+        errInfo->error = SORCER_TxnError_TxnFile;
         errInfo->file = 0;
         errInfo->line = 0;
         errInfo->column = 0;

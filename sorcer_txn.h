@@ -9,27 +9,27 @@
 
 
 
-typedef enum SORCER_TxnErr
+typedef enum SORCER_TxnError
 {
-    SORCER_TxnErr_NONE = 0,
+    SORCER_TxnError_NONE = 0,
 
-    SORCER_TxnErr_TxnFile,
-    SORCER_TxnErr_TxnSyntex,
-    SORCER_TxnErr_Syntax,
-    SORCER_TxnErr_UnkWord,
-    SORCER_TxnErr_UnkCall,
-    SORCER_TxnErr_UnkFunType,
-    SORCER_TxnErr_UnkTypeDecl,
-    SORCER_TxnErr_BranchUneq,
-    SORCER_TxnErr_RecurNoBaseCase,
-    SORCER_TxnErr_TypeUnsolvable,
+    SORCER_TxnError_TxnFile,
+    SORCER_TxnError_TxnSyntex,
+    SORCER_TxnError_Syntax,
+    SORCER_TxnError_UnkWord,
+    SORCER_TxnError_UnkCall,
+    SORCER_TxnError_UnkFunType,
+    SORCER_TxnError_UnkTypeDecl,
+    SORCER_TxnError_BranchUneq,
+    SORCER_TxnError_RecurNoBaseCase,
+    SORCER_TxnError_TypeUnsolvable,
 
-    SORCER_NumTxnErrs
-} SORCER_TxnErr;
+    SORCER_NumTxnErrors
+} SORCER_TxnError;
 
-static const char** SORCER_TxnErrNameTable(void)
+static const char** SORCER_TxnErrorNameTable(void)
 {
-    const char* a[SORCER_NumTxnErrs] =
+    const char* a[SORCER_NumTxnErrors] =
     {
         "NONE",
         "TxnFile",
@@ -46,25 +46,23 @@ static const char** SORCER_TxnErrNameTable(void)
     return a;
 }
 
-
-
-typedef struct SORCER_TxnErrInfo
+typedef struct SORCER_TxnErrorInfo
 {
-    SORCER_TxnErr error;
+    SORCER_TxnError error;
     u32 file;
     u32 line;
     u32 column;
-} SORCER_TxnErrInfo;
+} SORCER_TxnErrorInfo;
 
 
 
 
 SORCER_Block SORCER_blockFromTxnNode
 (
-    SORCER_Context* ctx, TXN_Space* space, TXN_Node node, const TXN_SpaceSrcInfo* srcInfo, SORCER_TxnErrInfo* errInfo
+    SORCER_Context* ctx, TXN_Space* space, TXN_Node node, const TXN_SpaceSrcInfo* srcInfo, SORCER_TxnErrorInfo* errInfo
 );
-SORCER_Block SORCER_blockFromTxnCode(SORCER_Context* ctx, const char* path, SORCER_TxnErrInfo* errInfo);
-SORCER_Block SORCER_blockFromTxnFile(SORCER_Context* ctx, const char* path, SORCER_TxnErrInfo* errInfo);
+SORCER_Block SORCER_blockFromTxnCode(SORCER_Context* ctx, const char* path, SORCER_TxnErrorInfo* errInfo);
+SORCER_Block SORCER_blockFromTxnFile(SORCER_Context* ctx, const char* path, SORCER_TxnErrorInfo* errInfo);
 
 
 
