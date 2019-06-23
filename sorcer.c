@@ -7,7 +7,7 @@
 typedef enum SORCER_OP
 {
     SORCER_OP_PopVar = 0,
-    SORCER_OP_PushCell,
+    SORCER_OP_PushImm,
     SORCER_OP_PushVar,
     SORCER_OP_PushBlock,
     SORCER_OP_Call,
@@ -22,13 +22,19 @@ typedef enum SORCER_OP
 } SORCER_OP;
 
 
+typedef struct SORCER_InstImm
+{
+    SORCER_Type type;
+    const char* str;
+    bool quoted;
+} SORCER_InstImm;
 
 typedef struct SORCER_Inst
 {
     SORCER_OP op;
     union
     {
-        SORCER_Cell cell;
+        SORCER_InstImm imm;
         SORCER_Var var;
         SORCER_Block block;
         SORCER_Opr opr;
@@ -210,7 +216,19 @@ bool SORCER_cellNew(SORCER_Context* ctx, SORCER_Type type, const char* str, bool
     {
         return false;
     }
-    return info->ctor(tp->data[type.id], str, out);
+    void* pool = tp->data[type.id];
+    return info->ctor(pool, str, out);
+}
+
+void SORCER_cellFree(SORCER_Context* ctx, SORCER_Cell* x)
+{
+    SORCER_TypeInfoVec* tt = ctx->typeTable;
+    vec_ptr* tp = ctx->typePool;
+    assert(tt->length == tp->length);
+    assert(x->type.id < tt->length);
+    SORCER_TypeInfo* info = tt->data + x->type.id;
+    void* pool = tp->data[x->type.id];
+    info->dtor(pool, x);
 }
 
 
@@ -346,12 +364,13 @@ SORCER_Var SORCER_blockAddInstPopVar(SORCER_Context* ctx, SORCER_Block blk)
 
 
 
-void SORCER_blockAddInstPushCell(SORCER_Context* ctx, SORCER_Block blk, const SORCER_Cell* x)
+void SORCER_blockAddInstPushImm(SORCER_Context* ctx, SORCER_Block blk, SORCER_Type type, const char* str, bool quoted)
 {
     SORCER_codeOutdate(ctx);
     SORCER_BlockInfoVec* bt = ctx->blockTable;
     SORCER_BlockInfo* binfo = bt->data + blk.id;
-    SORCER_Inst inst = { SORCER_OP_PushCell, .arg.cell = *x };
+    SORCER_InstImm imm = { type, str, quoted };
+    SORCER_Inst inst = { SORCER_OP_PushImm, .arg.imm = imm };
     vec_push(binfo->code, inst);
 }
 
@@ -592,7 +611,7 @@ void SORCER_run(SORCER_Context* ctx, SORCER_Block blk)
 
     assert(blk.id < bt->length);
     u32 p = bt->data[blk.id].baseAddress;
-    SORCER_Inst* inst = NULL;
+    const SORCER_Inst* inst = NULL;
 next:
     inst = code->data + p++;
     switch (inst->op)
@@ -604,9 +623,13 @@ next:
         vec_push(vt, top);
         goto next;
     }
-    case SORCER_OP_PushCell:
+    case SORCER_OP_PushImm:
     {
-        vec_push(ds, inst->arg.cell);
+        const SORCER_InstImm* imm = &inst->arg.imm;
+        SORCER_Cell cell;
+        bool r = SORCER_cellNew(ctx, imm->type, imm->str, imm->quoted, &cell);
+        assert(r);
+        vec_push(ds, cell);
         goto next;
     }
     case SORCER_OP_PushVar:

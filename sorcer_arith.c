@@ -20,9 +20,9 @@ static bool SORCER_cellCtor_Num(void* pool, const char* str, SORCER_Cell* out)
     return true;
 }
 
-static void SORCER_cellDtor_Num(void* pool, void* ptr)
+static void SORCER_cellDtor_Num(void* pool, SORCER_Cell* x)
 {
-    APNUM_ratFree(pool, ptr);
+    APNUM_ratFree(pool, x->as.ptr);
 }
 
 static void* SORCER_poolCtor_Num(void)
