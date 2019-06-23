@@ -1,8 +1,5 @@
 #pragma warning(disable: 4101)
 
-#include "sorcer.h"
-#include "sorcer_utils.h"
-
 
 
 #include <stdlib.h>
@@ -20,6 +17,11 @@
 #include <argparse.h>
 
 #include <fileu.h>
+
+
+
+#include <sorcer.h>
+#include <sorcer_utils.h>
 
 
 
@@ -129,7 +131,7 @@ int main(int argc, char* argv[])
                 stat(entryFile, &st);
                 if (lastMtime != st.st_mtime)
                 {
-                    //printf("[CHANGE] \"%s\" [%s]\n", entryFile, TXN_evalGetNowStr(timeBuf));
+                    printf("[CHANGE] \"%s\" [%s]\n", entryFile, SORCER_nowStr(timeBuf));
                     //execCode(entryFile, NULL);
                 }
                 lastMtime = st.st_mtime;
