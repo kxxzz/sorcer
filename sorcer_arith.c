@@ -47,27 +47,35 @@ static void SORCER_oprFunc_Neg(SORCER_Context* ctx, const SORCER_Cell* ins, SORC
     APNUM_pool_t pool = SORCER_pool(ctx, s_typeNum);
     outs[0].as.ptr = APNUM_ratNew(pool);
     APNUM_ratDup(outs[0].as.ptr, ins[0].as.ptr);
-    //APNUM_ratNeg(outs[0].as.ptr);
+    APNUM_ratNeg(outs[0].as.ptr);
 }
 
 static void SORCER_oprFunc_Add(SORCER_Context* ctx, const SORCER_Cell* ins, SORCER_Cell* outs)
 {
-    //APNUM_ratAdd(pool, outs[0].as.ptr, ins[0].as.ptr, ins[1].as.ptr);
+    APNUM_pool_t pool = SORCER_pool(ctx, s_typeNum);
+    outs[0].as.ptr = APNUM_ratNew(pool);
+    APNUM_ratAdd(pool, outs[0].as.ptr, ins[0].as.ptr, ins[1].as.ptr);
 }
 
 static void SORCER_oprFunc_Sub(SORCER_Context* ctx, const SORCER_Cell* ins, SORCER_Cell* outs)
 {
-    //APNUM_ratSub(pool, outs[0].as.ptr, ins[0].as.ptr, ins[1].as.ptr);
+    APNUM_pool_t pool = SORCER_pool(ctx, s_typeNum);
+    outs[0].as.ptr = APNUM_ratNew(pool);
+    APNUM_ratSub(pool, outs[0].as.ptr, ins[0].as.ptr, ins[1].as.ptr);
 }
 
 static void SORCER_oprFunc_Mul(SORCER_Context* ctx, const SORCER_Cell* ins, SORCER_Cell* outs)
 {
-    //APNUM_ratMul(pool, outs[0].as.ptr, ins[0].as.ptr, ins[1].as.ptr);
+    APNUM_pool_t pool = SORCER_pool(ctx, s_typeNum);
+    outs[0].as.ptr = APNUM_ratNew(pool);
+    APNUM_ratMul(pool, outs[0].as.ptr, ins[0].as.ptr, ins[1].as.ptr);
 }
 
 static void SORCER_oprFunc_Div(SORCER_Context* ctx, const SORCER_Cell* ins, SORCER_Cell* outs)
 {
-    //APNUM_ratDiv(pool, outs[0].as.ptr, ins[0].as.ptr, ins[1].as.ptr);
+    APNUM_pool_t pool = SORCER_pool(ctx, s_typeNum);
+    outs[0].as.ptr = APNUM_ratNew(pool);
+    APNUM_ratDiv(pool, outs[0].as.ptr, ins[0].as.ptr, ins[1].as.ptr);
 }
 
 
