@@ -5,8 +5,10 @@
 #include "sorcer.h"
 
 
+#include <stdio.h>
 
 
+void SORCER_dsFprint(FILE* f, SORCER_Context* ctx);
 
 
 

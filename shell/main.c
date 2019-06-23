@@ -92,7 +92,7 @@ static void execCode(const char* filename, const char* code)
     {
         printf("<DataStack>\n");
         printf("-------------\n");
-        //TXN_evalDataStackFprint(stdout, ctx);
+        SORCER_dsFprint(stdout, ctx);
         printf("-------------\n");
     }
     SORCER_ctxFree(ctx);
