@@ -14,13 +14,14 @@ typedef enum SORCER_TxnPrimWord
     SORCER_NumTxnPrimWords
 } SORCER_TxnPrimWord;
 
-const char** SORCER_TxnPrimWordNameTable(void)
+const char* SORCER_TxnPrimWordNameTable(SORCER_TxnPrimWord w)
 {
+    assert(w < SORCER_NumTxnPrimWords);
     static const char* a[SORCER_NumTxnPrimWords] =
     {
         "apply",
     };
-    return a;
+    return a[w];
 }
 
 
@@ -36,14 +37,15 @@ typedef enum SORCER_TxnKeyExpr
     SORCER_NumTxnKeyExprs
 } SORCER_TxnKeyExpr;
 
-const char** SORCER_TxnKeyExprHeadNameTable(void)
+const char* SORCER_TxnKeyExprHeadNameTable(SORCER_TxnKeyExpr expr)
 {
+    assert(expr < SORCER_NumTxnKeyExprs);
     static const char* a[SORCER_NumTxnKeyExprs] =
     {
         "def",
         "var",
     };
-    return a;
+    return a[expr];
 }
 
 
@@ -173,7 +175,7 @@ static SORCER_TxnPrimWord SORCER_txnPrimWordFromName(const char* name)
     for (SORCER_TxnPrimWord i = 0; i < SORCER_NumTxnPrimWords; ++i)
     {
         SORCER_TxnPrimWord k = SORCER_NumTxnPrimWords - 1 - i;
-        const char* s = SORCER_TxnPrimWordNameTable()[k];
+        const char* s = SORCER_TxnPrimWordNameTable(k);
         if (0 == strcmp(s, name))
         {
             return k;
@@ -188,7 +190,7 @@ static SORCER_TxnKeyExpr SORCER_txnKeyExprFromHeadName(const char* name)
     for (SORCER_TxnKeyExpr i = 0; i < SORCER_NumTxnKeyExprs; ++i)
     {
         SORCER_TxnKeyExpr k = SORCER_NumTxnKeyExprs - 1 - i;
-        const char* s = SORCER_TxnKeyExprHeadNameTable()[k];
+        const char* s = SORCER_TxnKeyExprHeadNameTable(k);
         if (0 == strcmp(s, name))
         {
             return k;

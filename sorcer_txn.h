@@ -27,7 +27,7 @@ typedef enum SORCER_TxnError
     SORCER_NumTxnErrors
 } SORCER_TxnError;
 
-static const char** SORCER_TxnErrorNameTable(void)
+static const char* SORCER_TxnErrorNameTable(SORCER_TxnError err)
 {
     const char* a[SORCER_NumTxnErrors] =
     {
@@ -43,7 +43,7 @@ static const char** SORCER_TxnErrorNameTable(void)
         "RecurNoBaseCase",
         "TypeUnsolvable",
     };
-    return a;
+    return a[err];
 }
 
 typedef struct SORCER_TxnErrorInfo
