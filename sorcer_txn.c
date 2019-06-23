@@ -351,7 +351,7 @@ next:
             SORCER_txnLoadErrorAtNode(ctx, node, SORCER_TxnError_Syntax);
             return SORCER_Block_Invalid;
         }
-        const char* name = TXN_tokCstr(space, elms[0]);
+        const char* name = TXN_tokData(space, elms[0]);
         SORCER_TxnKeyExpr expr = SORCER_txnKeyExprFromHeadName(name);
         if (expr != SORCER_TxnKeyExpr_Invalid)
         {
@@ -364,7 +364,7 @@ next:
                     SORCER_txnLoadErrorAtNode(ctx, elms[1], SORCER_TxnError_Syntax);
                     return SORCER_Block_Invalid;
                 }
-                const char* defName = TXN_tokCstr(space, elms[1]);
+                const char* defName = TXN_tokData(space, elms[1]);
                 SORCER_Block block;
                 {
                     block = SORCER_txnLoadBlockNew(ctx, cur->block, elms + 2, len - 2);
@@ -450,7 +450,7 @@ next:
             {
                 SORCER_Type type = SORCER_typeByIndex(sorcer, i);
                 SORCER_Cell cell[1] = { 0 };
-                if (SORCER_cellNew(sorcer, type, TXN_tokCstr(space, node), true, cell))
+                if (SORCER_cellNew(sorcer, type, TXN_tokData(space, node), true, cell))
                 {
                     SORCER_blockAddInstPushCell(sorcer, cur->block, cell);
                     goto next;
@@ -461,7 +461,7 @@ next:
         }
         else
         {
-            const char* name = TXN_tokCstr(space, node);
+            const char* name = TXN_tokData(space, node);
             SORCER_TxnPrimWord primWord = SORCER_txnPrimWordFromName(name);
             if (primWord != SORCER_TxnPrimWord_Invalid)
             {
@@ -508,7 +508,7 @@ next:
             {
                 SORCER_Type type = SORCER_typeByIndex(sorcer, i);
                 SORCER_Cell cell[1] = { 0 };
-                if (SORCER_cellNew(sorcer, type, TXN_tokCstr(space, node), false, cell))
+                if (SORCER_cellNew(sorcer, type, TXN_tokData(space, node), false, cell))
                 {
                     SORCER_blockAddInstPushCell(sorcer, cur->block, cell);
                     goto next;
@@ -554,7 +554,7 @@ next:
     {
         const TXN_Node* elms = TXN_seqElm(space, node);
         u32 len = TXN_seqLen(space, node);
-        const char* name = TXN_tokCstr(space, elms[0]);
+        const char* name = TXN_tokData(space, elms[0]);
         SORCER_TxnKeyExpr expr = SORCER_txnKeyExprFromHeadName(name);
         if (expr != SORCER_TxnKeyExpr_Invalid)
         {
@@ -569,7 +569,7 @@ next:
                 for (u32 i = 1; i < len; ++i)
                 {
                     u32 j = len - 1 - i;
-                    const char* name = TXN_tokCstr(space, elms[j]);
+                    const char* name = TXN_tokData(space, elms[j]);
                     SORCER_Var var = SORCER_blockAddInstPopVar(sorcer, cur->block);
                     SORCER_TxnLoadBlock* blkInfo = blockTable->data + cur->block.id;
                     SORCER_TxnLoadVar varInfo = { name, var };

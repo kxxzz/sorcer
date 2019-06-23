@@ -36,6 +36,10 @@ static void SORCER_poolDtor_Num(void* pool)
     APNUM_poolFree(pool);
 }
 
+static u32 SORCER_cellToStr_Num(char* buf, u32 bufSize, void* pool, const SORCER_Cell* x)
+{
+    return APNUM_ratToStrWithBaseFmt(pool, x->as.ptr, APNUM_int_StrBaseFmtType_DEC, buf, bufSize);
+}
 
 
 
@@ -114,6 +118,7 @@ void SORCER_arith(SORCER_Context* ctx, SORCER_ArithContext* arithCtx)
             SORCER_cellDtor_Num,
             SORCER_poolCtor_Num,
             SORCER_poolDtor_Num,
+            SORCER_cellToStr_Num,
         }
     };
     for (u32 i = 0; i < ARYLEN(typeInfo); ++i)

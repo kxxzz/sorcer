@@ -210,8 +210,23 @@ bool SORCER_cellNew(SORCER_Context* ctx, SORCER_Type type, const char* str, bool
     {
         return false;
     }
-    return info->cellCtor(tp->data[type.id], str, out);
+    return info->ctor(tp->data[type.id], str, out);
 }
+
+
+
+
+u32 SORCER_cellToStr(char* buf, u32 bufSize, SORCER_Context* ctx, const SORCER_Cell* x)
+{
+    SORCER_TypeInfoVec* tt = ctx->typeTable;
+    vec_ptr* tp = ctx->typePool;
+    assert(tt->length == tp->length);
+    assert(x->type.id < tt->length);
+    SORCER_TypeInfo* info = tt->data + x->type.id;
+    void* pool = tp->data[x->type.id];
+    return info->toStr(buf, bufSize, pool, x);
+}
+
 
 
 
@@ -548,7 +563,7 @@ static void SORCER_runOpr(SORCER_Context* ctx, SORCER_Opr opr)
     vec_resize(inBuf, info->numIns);
     vec_resize(ds, ds->length + info->numOuts - info->numIns);
 
-    memcpy(inBuf->data, ds->data + ds->length - info->numIns, sizeof(SORCER_Cell)*info->numIns);
+    memcpy(inBuf->data, ds->data + ds->length - info->numOuts, sizeof(SORCER_Cell)*info->numIns);
 
     info->func(ctx, info->funcCtx, inBuf->data, ds->data + ds->length - info->numOuts);
 }

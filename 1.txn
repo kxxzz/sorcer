@@ -1,6 +1,7 @@
 (def a 100)
-//(def b 2)
-a neg
+(def b 2)
+
+a b /
 
 
 
