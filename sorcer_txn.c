@@ -10,7 +10,6 @@ typedef enum SORCER_TxnPrimWord
     SORCER_TxnPrimWord_Invalid = -1,
 
     SORCER_TxnPrimWord_Apply,
-    SORCER_TxnPrimWord_Ifte,
 
     SORCER_NumTxnPrimWords
 } SORCER_TxnPrimWord;
@@ -20,7 +19,6 @@ const char** SORCER_TxnPrimWordNameTable(void)
     static const char* a[SORCER_NumTxnPrimWords] =
     {
         "apply",
-        "ifte",
     };
     return a;
 }
@@ -472,11 +470,6 @@ next:
                 case SORCER_TxnPrimWord_Apply:
                 {
                     SORCER_blockAddInstApply(sorcer, cur->block);
-                    break;
-                }
-                case SORCER_TxnPrimWord_Ifte:
-                {
-                    SORCER_blockAddInstIfte(sorcer, cur->block);
                     break;
                 }
                 default:

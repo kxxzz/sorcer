@@ -12,13 +12,10 @@ typedef enum SORCER_OP
     SORCER_OP_PushBlock,
     SORCER_OP_Call,
     SORCER_OP_Apply,
-
-    SORCER_OP_Ifte,
     SORCER_OP_Opr,
 
     SORCER_OP_Ret,
     SORCER_OP_Jmp,
-    SORCER_OP_Jnz,
     SORCER_OP_JmpDS,
 
     SORCER_NumOPs
@@ -377,22 +374,12 @@ void SORCER_blockAddInstApply(SORCER_Context* ctx, SORCER_Block blk)
 }
 
 
-void SORCER_blockAddInstIfte(SORCER_Context* ctx, SORCER_Block blk)
-{
-    SORCER_codeOutdate(ctx);
-    SORCER_BlockInfoVec* bt = ctx->blockTable;
-    SORCER_BlockInfo* binfo = bt->data + blk.id;
-    SORCER_Inst inst = { SORCER_OP_Apply };
-    vec_push(binfo->code, inst);
-}
-
-
 void SORCER_blockAddInstOpr(SORCER_Context* ctx, SORCER_Block blk, SORCER_Opr opr)
 {
     SORCER_codeOutdate(ctx);
     SORCER_BlockInfoVec* bt = ctx->blockTable;
     SORCER_BlockInfo* binfo = bt->data + blk.id;
-    SORCER_Inst inst = { SORCER_OP_Opr,.arg.opr = opr };
+    SORCER_Inst inst = { SORCER_OP_Opr, .arg.opr = opr };
     vec_push(binfo->code, inst);
 }
 
@@ -433,31 +420,6 @@ void SORCER_blockAddInlineBlock(SORCER_Context* ctx, SORCER_Block blk, SORCER_Bl
 }
 
 
-
-
-
-void SORCER_blockAddPatIfteCT(SORCER_Context* ctx, SORCER_Block blk, SORCER_Block onTrue, SORCER_Block onFalse)
-{
-    SORCER_codeOutdate(ctx);
-    SORCER_BlockInfoVec* bt = ctx->blockTable;
-    SORCER_BlockInfo* bInfo = bt->data + blk.id;
-    SORCER_BlockInfo* onTrueInfo = bt->data + onTrue.id;
-    SORCER_BlockInfo* onFalseInfo = bt->data + onFalse.id;
-    u32 jnzOff = bInfo->code->length;
-    {
-        SORCER_Inst inst = { SORCER_OP_Jnz };
-        vec_push(bInfo->code, inst);
-    }
-    SORCER_blockAddInlineBlock(ctx, blk, onFalse);
-    u32 jmpOff = bInfo->code->length;
-    {
-        SORCER_Inst inst = { SORCER_OP_Jmp };
-        vec_push(bInfo->code, inst);
-    }
-    bInfo->code->data[jnzOff].arg.address = bInfo->code->length;
-    SORCER_blockAddInlineBlock(ctx, blk, onTrue);
-    bInfo->code->data[jmpOff].arg.address = bInfo->code->length;
-}
 
 
 
@@ -505,7 +467,6 @@ static void SORCER_codeUpdate(SORCER_Context* ctx, SORCER_Block blk)
             switch (inst.op)
             {
             case SORCER_OP_Jmp:
-            case SORCER_OP_Jnz:
             {
                 inst.arg.address += blkInfo->baseAddress;
                 break;
@@ -657,26 +618,6 @@ next:
         p = top.as.address;
         goto next;
     }
-    case SORCER_OP_Ifte:
-    {
-        SORCER_Cell onFalse = vec_last(ds);
-        vec_pop(ds);
-        SORCER_Cell onTure = vec_last(ds);
-        vec_pop(ds);
-        SORCER_Cell cond = vec_last(ds);
-        vec_pop(ds);
-        SORCER_Ret ret = { p, vt->length };
-        vec_push(rs, ret);
-        if (cond.as.val)
-        {
-            p = onTure.as.address;
-        }
-        else
-        {
-            p = onFalse.as.address;
-        }
-        goto next;
-    }
     case SORCER_OP_Opr:
     {
         SORCER_runOpr(ctx, inst->arg.opr);
@@ -698,16 +639,6 @@ next:
     case SORCER_OP_Jmp:
     {
         p = inst->arg.address;
-        goto next;
-    }
-    case SORCER_OP_Jnz:
-    {
-        SORCER_Cell top = vec_last(ds);
-        vec_pop(ds);
-        if (top.as.val)
-        {
-            p = inst->arg.address;
-        }
         goto next;
     }
     case SORCER_OP_JmpDS:
