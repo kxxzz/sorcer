@@ -548,7 +548,8 @@ static void SORCER_runOpr(SORCER_Context* ctx, SORCER_Opr opr)
     vec_resize(inBuf, info->numIns);
     vec_resize(ds, ds->length + info->numOuts - info->numIns);
 
-    SORCER_dsPop(ctx, info->numIns, ctx->inBuf->data);
+    memcpy(inBuf->data, ds->data + ds->length - info->numIns, sizeof(SORCER_Cell)*info->numIns);
+
     info->func(ctx, inBuf->data, ds->data + ds->length - info->numOuts);
 }
 
