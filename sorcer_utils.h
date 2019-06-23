@@ -3,8 +3,6 @@
 
 
 #include "sorcer.h"
-#include "sorcer_txn.h"
-#include "sorcer_arith.h"
 
 
 
