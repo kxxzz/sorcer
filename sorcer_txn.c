@@ -82,7 +82,7 @@ typedef struct SORCER_TxnLoadBlockInfo
     SORCER_TxnLoadDefVec defTable[1];
     SORCER_TxnLoadVarVec varTable[1];
     bool loaded;
-    SORCER_TypeVec cellTable[1];
+    u32 cellNewCount;
     vec_u32 dataStack[1];
     u32 numIns;
 } SORCER_TxnLoadBlockInfo;
@@ -90,7 +90,6 @@ typedef struct SORCER_TxnLoadBlockInfo
 static void SORCER_txnLoadBlockInfoFree(SORCER_TxnLoadBlockInfo* b)
 {
     vec_free(b->dataStack);
-    vec_free(b->cellTable);
     vec_free(b->varTable);
     vec_free(b->defTable);
 }
@@ -415,7 +414,7 @@ static void SORCER_txnLoadBlockSetLoaded(SORCER_TxnLoadContext* ctx, SORCER_Bloc
 {
     SORCER_TxnLoadBlockInfo* blkInfo = SORCER_txnLoadBlockInfo(ctx, block);
     assert(!blkInfo->loaded);
-    assert(!blkInfo->cellTable->length);
+    assert(!blkInfo->cellNewCount);
     assert(!blkInfo->dataStack->length);
     assert(!blkInfo->numIns);
     blkInfo->loaded = true;
@@ -424,12 +423,34 @@ static void SORCER_txnLoadBlockSetLoaded(SORCER_TxnLoadContext* ctx, SORCER_Bloc
 
 
 
-static void SORCER_txnLoadBlockCellNew(SORCER_TxnLoadBlockInfo* curBlkInfo, SORCER_Type type)
+static void SORCER_txnLoadBlockCellNew(SORCER_TxnLoadContext* ctx, SORCER_Block block)
 {
-    u32 cellId = curBlkInfo->cellTable->length;
-    vec_push(curBlkInfo->cellTable, type);
-    vec_push(curBlkInfo->dataStack, cellId);
+    SORCER_TxnLoadBlockInfo* blkInfo = SORCER_txnLoadBlockInfo(ctx, block);
+    u32 cellId = blkInfo->cellNewCount++;
+    vec_push(blkInfo->dataStack, cellId);
 }
+
+
+
+
+static SORCER_TxnLoadVar* SORCER_txnLoadFindVarWithCell(SORCER_TxnLoadContext* ctx, SORCER_Block block, u32 cellId)
+{
+    SORCER_TxnLoadBlockInfo* blkInfo = SORCER_txnLoadBlockInfo(ctx, block);
+    assert(blkInfo->loaded);
+    for (u32 i = 0; i < blkInfo->varTable->length; ++i)
+    {
+        SORCER_TxnLoadVar* info = blkInfo->varTable->data + i;
+        if (info->cellId == cellId)
+        {
+            return info;
+        }
+    }
+    return NULL;
+}
+
+
+
+
 
 
 
@@ -494,7 +515,7 @@ next:
                 {
                     SORCER_cellFree(sorcer, cell);
                     SORCER_blockAddInstPushImm(sorcer, cur->block, type, str);
-                    SORCER_txnLoadBlockCellNew(curBlkInfo, type);
+                    SORCER_txnLoadBlockCellNew(ctx, cur->block);
                     goto next;
                 }
             }
@@ -554,8 +575,7 @@ next:
                 for (u32 i = 0; i < blkInfo->dataStack->length; ++i)
                 {
                     u32 cellId = blkInfo->dataStack->data[i];
-                    SORCER_Type cellType = blkInfo->cellTable->data[cellId];
-                    SORCER_txnLoadBlockCellNew(curBlkInfo, cellType);
+                    SORCER_txnLoadBlockCellNew(ctx, cur->block);
                 }
                 goto next;
             }
@@ -576,7 +596,7 @@ next:
                 }
                 for (u32 i = 0; i < oprInfo->numOuts; ++i)
                 {
-                    SORCER_txnLoadBlockCellNew(curBlkInfo, oprInfo->outs[i]);
+                    SORCER_txnLoadBlockCellNew(ctx, cur->block);
                 }
                 goto next;
             }
@@ -596,29 +616,13 @@ next:
                 {
                     SORCER_cellFree(sorcer, cell);
                     SORCER_blockAddInstPushImm(sorcer, cur->block, type, str);
-                    SORCER_txnLoadBlockCellNew(curBlkInfo, type);
+                    SORCER_txnLoadBlockCellNew(ctx, cur->block);
                     goto next;
                 }
             }
             SORCER_txnLoadErrorAtNode(ctx, node, SORCER_TxnError_UnkWord);
             goto failed;
         }
-    }
-    else if (TXN_isSeqCurly(space, node))
-    {
-        const TXN_Node* body = TXN_seqElm(space, node);
-        u32 bodyLen = TXN_seqLen(space, node);
-        SORCER_Block block = SORCER_txnLoadBlockNew(ctx, cur->block, body, bodyLen);
-        if (block.id == SORCER_Block_Invalid.id)
-        {
-            goto failed;
-        }
-        SORCER_blockAddInstCall(sorcer, cur->block, block);
-        SORCER_TxnLoadCallLevel level = { block, body, bodyLen, };
-        vec_push(callStack, level);
-        SORCER_txnLoadBlockDefTree(ctx);
-        SORCER_txnLoadBlockSetLoaded(ctx, block);
-        goto next;
     }
     else if (TXN_isSeqSquare(space, node))
     {

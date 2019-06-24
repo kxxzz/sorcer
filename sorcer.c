@@ -16,7 +16,6 @@ typedef enum SORCER_OP
 
     SORCER_OP_Ret,
     SORCER_OP_Jmp,
-    SORCER_OP_JmpDS,
 
     SORCER_NumOPs
 } SORCER_OP;
@@ -112,6 +111,10 @@ void SORCER_ctxFree(SORCER_Context* ctx)
     vec_free(ctx->retStack);
     vec_free(ctx->code);
 
+    for (u32 i = 0; i < ctx->dataStack->length; ++i)
+    {
+        SORCER_cellFree(ctx, ctx->dataStack->data + i);
+    }
     vec_free(ctx->dataStack);
 
     upool_free(ctx->dataPool);
@@ -538,13 +541,10 @@ static void SORCER_codeUpdate(SORCER_Context* ctx, SORCER_Block blk)
                 switch (inst.op)
                 {
                 case SORCER_OP_Call:
-                {
-                    inst.op = SORCER_OP_Jmp;
-                    break;
-                }
                 case SORCER_OP_Apply:
                 {
-                    inst.op = SORCER_OP_JmpDS;
+                    SORCER_Inst inst0 = { SORCER_OP_Ret };
+                    vec_push(code, inst0);
                     break;
                 }
                 default:
@@ -703,13 +703,6 @@ next:
     case SORCER_OP_Jmp:
     {
         p = inst->arg.address;
-        goto next;
-    }
-    case SORCER_OP_JmpDS:
-    {
-        SORCER_Cell top = vec_last(ds);
-        vec_pop(ds);
-        p = top.as.address;
         goto next;
     }
     default:
