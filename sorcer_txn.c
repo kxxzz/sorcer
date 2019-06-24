@@ -450,19 +450,21 @@ static SORCER_TxnLoadVarInfo* SORCER_txnLoadFindVarWithCell(SORCER_TxnLoadContex
 
 
 
-static u32 SORCER_txnLoadFindVarPush(SORCER_TxnLoadContext* ctx, const TXN_Node* seq, u32 len, const char* name)
+static u32 SORCER_txnLoadFindLastVarPush(SORCER_TxnLoadContext* ctx, const char* varName)
 {
+    SORCER_TxnLoadCallLevel* cur = &vec_last(ctx->callStack);
     TXN_Space* space = ctx->space;
-    for (u32 i = 0; i < len; ++i)
+    for (u32 i = 0; i < cur->len - cur->p - 1; ++i)
     {
-        if (!TXN_nodeIsTok(space, seq[i]))
+        u32 j = cur->len - 1 - i;
+        if (!TXN_nodeIsTok(space, cur->seq[j]))
         {
             continue;
         }
-        const char* name = TXN_tokData(space, seq[i]);
-        if (name == name)
+        const char* name = TXN_tokData(space, cur->seq[j]);
+        if (name == varName)
         {
-            return i;
+            return j;
         }
     }
     return -1;
@@ -699,23 +701,28 @@ next:
                 {
                     u32 j = len - 1 - i;
                     const char* name = TXN_tokData(space, elms[j]);
-                    // todo
-                    SORCER_Var var = SORCER_blockAddInstPopVar(sorcer, cur->block);
-
-                    SORCER_TxnLoadBlockInfo* curBlkInfo = SORCER_txnLoadBlockInfo(ctx, cur->block);
-                    u32 cell = -1;
-                    if (curBlkInfo->dataStack->length > 0)
+                    u32 lastPos = SORCER_txnLoadFindLastVarPush(ctx, name);
+                    if (lastPos != -1)
                     {
-                        cell = vec_last(curBlkInfo->dataStack);
-                        vec_pop(curBlkInfo->dataStack);
+                        SORCER_Var var = SORCER_blockAddInstPopVar(sorcer, cur->block);
+                        SORCER_TxnLoadBlockInfo* curBlkInfo = SORCER_txnLoadBlockInfo(ctx, cur->block);
+                        u32 cell = -1;
+                        if (curBlkInfo->dataStack->length > 0)
+                        {
+                            cell = vec_last(curBlkInfo->dataStack);
+                            vec_pop(curBlkInfo->dataStack);
+                        }
+                        else
+                        {
+                            curBlkInfo->numIns += 1;
+                        }
+                        SORCER_TxnLoadVarInfo varInfo = { name, var, cell };
+                        vec_push(curBlkInfo->varTable, varInfo);
                     }
                     else
                     {
-                        curBlkInfo->numIns += 1;
+                        // todo
                     }
-
-                    SORCER_TxnLoadVarInfo varInfo = { name, var, cell };
-                    vec_push(curBlkInfo->varTable, varInfo);
                 }
                 goto next;
             }
