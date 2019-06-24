@@ -25,6 +25,11 @@ static void SORCER_cellDtor_Num(void* pool, void* x)
     APNUM_ratFree(pool, x);
 }
 
+static void SORCER_cellCopier_Num(void* pool, void* x, void** pOut)
+{
+    APNUM_ratDup(*pOut, x);
+}
+
 static void* SORCER_poolCtor_Num(void)
 {
     APNUM_pool_t pool = APNUM_poolNew();
@@ -116,6 +121,7 @@ void SORCER_arith(SORCER_Context* ctx, SORCER_ArithContext* arithCtx)
             "num",
             SORCER_cellCtor_Num,
             SORCER_cellDtor_Num,
+            SORCER_cellCopier_Num,
             SORCER_poolCtor_Num,
             SORCER_poolDtor_Num,
             SORCER_cellToStr_Num,

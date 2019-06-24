@@ -56,8 +56,9 @@ typedef struct SORCER_Cell
     } as;
 } SORCER_Cell;
 
-typedef bool(*SORCER_CellCtor)(void* pool, const char* str, void** out);
+typedef bool(*SORCER_CellCtor)(void* pool, const char* str, void** pOut);
 typedef void(*SORCER_CellDtor)(void* pool, void* x);
+typedef void(*SORCER_CellCopier)(void* pool, void* x, void** pOut);
 typedef void*(*SORCER_PoolCtor)(void);
 typedef void(*SORCER_PoolDtor)(void* pool);
 typedef u32(*SORCER_CellToStr)(char* buf, u32 bufLen, void* pool, const SORCER_Cell* x);
@@ -67,6 +68,7 @@ typedef struct SORCER_TypeInfo
     const char* name;
     SORCER_CellCtor ctor;
     SORCER_CellDtor dtor;
+    SORCER_CellCopier copier;
     SORCER_PoolCtor poolCtor;
     SORCER_PoolDtor poolDtor;
     SORCER_CellToStr toStr;
