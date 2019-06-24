@@ -297,6 +297,12 @@ SORCER_Opr SORCER_oprByIndex(SORCER_Context* ctx, u32 idx)
 }
 
 
+const SORCER_OprInfo* SORCER_oprInfo(SORCER_Context* ctx, SORCER_Opr opr)
+{
+    SORCER_OprInfoVec* ot = ctx->oprTable;
+    assert(opr.id < ot->length);
+    return ot->data + opr.id;
+}
 
 
 

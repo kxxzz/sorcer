@@ -62,7 +62,7 @@ static char* stzncpy(char* dst, char const* src, u32 len)
 
 
 
-
+typedef vec_t(SORCER_Type) SORCER_TypeVec;
 
 
 

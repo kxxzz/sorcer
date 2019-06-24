@@ -109,6 +109,7 @@ typedef struct SORCER_OprInfo
 SORCER_Opr SORCER_oprNew(SORCER_Context* ctx, const SORCER_OprInfo* info);
 SORCER_Opr SORCER_oprByName(SORCER_Context* ctx, const char* name);
 SORCER_Opr SORCER_oprByIndex(SORCER_Context* ctx, u32 idx);
+const SORCER_OprInfo* SORCER_oprInfo(SORCER_Context* ctx, SORCER_Opr opr);
 
 
 
