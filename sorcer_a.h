@@ -58,11 +58,25 @@ static char* stzncpy(char* dst, char const* src, u32 len)
 
 
 
+static u32 findInArray32(const u32* a, u32 n, u32 x)
+{
+    for (u32 i = 0; i < n; ++i)
+    {
+        if (a[i] == x)
+        {
+            return i;
+        }
+    }
+    return -1;
+}
 
 
 
 
-typedef vec_t(SORCER_Type) SORCER_TypeVec;
+
+
+
+
 
 
 

@@ -134,6 +134,7 @@ void SORCER_blockAddInstApply(SORCER_Context* ctx, SORCER_Block blk);
 void SORCER_blockAddInstOpr(SORCER_Context* ctx, SORCER_Block blk, SORCER_Opr opr);
 void SORCER_blockAddInstClean(SORCER_Context* ctx, SORCER_Block blk, u32 mask);
 void SORCER_blockAddInstDrop(SORCER_Context* ctx, SORCER_Block blk, u32 rdp);
+void SORCER_blockAddInstVarCellFree(SORCER_Context* ctx, SORCER_Block blk, SORCER_Var v);
 
 void SORCER_blockAddInlineBlock(SORCER_Context* ctx, SORCER_Block blk, SORCER_Block ib);
 

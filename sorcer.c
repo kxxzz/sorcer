@@ -15,6 +15,7 @@ typedef enum SORCER_OP
     SORCER_OP_Opr,
     SORCER_OP_Clean,
     SORCER_OP_Drop,
+    SORCER_OP_VarCellFree,
 
     SORCER_OP_Ret,
     SORCER_OP_Jmp,
@@ -480,6 +481,15 @@ void SORCER_blockAddInstDrop(SORCER_Context* ctx, SORCER_Block blk, u32 a)
 }
 
 
+void SORCER_blockAddInstVarCellFree(SORCER_Context* ctx, SORCER_Block blk, SORCER_Var v)
+{
+    SORCER_codeOutdate(ctx);
+    SORCER_BlockInfoVec* bt = ctx->blockTable;
+    SORCER_BlockInfo* binfo = bt->data + blk.id;
+    SORCER_Inst inst = { SORCER_OP_VarCellFree, .arg.var = v };
+    vec_push(binfo->code, inst);
+}
+
 
 
 
@@ -728,6 +738,18 @@ next:
         u32 dp = ds->length - 1 - inst->arg.rdp;
         SORCER_cellDup(ctx, ds->data + dp, t);
         ds->data[dp] = t[0];
+        goto next;
+    }
+    case SORCER_OP_VarCellFree:
+    {
+        u32 varBase = 0;
+        if (rs->length > 0)
+        {
+            SORCER_Ret ret = vec_last(rs);
+            varBase = ret.varBase;
+        }
+        SORCER_Cell* cell = vt->data + varBase + inst->arg.var.id;
+        SORCER_cellFree(ctx, cell);
         goto next;
     }
     case SORCER_OP_Ret:
