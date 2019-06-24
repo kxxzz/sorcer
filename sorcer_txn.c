@@ -450,6 +450,26 @@ static SORCER_TxnLoadVarInfo* SORCER_txnLoadFindVarWithCell(SORCER_TxnLoadContex
 
 
 
+static u32 SORCER_txnLoadFindVarPush(SORCER_TxnLoadContext* ctx, const TXN_Node* seq, u32 len, const char* name)
+{
+    TXN_Space* space = ctx->space;
+    for (u32 i = 0; i < len; ++i)
+    {
+        if (!TXN_isTok(space, seq[i]))
+        {
+            continue;
+        }
+        const char* name = TXN_tokData(space, seq[i]);
+        if (name == name)
+        {
+            return i;
+        }
+    }
+    return -1;
+}
+
+
+
 
 
 
