@@ -592,11 +592,15 @@ next:
                     if (i >= curBlkIns)
                     {
                         u32 cellId = curBlkInfo->dataStack->data[i - curBlkIns];
-                        SORCER_TxnLoadVarInfo* var = SORCER_txnLoadFindVarWithCell(ctx, cur->block, cellId);
-                        if (var)
+                        SORCER_TxnLoadVarInfo* varInfo = SORCER_txnLoadFindVarWithCell(ctx, cur->block, cellId);
+                        if (varInfo)
                         {
                             u32 rdp = defBlkInfo->numIns - 1 - i;
                             SORCER_blockAddInstDrop(sorcer, cur->block, rdp);
+                            if (varInfo->lastPos < cur->p)
+                            {
+                                SORCER_blockAddInstVarFree(sorcer, cur->block, varInfo->var);
+                            }
                         }
                     }
                 }
@@ -627,8 +631,15 @@ next:
                     else
                     {
                         u32 cellId = curBlkInfo->dataStack->data[i - curBlkIns];
-                        SORCER_TxnLoadVarInfo* var = SORCER_txnLoadFindVarWithCell(ctx, cur->block, cellId);
-                        if (!var)
+                        SORCER_TxnLoadVarInfo* varInfo = SORCER_txnLoadFindVarWithCell(ctx, cur->block, cellId);
+                        if (varInfo)
+                        {
+                            if (varInfo->lastPos < cur->p)
+                            {
+                                freeMask |= (1U << i);
+                            }
+                        }
+                        else
                         {
                             freeMask |= (1U << i);
                         }
