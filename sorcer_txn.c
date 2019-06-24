@@ -502,8 +502,8 @@ next:
             for (u32 i = 0; i < numTypes; ++i)
             {
                 SORCER_Type type = SORCER_typeByIndex(sorcer, i);
-                const SORCER_TypeInfo* info = SORCER_typeInfo(sorcer, type);
-                if (!(info->flags & SORCER_TypeFlag_String))
+                const SORCER_TypeInfo* typeInfo = SORCER_typeInfo(sorcer, type);
+                if (!(typeInfo->flags & SORCER_TypeFlag_String))
                 {
                     continue;
                 }
@@ -548,14 +548,14 @@ next:
                 vec_push(curBlkInfo->dataStack, varInfo->cell);
                 goto next;
             }
-            SORCER_TxnLoadDef* def = SORCER_txnLoadFindDef(ctx, name, cur->block);
-            if (def)
+            SORCER_TxnLoadDef* defInfo = SORCER_txnLoadFindDef(ctx, name, cur->block);
+            if (defInfo)
             {
-                SORCER_TxnLoadBlockInfo* defBlkInfo = SORCER_txnLoadBlockInfo(ctx, def->block);
+                SORCER_TxnLoadBlockInfo* defBlkInfo = SORCER_txnLoadBlockInfo(ctx, defInfo->block);
                 if (!defBlkInfo->loaded)
                 {
-                    SORCER_txnLoadBlockSetLoaded(ctx, def->block);
-                    SORCER_TxnLoadCallLevel level = { def->block, defBlkInfo->body, defBlkInfo->bodyLen };
+                    SORCER_txnLoadBlockSetLoaded(ctx, defInfo->block);
+                    SORCER_TxnLoadCallLevel level = { defInfo->block, defBlkInfo->body, defBlkInfo->bodyLen };
                     vec_push(callStack, level);
                     cur->p -= 1;
                     goto next;
@@ -577,7 +577,7 @@ next:
                         }
                     }
                 }
-                SORCER_blockAddInstCall(sorcer, cur->block, def->block);
+                SORCER_blockAddInstCall(sorcer, cur->block, defInfo->block);
                 vec_resize(curBlkInfo->dataStack, curBlkInfo->dataStack->length - dsReduce);
                 for (u32 i = 0; i < defBlkInfo->dataStack->length; ++i)
                 {
@@ -623,8 +623,8 @@ next:
             for (u32 i = 0; i < numTypes; ++i)
             {
                 SORCER_Type type = SORCER_typeByIndex(sorcer, i);
-                const SORCER_TypeInfo* info = SORCER_typeInfo(sorcer, type);
-                if (info->flags & SORCER_TypeFlag_String)
+                const SORCER_TypeInfo* typeInfo = SORCER_typeInfo(sorcer, type);
+                if (typeInfo->flags & SORCER_TypeFlag_String)
                 {
                     continue;
                 }
