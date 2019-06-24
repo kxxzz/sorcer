@@ -272,7 +272,7 @@ static SORCER_Opr SORCER_txnLoadFindOpr(SORCER_TxnLoadContext* ctx, const char* 
 
 static bool SORCER_txnLoadCheckCall(TXN_Space* space, TXN_Node node)
 {
-    if (!TXN_isSeqRound(space, node))
+    if (!TXN_nodeIsSeqRound(space, node))
     {
         return false;
     }
@@ -282,7 +282,7 @@ static bool SORCER_txnLoadCheckCall(TXN_Space* space, TXN_Node node)
         return false;
     }
     const TXN_Node* elms = TXN_seqElm(space, node);
-    if (!TXN_isTok(space, elms[0]))
+    if (!TXN_nodeIsTok(space, elms[0]))
     {
         return false;
     }
@@ -379,7 +379,7 @@ next:
             {
             case SORCER_TxnKeyExpr_Def:
             {
-                if (!TXN_isTok(space, elms[1]))
+                if (!TXN_nodeIsTok(space, elms[1]))
                 {
                     SORCER_txnLoadErrorAtNode(ctx, elms[1], SORCER_TxnError_Syntax);
                     return SORCER_Block_Invalid;
@@ -455,7 +455,7 @@ static u32 SORCER_txnLoadFindVarPush(SORCER_TxnLoadContext* ctx, const TXN_Node*
     TXN_Space* space = ctx->space;
     for (u32 i = 0; i < len; ++i)
     {
-        if (!TXN_isTok(space, seq[i]))
+        if (!TXN_nodeIsTok(space, seq[i]))
         {
             continue;
         }
@@ -514,7 +514,7 @@ next:
         }
     }
     TXN_Node node = cur->seq[cur->p++];
-    if (TXN_isTok(space, node))
+    if (TXN_nodeIsTok(space, node))
     {
         u32 numTypes = SORCER_ctxTypesTotal(sorcer);
         if (TXN_tokQuoted(space, node))
@@ -663,7 +663,7 @@ next:
             goto failed;
         }
     }
-    else if (TXN_isSeqSquare(space, node))
+    else if (TXN_nodeIsSeqSquare(space, node))
     {
         const TXN_Node* body = TXN_seqElm(space, node);
         u32 bodyLen = TXN_seqLen(space, node);
