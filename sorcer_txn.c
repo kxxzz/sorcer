@@ -679,6 +679,7 @@ next:
                 {
                     u32 j = len - 1 - i;
                     const char* name = TXN_tokData(space, elms[j]);
+                    // todo
                     SORCER_Var var = SORCER_blockAddInstPopVar(sorcer, cur->block);
 
                     SORCER_TxnLoadBlockInfo* curBlkInfo = SORCER_txnLoadBlockInfo(ctx, cur->block);
