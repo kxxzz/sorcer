@@ -56,13 +56,35 @@ typedef struct SORCER_TxnErrorInfo
 
 
 
+enum
+{
+    SORCER_TxnFilePath_MAX = 260,
+};
+
+typedef struct SORCER_TxnFileInfo
+{
+    char path[SORCER_TxnFilePath_MAX];
+} SORCER_TxnFileInfo;
+
+typedef vec_t(SORCER_TxnFileInfo) SORCER_TxnFileInfoVec;
+
+
 
 SORCER_Block SORCER_blockFromTxnNode
 (
-    SORCER_Context* ctx, TXN_Space* space, TXN_Node node, const TXN_SpaceSrcInfo* srcInfo, SORCER_TxnErrorInfo* errInfo
+    SORCER_Context* ctx, TXN_Space* space, TXN_Node node,
+    const TXN_SpaceSrcInfo* srcInfo, SORCER_TxnErrorInfo* errInfo, SORCER_TxnFileInfoVec* fileTable
 );
-SORCER_Block SORCER_blockFromTxnCode(SORCER_Context* ctx, const char* path, SORCER_TxnErrorInfo* errInfo);
-SORCER_Block SORCER_blockFromTxnFile(SORCER_Context* ctx, const char* path, SORCER_TxnErrorInfo* errInfo);
+
+SORCER_Block SORCER_blockFromTxnCode
+(
+    SORCER_Context* ctx, const char* path, SORCER_TxnErrorInfo* errInfo, SORCER_TxnFileInfoVec* fileTable
+);
+
+SORCER_Block SORCER_blockFromTxnFile
+(
+    SORCER_Context* ctx, const char* path, SORCER_TxnErrorInfo* errInfo, SORCER_TxnFileInfoVec* fileTable
+);
 
 
 

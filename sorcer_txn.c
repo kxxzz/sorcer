@@ -115,6 +115,7 @@ typedef struct SORCER_TxnLoadContext
     TXN_Space* space;
     const TXN_SpaceSrcInfo* srcInfo;
     SORCER_TxnErrorInfo* errInfo;
+    SORCER_TxnFileInfoVec* fileTable;
     u32 blockBaseId;
     SORCER_TxnLoadBlockVec blockTable[1];
     SORCER_TxnLoadCallStack callStack[1];
@@ -122,7 +123,8 @@ typedef struct SORCER_TxnLoadContext
 
 static SORCER_TxnLoadContext SORCER_txnLoadContextNew
 (
-    SORCER_Context* sorcer, TXN_Space* space, const TXN_SpaceSrcInfo* srcInfo, SORCER_TxnErrorInfo* errInfo
+    SORCER_Context* sorcer, TXN_Space* space,
+    const TXN_SpaceSrcInfo* srcInfo, SORCER_TxnErrorInfo* errInfo, SORCER_TxnFileInfoVec* fileTable
 )
 {
     SORCER_TxnLoadContext ctx[1] = { 0 };
@@ -130,6 +132,7 @@ static SORCER_TxnLoadContext SORCER_txnLoadContextNew
     ctx->space = space;
     ctx->srcInfo = srcInfo;
     ctx->errInfo = errInfo;
+    ctx->fileTable = fileTable;
     ctx->blockBaseId = SORCER_ctxBlocksTotal(sorcer);
     return *ctx;
 }
@@ -617,12 +620,18 @@ failed:
 
 SORCER_Block SORCER_blockFromTxnNode
 (
-    SORCER_Context* ctx, TXN_Space* space, TXN_Node node, const TXN_SpaceSrcInfo* srcInfo, SORCER_TxnErrorInfo* errInfo
+    SORCER_Context* ctx, TXN_Space* space, TXN_Node node,
+    const TXN_SpaceSrcInfo* srcInfo, SORCER_TxnErrorInfo* errInfo, SORCER_TxnFileInfoVec* fileTable
 )
 {
+    if (fileTable && !fileTable->length)
+    {
+        SORCER_TxnFileInfo info = { 0 };
+        vec_push(fileTable, info);
+    }
     const TXN_Node* seq = TXN_seqElm(space, node);
     u32 len = TXN_seqLen(space, node);
-    SORCER_TxnLoadContext tctx[1] = { SORCER_txnLoadContextNew(ctx, space, srcInfo, errInfo) };
+    SORCER_TxnLoadContext tctx[1] = { SORCER_txnLoadContextNew(ctx, space, srcInfo, errInfo, fileTable) };
     SORCER_Block r = SORCER_txnLoadBlock(tctx, seq, len);
     SORCER_txnLoadContextFree(tctx);
     return r;
@@ -631,7 +640,10 @@ SORCER_Block SORCER_blockFromTxnNode
 
 
 
-SORCER_Block SORCER_blockFromTxnCode(SORCER_Context* ctx, const char* code, SORCER_TxnErrorInfo* errInfo)
+SORCER_Block SORCER_blockFromTxnCode
+(
+    SORCER_Context* ctx, const char* code, SORCER_TxnErrorInfo* errInfo, SORCER_TxnFileInfoVec* fileTable
+)
 {
     SORCER_Block block = SORCER_Block_Invalid;
     TXN_Space* space = TXN_spaceNew();
@@ -646,7 +658,7 @@ SORCER_Block SORCER_blockFromTxnCode(SORCER_Context* ctx, const char* code, SORC
         errInfo->column = nodeSrcInfo->column;
         goto out;
     }
-    block = SORCER_blockFromTxnNode(ctx, space, root, srcInfo, errInfo);
+    block = SORCER_blockFromTxnNode(ctx, space, root, srcInfo, errInfo, fileTable);
 out:
     TXN_spaceSrcInfoFree(srcInfo);
     TXN_spaceFree(space);
@@ -656,7 +668,10 @@ out:
 
 
 
-SORCER_Block SORCER_blockFromTxnFile(SORCER_Context* ctx, const char* path, SORCER_TxnErrorInfo* errInfo)
+SORCER_Block SORCER_blockFromTxnFile
+(
+    SORCER_Context* ctx, const char* path, SORCER_TxnErrorInfo* errInfo, SORCER_TxnFileInfoVec* fileTable
+)
 {
     char* str;
     u32 strSize = FILEU_readFile(path, &str);
@@ -668,7 +683,13 @@ SORCER_Block SORCER_blockFromTxnFile(SORCER_Context* ctx, const char* path, SORC
         errInfo->column = 0;
         return SORCER_Block_Invalid;
     }
-    SORCER_Block blk = SORCER_blockFromTxnCode(ctx, str, errInfo);
+    if (fileTable && !fileTable->length)
+    {
+        SORCER_TxnFileInfo info = { 0 };
+        stzncpy(info.path, path, SORCER_TxnFilePath_MAX);
+        vec_push(fileTable, info);
+    }
+    SORCER_Block blk = SORCER_blockFromTxnCode(ctx, str, errInfo, fileTable);
     free(str);
     return blk;
 }

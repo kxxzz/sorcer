@@ -67,34 +67,41 @@ static void execCode(const char* filename, const char* code)
     SORCER_ArithContext arithCtx[1] = { 0 };
     SORCER_arith(ctx, arithCtx);
     SORCER_TxnErrorInfo txnErrInfo[1] = { 0 };
+    SORCER_TxnFileInfoVec fileTable[1] = { 0 };
     SORCER_Block blk;
     if (code)
     {
-        blk = SORCER_blockFromTxnCode(ctx, code, txnErrInfo);
+        blk = SORCER_blockFromTxnCode(ctx, code, txnErrInfo, fileTable);
     }
     else
     {
-        blk = SORCER_blockFromTxnFile(ctx, filename, txnErrInfo);
+        blk = SORCER_blockFromTxnFile(ctx, filename, txnErrInfo, fileTable);
     }
     printf("[COMP DONE] \"%s\" [%s]\n", filename, nowStr(timeBuf));
     if (blk.id != SORCER_Block_Invalid.id)
     {
         assert(SORCER_TxnError_NONE == txnErrInfo->error);
+
+        printf("[EXEC START] \"%s\" [%s]\n", filename, nowStr(timeBuf));
+        SORCER_run(ctx, blk);
+        printf("[EXEC DONE] \"%s\" [%s]\n", filename, nowStr(timeBuf));
+
+        printf("<DataStack>\n");
+        printf("-------------\n");
+        SORCER_dsFprint(stdout, ctx);
+        printf("-------------\n");
     }
     else
     {
-        //const SORCER_FileInfoTable* fiTable = SORCER_ctxSrcFileInfoTable(ctx);
-        //TXN_evalErrorFprint(stderr, fiTable, &err);
+        const char* errname = SORCER_TxnErrorNameTable(txnErrInfo->error);
+        const char* filename = fileTable->data[txnErrInfo->file].path;
+        printf
+        (
+            "[ERROR] %s: \"%s\": %u:%u [%s]\n",
+            errname, filename, txnErrInfo->line, txnErrInfo->column, nowStr(timeBuf)
+        );
     }
-    printf("[EXEC START] \"%s\" [%s]\n", filename, nowStr(timeBuf));
-    SORCER_run(ctx, blk);
-    printf("[EXEC DONE] \"%s\" [%s]\n", filename, nowStr(timeBuf));
-
-    printf("<DataStack>\n");
-    printf("-------------\n");
-    SORCER_dsFprint(stdout, ctx);
-    printf("-------------\n");
-
+    vec_free(fileTable);
     SORCER_ctxFree(ctx);
 }
 
