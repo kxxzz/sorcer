@@ -481,19 +481,6 @@ next:
     cur = &vec_last(callStack);
     if (cur->p == cur->len)
     {
-        SORCER_TxnLoadBlockInfo* curBlkInfo = SORCER_txnLoadBlockInfo(ctx, cur->block);
-        for (u32 i = 0; i < curBlkInfo->varTable->length; ++i)
-        {
-            SORCER_TxnLoadVarInfo* varInfo = curBlkInfo->varTable->data + i;
-            if (varInfo->cell != -1)
-            {
-                u32 idx = findInArray32(curBlkInfo->dataStack->data, curBlkInfo->dataStack->length, varInfo->cell);
-                if (-1 == idx)
-                {
-                    SORCER_blockAddInstVarCellFree(sorcer, cur->block, varInfo->var);
-                }
-            }
-        }
         if (callStack->length > begin)
         {
             vec_pop(callStack);
