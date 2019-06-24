@@ -56,7 +56,6 @@ typedef struct SORCER_TxnLoadVar
 {
     const char* name;
     SORCER_Var var;
-    u32 cellId;
 } SORCER_TxnLoadVar;
 
 typedef vec_t(SORCER_TxnLoadVar) SORCER_TxnLoadVarVec;
@@ -82,14 +81,10 @@ typedef struct SORCER_TxnLoadBlockInfo
     SORCER_TxnLoadDefVec defTable[1];
     SORCER_TxnLoadVarVec varTable[1];
     bool loaded;
-    u32 cellNewCount;
-    vec_u32 dataStack[1];
-    u32 numIns;
 } SORCER_TxnLoadBlockInfo;
 
 static void SORCER_txnLoadBlockInfoFree(SORCER_TxnLoadBlockInfo* b)
 {
-    vec_free(b->dataStack);
     vec_free(b->varTable);
     vec_free(b->defTable);
 }
@@ -414,39 +409,15 @@ static void SORCER_txnLoadBlockSetLoaded(SORCER_TxnLoadContext* ctx, SORCER_Bloc
 {
     SORCER_TxnLoadBlockInfo* blkInfo = SORCER_txnLoadBlockInfo(ctx, block);
     assert(!blkInfo->loaded);
-    assert(!blkInfo->cellNewCount);
-    assert(!blkInfo->dataStack->length);
-    assert(!blkInfo->numIns);
     blkInfo->loaded = true;
 }
 
 
 
 
-static void SORCER_txnLoadBlockCellNew(SORCER_TxnLoadContext* ctx, SORCER_Block block)
-{
-    SORCER_TxnLoadBlockInfo* blkInfo = SORCER_txnLoadBlockInfo(ctx, block);
-    u32 cellId = blkInfo->cellNewCount++;
-    vec_push(blkInfo->dataStack, cellId);
-}
 
 
 
-
-static SORCER_TxnLoadVar* SORCER_txnLoadFindVarWithCell(SORCER_TxnLoadContext* ctx, SORCER_Block block, u32 cellId)
-{
-    SORCER_TxnLoadBlockInfo* blkInfo = SORCER_txnLoadBlockInfo(ctx, block);
-    assert(blkInfo->loaded);
-    for (u32 i = 0; i < blkInfo->varTable->length; ++i)
-    {
-        SORCER_TxnLoadVar* info = blkInfo->varTable->data + i;
-        if (info->cellId == cellId)
-        {
-            return info;
-        }
-    }
-    return NULL;
-}
 
 
 
@@ -515,7 +486,6 @@ next:
                 {
                     SORCER_cellFree(sorcer, cell);
                     SORCER_blockAddInstPushImm(sorcer, cur->block, type, str);
-                    SORCER_txnLoadBlockCellNew(ctx, cur->block);
                     goto next;
                 }
             }
@@ -546,7 +516,6 @@ next:
             if (varInfo)
             {
                 SORCER_blockAddInstPushVar(sorcer, cur->block, varInfo->var);
-                vec_push(curBlkInfo->dataStack, varInfo->cellId);
                 goto next;
             }
             SORCER_TxnLoadDef* def = SORCER_txnLoadFindDef(ctx, name, cur->block);
@@ -562,42 +531,12 @@ next:
                     goto next;
                 }
                 SORCER_blockAddInstCall(sorcer, cur->block, def->block);
-                // todo
-                if (blkInfo->numIns < curBlkInfo->dataStack->length)
-                {
-                    vec_resize(curBlkInfo->dataStack, curBlkInfo->dataStack->length - blkInfo->numIns);
-                }
-                else
-                {
-                    vec_resize(curBlkInfo->dataStack, 0);
-                    curBlkInfo->numIns += blkInfo->numIns - curBlkInfo->dataStack->length;
-                }
-                for (u32 i = 0; i < blkInfo->dataStack->length; ++i)
-                {
-                    u32 cellId = blkInfo->dataStack->data[i];
-                    SORCER_txnLoadBlockCellNew(ctx, cur->block);
-                }
                 goto next;
             }
             SORCER_Opr opr = SORCER_txnLoadFindOpr(ctx, name);
             if (opr.id != SORCER_Opr_Invalid.id)
             {
                 SORCER_blockAddInstOpr(sorcer, cur->block, opr);
-                const SORCER_OprInfo* oprInfo = SORCER_oprInfo(sorcer, opr);
-                // todo
-                if (oprInfo->numIns < curBlkInfo->dataStack->length)
-                {
-                    vec_resize(curBlkInfo->dataStack, curBlkInfo->dataStack->length - oprInfo->numIns);
-                }
-                else
-                {
-                    vec_resize(curBlkInfo->dataStack, 0);
-                    curBlkInfo->numIns += oprInfo->numIns - curBlkInfo->dataStack->length;
-                }
-                for (u32 i = 0; i < oprInfo->numOuts; ++i)
-                {
-                    SORCER_txnLoadBlockCellNew(ctx, cur->block);
-                }
                 goto next;
             }
 
@@ -616,7 +555,6 @@ next:
                 {
                     SORCER_cellFree(sorcer, cell);
                     SORCER_blockAddInstPushImm(sorcer, cur->block, type, str);
-                    SORCER_txnLoadBlockCellNew(ctx, cur->block);
                     goto next;
                 }
             }
@@ -661,20 +599,8 @@ next:
                     u32 j = len - 1 - i;
                     const char* name = TXN_tokData(space, elms[j]);
                     SORCER_Var var = SORCER_blockAddInstPopVar(sorcer, cur->block);
-
                     SORCER_TxnLoadBlockInfo* curBlkInfo = SORCER_txnLoadBlockInfo(ctx, cur->block);
-                    u32 cellId = -1;
-                    if (curBlkInfo->dataStack->length > 0)
-                    {
-                        cellId = vec_last(curBlkInfo->dataStack);
-                        vec_pop(curBlkInfo->dataStack);
-                    }
-                    else
-                    {
-                        curBlkInfo->numIns += 1;
-                    }
-
-                    SORCER_TxnLoadVar varInfo = { name, var, cellId };
+                    SORCER_TxnLoadVar varInfo = { name, var };
                     vec_push(curBlkInfo->varTable, varInfo);
                 }
                 goto next;
