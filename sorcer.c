@@ -13,7 +13,8 @@ typedef enum SORCER_OP
     SORCER_OP_Call,
     SORCER_OP_Apply,
     SORCER_OP_Opr,
-    SORCER_OP_InsDstr,
+    SORCER_OP_Clean,
+    SORCER_OP_Drop,
 
     SORCER_OP_Ret,
     SORCER_OP_Jmp,
@@ -38,7 +39,8 @@ typedef struct SORCER_Inst
         SORCER_Block block;
         SORCER_Opr opr;
         u32 address;
-        u32 insDstrMask;
+        u32 freeMask;
+        u32 rdp;
     } arg;
 } SORCER_Inst;
 
@@ -244,6 +246,17 @@ void SORCER_cellFree(SORCER_Context* ctx, SORCER_Cell* x)
     info->dtor(pool, x->as.ptr);
 }
 
+void SORCER_cellDup(SORCER_Context* ctx, const SORCER_Cell* x, SORCER_Cell* out)
+{
+    SORCER_TypeInfoVec* tt = ctx->typeTable;
+    vec_ptr* pt = ctx->typePoolTable;
+    assert(tt->length == pt->length);
+    assert(x->type.id < tt->length);
+    SORCER_TypeInfo* info = tt->data + x->type.id;
+    void* pool = pt->data[x->type.id];
+    info->copier(pool, x->as.ptr, &out->as.ptr);
+}
+
 
 
 
@@ -447,17 +460,24 @@ void SORCER_blockAddInstOpr(SORCER_Context* ctx, SORCER_Block blk, SORCER_Opr op
 }
 
 
-void SORCER_blockAddInstInsDstr(SORCER_Context* ctx, SORCER_Block blk, u32 mask)
+void SORCER_blockAddInstClean(SORCER_Context* ctx, SORCER_Block blk, u32 mask)
 {
     SORCER_codeOutdate(ctx);
     SORCER_BlockInfoVec* bt = ctx->blockTable;
     SORCER_BlockInfo* binfo = bt->data + blk.id;
-    SORCER_Inst inst = { SORCER_OP_InsDstr, .arg.insDstrMask = mask };
+    SORCER_Inst inst = { SORCER_OP_Clean, .arg.freeMask = mask };
     vec_push(binfo->code, inst);
 }
 
 
-
+void SORCER_blockAddInstDrop(SORCER_Context* ctx, SORCER_Block blk, u32 a)
+{
+    SORCER_codeOutdate(ctx);
+    SORCER_BlockInfoVec* bt = ctx->blockTable;
+    SORCER_BlockInfo* binfo = bt->data + blk.id;
+    SORCER_Inst inst = { SORCER_OP_Drop, .arg.rdp = a };
+    vec_push(binfo->code, inst);
+}
 
 
 
@@ -601,40 +621,6 @@ static void SORCER_codeUpdate(SORCER_Context* ctx, SORCER_Block blk)
 
 
 
-static void SORCER_runOpr(SORCER_Context* ctx, SORCER_Opr opr)
-{
-    const SORCER_OprInfo* info = ctx->oprTable->data + opr.id;
-    SORCER_CellVec* inBuf = ctx->inBuf;
-    SORCER_CellVec* ds = ctx->dataStack;
-
-    vec_resize(inBuf, info->numIns);
-    vec_resize(ds, ds->length + info->numOuts - info->numIns);
-
-    memcpy(inBuf->data, ds->data + ds->length - info->numOuts, sizeof(SORCER_Cell)*info->numIns);
-
-    info->func(ctx, info->funcCtx, inBuf->data, ds->data + ds->length - info->numOuts);
-}
-
-
-
-
-
-static void SORCER_insDstr(SORCER_Context* ctx, u32 mask)
-{
-    SORCER_CellVec* inBuf = ctx->inBuf;
-    assert(inBuf->length <= SORCER_OprIO_MAX);
-    for (u32 i = 0; i < inBuf->length; ++i)
-    {
-        if (mask & (1U << i))
-        {
-            SORCER_cellFree(ctx, inBuf->data + i);
-        }
-    }
-}
-
-
-
-
 
 
 
@@ -711,12 +697,37 @@ next:
     }
     case SORCER_OP_Opr:
     {
-        SORCER_runOpr(ctx, inst->arg.opr);
+        const SORCER_OprInfo* info = ctx->oprTable->data + inst->arg.opr.id;
+        SORCER_CellVec* inBuf = ctx->inBuf;
+        SORCER_CellVec* ds = ctx->dataStack;
+
+        vec_resize(inBuf, info->numIns);
+        vec_resize(ds, ds->length + info->numOuts - info->numIns);
+
+        memcpy(inBuf->data, ds->data + ds->length - info->numOuts, sizeof(SORCER_Cell)*info->numIns);
+
+        info->func(ctx, info->funcCtx, inBuf->data, ds->data + ds->length - info->numOuts);
         goto next;
     }
-    case SORCER_OP_InsDstr:
+    case SORCER_OP_Clean:
     {
-        SORCER_insDstr(ctx, inst->arg.insDstrMask);
+        SORCER_CellVec* inBuf = ctx->inBuf;
+        assert(inBuf->length <= SORCER_OprIO_MAX);
+        for (u32 i = 0; i < inBuf->length; ++i)
+        {
+            if (inst->arg.freeMask & (1U << i))
+            {
+                SORCER_cellFree(ctx, inBuf->data + i);
+            }
+        }
+        goto next;
+    }
+    case SORCER_OP_Drop:
+    {
+        SORCER_Cell t[1];
+        u32 dp = ds->length - 1 - inst->arg.rdp;
+        SORCER_cellDup(ctx, ds->data + dp, t);
+        ds->data[dp] = t[0];
         goto next;
     }
     case SORCER_OP_Ret:

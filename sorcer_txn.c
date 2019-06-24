@@ -572,7 +572,8 @@ next:
                         SORCER_TxnLoadVar* var = SORCER_txnLoadFindVarWithCell(ctx, cur->block, cellId);
                         if (var)
                         {
-                            // copy
+                            u32 rdp = defBlkInfo->numIns - 1 - i;
+                            SORCER_blockAddInstDrop(sorcer, cur->block, rdp);
                         }
                     }
                 }
@@ -593,12 +594,12 @@ next:
                 u32 dsReduce = min(oprInfo->numIns, curBlkInfo->dataStack->length);
                 u32 curBlkIns = oprInfo->numIns - dsReduce;
                 curBlkInfo->numIns += curBlkIns;
-                u32 insDstrMask = 0;
+                u32 freeMask = 0;
                 for (u32 i = 0; i < oprInfo->numIns; ++i)
                 {
                     if (i < curBlkIns)
                     {
-                        insDstrMask |= (1U << i);
+                        freeMask |= (1U << i);
                     }
                     else
                     {
@@ -606,11 +607,11 @@ next:
                         SORCER_TxnLoadVar* var = SORCER_txnLoadFindVarWithCell(ctx, cur->block, cellId);
                         if (!var)
                         {
-                            insDstrMask |= (1U << i);
+                            freeMask |= (1U << i);
                         }
                     }
                 }
-                SORCER_blockAddInstInsDstr(sorcer, cur->block, insDstrMask);
+                SORCER_blockAddInstClean(sorcer, cur->block, freeMask);
                 vec_resize(curBlkInfo->dataStack, curBlkInfo->dataStack->length - dsReduce);
                 for (u32 i = 0; i < oprInfo->numOuts; ++i)
                 {

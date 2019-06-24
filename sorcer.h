@@ -85,6 +85,7 @@ void* SORCER_pool(SORCER_Context* ctx, SORCER_Type type);
 
 bool SORCER_cellNew(SORCER_Context* ctx, SORCER_Type type, const char* str, SORCER_Cell* out);
 void SORCER_cellFree(SORCER_Context* ctx, SORCER_Cell* x);
+void SORCER_cellDup(SORCER_Context* ctx, const SORCER_Cell* x, SORCER_Cell* out);
 u32 SORCER_cellToStr(char* buf, u32 bufSize, SORCER_Context* ctx, const SORCER_Cell* x);
 
 
@@ -131,7 +132,8 @@ void SORCER_blockAddInstPushBlock(SORCER_Context* ctx, SORCER_Block blk, SORCER_
 void SORCER_blockAddInstCall(SORCER_Context* ctx, SORCER_Block blk, SORCER_Block callee);
 void SORCER_blockAddInstApply(SORCER_Context* ctx, SORCER_Block blk);
 void SORCER_blockAddInstOpr(SORCER_Context* ctx, SORCER_Block blk, SORCER_Opr opr);
-void SORCER_blockAddInstInsDstr(SORCER_Context* ctx, SORCER_Block blk, u32 mask);
+void SORCER_blockAddInstClean(SORCER_Context* ctx, SORCER_Block blk, u32 mask);
+void SORCER_blockAddInstDrop(SORCER_Context* ctx, SORCER_Block blk, u32 rdp);
 
 void SORCER_blockAddInlineBlock(SORCER_Context* ctx, SORCER_Block blk, SORCER_Block ib);
 
