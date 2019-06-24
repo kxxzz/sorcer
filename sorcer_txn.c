@@ -424,6 +424,16 @@ static void SORCER_txnLoadBlockSetLoaded(SORCER_TxnLoadContext* ctx, SORCER_Bloc
 
 
 
+static void SORCER_txnLoadBlockCellNew(SORCER_TxnLoadBlockInfo* curBlkInfo, SORCER_Type type)
+{
+    u32 cellId = curBlkInfo->cellTable->length;
+    vec_push(curBlkInfo->cellTable, type);
+    vec_push(curBlkInfo->dataStack, cellId);
+}
+
+
+
+
 
 
 
@@ -468,6 +478,7 @@ next:
         u32 numTypes = SORCER_ctxTypesTotal(sorcer);
         if (TXN_tokQuoted(space, node))
         {
+            SORCER_TxnLoadBlockInfo* curBlkInfo = SORCER_txnLoadBlockInfo(ctx, cur->block);
             for (u32 i = 0; i < numTypes; ++i)
             {
                 SORCER_Type type = SORCER_typeByIndex(sorcer, i);
@@ -479,10 +490,11 @@ next:
                 SORCER_Cell cell[1] = { 0 };
                 const char* str = TXN_tokData(space, node);
                 bool r = SORCER_cellNew(sorcer, type, str, cell);
-                SORCER_cellFree(sorcer, cell);
                 if (r)
                 {
+                    SORCER_cellFree(sorcer, cell);
                     SORCER_blockAddInstPushImm(sorcer, cur->block, type, str);
+                    SORCER_txnLoadBlockCellNew(curBlkInfo, type);
                     goto next;
                 }
             }
@@ -508,24 +520,42 @@ next:
                 }
                 goto next;
             }
+            SORCER_TxnLoadBlockInfo* curBlkInfo = SORCER_txnLoadBlockInfo(ctx, cur->block);
             SORCER_TxnLoadVar* varInfo = SORCER_txnLoadFindVar(ctx, name, cur->block);
             if (varInfo)
             {
                 SORCER_blockAddInstPushVar(sorcer, cur->block, varInfo->var);
-                SORCER_TxnLoadBlockInfo* curBlkInfo = SORCER_txnLoadBlockInfo(ctx, cur->block);
                 vec_push(curBlkInfo->dataStack, varInfo->cellId);
                 goto next;
             }
             SORCER_TxnLoadDef* def = SORCER_txnLoadFindDef(ctx, name, cur->block);
             if (def)
             {
-                SORCER_blockAddInstCall(sorcer, cur->block, def->block);
                 SORCER_TxnLoadBlockInfo* blkInfo = SORCER_txnLoadBlockInfo(ctx, def->block);
                 if (!blkInfo->loaded)
                 {
                     SORCER_txnLoadBlockSetLoaded(ctx, def->block);
                     SORCER_TxnLoadCallLevel level = { def->block, blkInfo->body, blkInfo->bodyLen };
                     vec_push(callStack, level);
+                    cur->p -= 1;
+                    goto next;
+                }
+                SORCER_blockAddInstCall(sorcer, cur->block, def->block);
+                // todo
+                if (blkInfo->numIns < curBlkInfo->dataStack->length)
+                {
+                    vec_resize(curBlkInfo->dataStack, curBlkInfo->dataStack->length - blkInfo->numIns);
+                }
+                else
+                {
+                    vec_resize(curBlkInfo->dataStack, 0);
+                    curBlkInfo->numIns += blkInfo->numIns - curBlkInfo->dataStack->length;
+                }
+                for (u32 i = 0; i < blkInfo->dataStack->length; ++i)
+                {
+                    u32 cellId = blkInfo->dataStack->data[i];
+                    SORCER_Type cellType = blkInfo->cellTable->data[cellId];
+                    SORCER_txnLoadBlockCellNew(curBlkInfo, cellType);
                 }
                 goto next;
             }
@@ -533,6 +563,21 @@ next:
             if (opr.id != SORCER_Opr_Invalid.id)
             {
                 SORCER_blockAddInstOpr(sorcer, cur->block, opr);
+                const SORCER_OprInfo* oprInfo = SORCER_oprInfo(sorcer, opr);
+                // todo
+                if (oprInfo->numIns < curBlkInfo->dataStack->length)
+                {
+                    vec_resize(curBlkInfo->dataStack, curBlkInfo->dataStack->length - oprInfo->numIns);
+                }
+                else
+                {
+                    vec_resize(curBlkInfo->dataStack, 0);
+                    curBlkInfo->numIns += oprInfo->numIns - curBlkInfo->dataStack->length;
+                }
+                for (u32 i = 0; i < oprInfo->numOuts; ++i)
+                {
+                    SORCER_txnLoadBlockCellNew(curBlkInfo, oprInfo->outs[i]);
+                }
                 goto next;
             }
 
@@ -547,10 +592,11 @@ next:
                 SORCER_Cell cell[1] = { 0 };
                 const char* str = TXN_tokData(space, node);
                 bool r = SORCER_cellNew(sorcer, type, str, cell);
-                SORCER_cellFree(sorcer, cell);
                 if (r)
                 {
+                    SORCER_cellFree(sorcer, cell);
                     SORCER_blockAddInstPushImm(sorcer, cur->block, type, str);
+                    SORCER_txnLoadBlockCellNew(curBlkInfo, type);
                     goto next;
                 }
             }
