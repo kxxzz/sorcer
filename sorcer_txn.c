@@ -697,6 +697,7 @@ next:
             }
             case SORCER_TxnKeyExpr_Var:
             {
+                SORCER_TxnLoadBlockInfo* curBlkInfo = SORCER_txnLoadBlockInfo(ctx, cur->block);
                 for (u32 i = 1; i < len; ++i)
                 {
                     u32 j = len - 1 - i;
@@ -705,7 +706,6 @@ next:
                     if (lastPos != -1)
                     {
                         SORCER_Var var = SORCER_blockAddInstPopVar(sorcer, cur->block);
-                        SORCER_TxnLoadBlockInfo* curBlkInfo = SORCER_txnLoadBlockInfo(ctx, cur->block);
                         u32 cell = -1;
                         if (curBlkInfo->dataStack->length > 0)
                         {
@@ -722,6 +722,14 @@ next:
                     else
                     {
                         SORCER_blockAddInstPopFree(sorcer, cur->block);
+                        if (curBlkInfo->dataStack->length > 0)
+                        {
+                            vec_pop(curBlkInfo->dataStack);
+                        }
+                        else
+                        {
+                            curBlkInfo->numIns += 1;
+                        }
                     }
                 }
                 goto next;
