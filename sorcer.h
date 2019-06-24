@@ -124,6 +124,8 @@ void SORCER_ctxBlocksRollback(SORCER_Context* ctx, u32 n);
 SORCER_Block SORCER_blockNew(SORCER_Context* ctx);
 
 
+void SORCER_blockAddInstPopNull(SORCER_Context* ctx, SORCER_Block blk);
+void SORCER_blockAddInstPopFree(SORCER_Context* ctx, SORCER_Block blk);
 SORCER_Var SORCER_blockAddInstPopVar(SORCER_Context* ctx, SORCER_Block blk);
 
 void SORCER_blockAddInstPushImm(SORCER_Context* ctx, SORCER_Block blk, SORCER_Type type, const char* str);
@@ -134,7 +136,7 @@ void SORCER_blockAddInstApply(SORCER_Context* ctx, SORCER_Block blk);
 void SORCER_blockAddInstOpr(SORCER_Context* ctx, SORCER_Block blk, SORCER_Opr opr);
 void SORCER_blockAddInstClean(SORCER_Context* ctx, SORCER_Block blk, u32 mask);
 void SORCER_blockAddInstDrop(SORCER_Context* ctx, SORCER_Block blk, u32 rdp);
-void SORCER_blockAddInstVarCellFree(SORCER_Context* ctx, SORCER_Block blk, SORCER_Var v);
+void SORCER_blockAddInstVarFree(SORCER_Context* ctx, SORCER_Block blk, SORCER_Var v);
 
 void SORCER_blockAddInlineBlock(SORCER_Context* ctx, SORCER_Block blk, SORCER_Block ib);
 

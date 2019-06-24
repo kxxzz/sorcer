@@ -721,7 +721,7 @@ next:
                     }
                     else
                     {
-                        // todo
+                        SORCER_blockAddInstPopFree(sorcer, cur->block);
                     }
                 }
                 goto next;

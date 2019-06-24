@@ -6,7 +6,11 @@
 
 typedef enum SORCER_OP
 {
-    SORCER_OP_PopVar = 0,
+    SORCER_OP_Nop = 0,
+
+    SORCER_OP_PopNull,
+    SORCER_OP_PopFree,
+    SORCER_OP_PopVar,
     SORCER_OP_PushImm,
     SORCER_OP_PushVar,
     SORCER_OP_PushBlock,
@@ -15,7 +19,7 @@ typedef enum SORCER_OP
     SORCER_OP_Opr,
     SORCER_OP_Clean,
     SORCER_OP_Drop,
-    SORCER_OP_VarCellFree,
+    SORCER_OP_VarFree,
 
     SORCER_OP_Ret,
     SORCER_OP_Jmp,
@@ -383,6 +387,26 @@ SORCER_Block SORCER_blockNew(SORCER_Context* ctx)
 
 
 
+void SORCER_blockAddInstPopNull(SORCER_Context* ctx, SORCER_Block blk)
+{
+    SORCER_codeOutdate(ctx);
+    SORCER_BlockInfoVec* bt = ctx->blockTable;
+    SORCER_BlockInfo* binfo = bt->data + blk.id;
+    SORCER_Inst inst = { SORCER_OP_PopNull };
+    vec_push(binfo->code, inst);
+}
+
+
+void SORCER_blockAddInstPopFree(SORCER_Context* ctx, SORCER_Block blk)
+{
+    SORCER_codeOutdate(ctx);
+    SORCER_BlockInfoVec* bt = ctx->blockTable;
+    SORCER_BlockInfo* binfo = bt->data + blk.id;
+    SORCER_Inst inst = { SORCER_OP_PopFree };
+    vec_push(binfo->code, inst);
+}
+
+
 SORCER_Var SORCER_blockAddInstPopVar(SORCER_Context* ctx, SORCER_Block blk)
 {
     SORCER_codeOutdate(ctx);
@@ -481,12 +505,12 @@ void SORCER_blockAddInstDrop(SORCER_Context* ctx, SORCER_Block blk, u32 a)
 }
 
 
-void SORCER_blockAddInstVarCellFree(SORCER_Context* ctx, SORCER_Block blk, SORCER_Var v)
+void SORCER_blockAddInstVarFree(SORCER_Context* ctx, SORCER_Block blk, SORCER_Var v)
 {
     SORCER_codeOutdate(ctx);
     SORCER_BlockInfoVec* bt = ctx->blockTable;
     SORCER_BlockInfo* binfo = bt->data + blk.id;
-    SORCER_Inst inst = { SORCER_OP_VarCellFree, .arg.var = v };
+    SORCER_Inst inst = { SORCER_OP_VarFree, .arg.var = v };
     vec_push(binfo->code, inst);
 }
 
@@ -654,6 +678,22 @@ next:
     inst = code->data + p++;
     switch (inst->op)
     {
+    case SORCER_OP_Nop:
+    {
+        goto next;
+    }
+    case SORCER_OP_PopNull:
+    {
+        vec_pop(ds);
+        goto next;
+    }
+    case SORCER_OP_PopFree:
+    {
+        SORCER_Cell top = vec_last(ds);
+        vec_pop(ds);
+        SORCER_cellFree(ctx, &top);
+        goto next;
+    }
     case SORCER_OP_PopVar:
     {
         SORCER_Cell top = vec_last(ds);
@@ -740,7 +780,7 @@ next:
         ds->data[dp] = t[0];
         goto next;
     }
-    case SORCER_OP_VarCellFree:
+    case SORCER_OP_VarFree:
     {
         u32 varBase = 0;
         if (rs->length > 0)
