@@ -13,6 +13,7 @@ typedef enum SORCER_OP
     SORCER_OP_Call,
     SORCER_OP_Apply,
     SORCER_OP_Opr,
+    SORCER_OP_InsDstr,
 
     SORCER_OP_Ret,
     SORCER_OP_Jmp,
@@ -37,6 +38,7 @@ typedef struct SORCER_Inst
         SORCER_Block block;
         SORCER_Opr opr;
         u32 address;
+        u32 insDstrMask;
     } arg;
 } SORCER_Inst;
 
@@ -445,6 +447,17 @@ void SORCER_blockAddInstOpr(SORCER_Context* ctx, SORCER_Block blk, SORCER_Opr op
 }
 
 
+void SORCER_blockAddInstInsDstr(SORCER_Context* ctx, SORCER_Block blk, u32 mask)
+{
+    SORCER_codeOutdate(ctx);
+    SORCER_BlockInfoVec* bt = ctx->blockTable;
+    SORCER_BlockInfo* binfo = bt->data + blk.id;
+    SORCER_Inst inst = { SORCER_OP_InsDstr, .arg.insDstrMask = mask };
+    vec_push(binfo->code, inst);
+}
+
+
+
 
 
 
@@ -606,6 +619,20 @@ static void SORCER_runOpr(SORCER_Context* ctx, SORCER_Opr opr)
 
 
 
+static void SORCER_insDstr(SORCER_Context* ctx, u32 mask)
+{
+    SORCER_CellVec* inBuf = ctx->inBuf;
+    assert(inBuf->length <= SORCER_OprIO_MAX);
+    for (u32 i = 0; i < inBuf->length; ++i)
+    {
+        if (mask & (1U << i))
+        {
+            SORCER_cellFree(ctx, inBuf->data + i);
+        }
+    }
+}
+
+
 
 
 
@@ -685,6 +712,11 @@ next:
     case SORCER_OP_Opr:
     {
         SORCER_runOpr(ctx, inst->arg.opr);
+        goto next;
+    }
+    case SORCER_OP_InsDstr:
+    {
+        SORCER_insDstr(ctx, inst->arg.insDstrMask);
         goto next;
     }
     case SORCER_OP_Ret:

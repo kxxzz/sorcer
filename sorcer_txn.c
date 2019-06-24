@@ -593,11 +593,12 @@ next:
                 u32 dsReduce = min(oprInfo->numIns, curBlkInfo->dataStack->length);
                 u32 curBlkIns = oprInfo->numIns - dsReduce;
                 curBlkInfo->numIns += curBlkIns;
+                u32 insDstrMask = 0;
                 for (u32 i = 0; i < oprInfo->numIns; ++i)
                 {
                     if (i < curBlkIns)
                     {
-                        // free
+                        insDstrMask |= (1U << i);
                     }
                     else
                     {
@@ -605,10 +606,11 @@ next:
                         SORCER_TxnLoadVar* var = SORCER_txnLoadFindVarWithCell(ctx, cur->block, cellId);
                         if (!var)
                         {
-                            // free
+                            insDstrMask |= (1U << i);
                         }
                     }
                 }
+                SORCER_blockAddInstInsDstr(sorcer, cur->block, insDstrMask);
                 vec_resize(curBlkInfo->dataStack, curBlkInfo->dataStack->length - dsReduce);
                 for (u32 i = 0; i < oprInfo->numOuts; ++i)
                 {
