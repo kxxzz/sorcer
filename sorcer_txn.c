@@ -57,6 +57,7 @@ typedef struct SORCER_TxnLoadVarInfo
     const char* name;
     SORCER_Var var;
     u32 cell;
+    u32 lastPos;
 } SORCER_TxnLoadVarInfo;
 
 typedef vec_t(SORCER_TxnLoadVarInfo) SORCER_TxnLoadVarInfoVec;
@@ -716,7 +717,7 @@ next:
                         {
                             curBlkInfo->numIns += 1;
                         }
-                        SORCER_TxnLoadVarInfo varInfo = { name, var, cell };
+                        SORCER_TxnLoadVarInfo varInfo = { name, var, cell, lastPos };
                         vec_push(curBlkInfo->varTable, varInfo);
                     }
                     else
