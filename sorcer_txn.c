@@ -359,40 +359,26 @@ next:
     {
         const TXN_Node* elms = TXN_seqElm(space, node);
         u32 len = TXN_seqLen(space, node);
-        if (len < 2)
+        if (len < 1)
         {
             SORCER_txnLoadErrorAtNode(ctx, node, SORCER_TxnError_Syntax);
             return SORCER_Block_Invalid;
         }
-        const char* name = TXN_tokData(space, elms[0]);
-        SORCER_TxnKeyExpr expr = SORCER_txnKeyExprFromHeadName(name);
-        if (expr != SORCER_TxnKeyExpr_Invalid)
+        if (!TXN_nodeIsTok(space, elms[0]))
         {
-            switch (expr)
-            {
-            case SORCER_TxnKeyExpr_Def:
-            {
-                if (!TXN_nodeIsTok(space, elms[1]))
-                {
-                    SORCER_txnLoadErrorAtNode(ctx, elms[1], SORCER_TxnError_Syntax);
-                    return SORCER_Block_Invalid;
-                }
-                const char* defName = TXN_tokData(space, elms[1]);
-                SORCER_Block block;
-                {
-                    block = SORCER_txnLoadBlockNew(ctx, cur->block, elms + 2, len - 2);
-                    SORCER_TxnLoadCallLevel level = { block, elms + 2, len - 2 };
-                    vec_push(callStack, level);
-                }
-                SORCER_TxnLoadDefInfo def = { defName, block };
-                SORCER_TxnLoadBlockInfo* info = SORCER_txnLoadBlockInfo(ctx, cur->block);
-                vec_push(info->defTable, def);
-                break;
-            }
-            default:
-                break;
-            }
+            SORCER_txnLoadErrorAtNode(ctx, elms[0], SORCER_TxnError_Syntax);
+            return SORCER_Block_Invalid;
         }
+        const char* defName = TXN_tokData(space, elms[0]);
+        SORCER_Block block;
+        {
+            block = SORCER_txnLoadBlockNew(ctx, cur->block, elms + 1, len - 1);
+            SORCER_TxnLoadCallLevel level = { block, elms + 1, len - 1 };
+            vec_push(callStack, level);
+        }
+        SORCER_TxnLoadDefInfo def = { defName, block };
+        SORCER_TxnLoadBlockInfo* info = SORCER_txnLoadBlockInfo(ctx, cur->block);
+        vec_push(info->defTable, def);
     }
     goto next;
 }
@@ -583,27 +569,7 @@ next:
     }
     else if (SORCER_txnLoadCheckCall(space, node))
     {
-        const TXN_Node* elms = TXN_seqElm(space, node);
-        u32 len = TXN_seqLen(space, node);
-        const char* name = TXN_tokData(space, elms[0]);
-        SORCER_TxnKeyExpr expr = SORCER_txnKeyExprFromHeadName(name);
-        if (expr != SORCER_TxnKeyExpr_Invalid)
-        {
-            switch (expr)
-            {
-            case SORCER_TxnKeyExpr_Def:
-            {
-                goto next;
-            }
-            default:
-            {
-                assert(false);
-                break;
-            }
-            }
-        }
-        SORCER_txnLoadErrorAtNode(ctx, node, SORCER_TxnError_UnkCall);
-        goto failed;
+        goto next;
     }
     SORCER_txnLoadErrorAtNode(ctx, node, SORCER_TxnError_Syntax);
 failed:
