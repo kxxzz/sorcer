@@ -76,13 +76,13 @@ add_library (sorcer ${SRC_FILES})
 
 
 
-file (GLOB TEST_SRC_FILES test/*.h test/*.c)
-source_group (src FILES ${TEST_SRC_FILES})
-add_executable (test ${TEST_SRC_FILES})
-target_link_libraries (test imp sorcer)
+file (GLOB TESTS_SRC_FILES tests/*.h tests/*.c)
+source_group (src FILES ${TESTS_SRC_FILES})
+add_executable (tests ${TESTS_SRC_FILES})
+target_link_libraries (tests imp sorcer)
 if (WIN32)
 else ()
-    target_link_libraries (test m)
+    target_link_libraries (tests m)
 endif ()
 
 file (GLOB SHELL_SRC_FILES shell/*.h shell/*.c)

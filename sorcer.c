@@ -9,7 +9,6 @@ typedef enum SORCER_OP
     SORCER_OP_Nop = 0,
 
     SORCER_OP_PopNull,
-    SORCER_OP_PopFree,
     SORCER_OP_PopVar,
     SORCER_OP_PushImm,
     SORCER_OP_PushVar,
@@ -17,9 +16,6 @@ typedef enum SORCER_OP
     SORCER_OP_Call,
     SORCER_OP_Apply,
     SORCER_OP_Opr,
-    SORCER_OP_Clean,
-    SORCER_OP_Drop,
-    SORCER_OP_VarFree,
 
     SORCER_OP_Ret,
     SORCER_OP_Jmp,
@@ -397,15 +393,6 @@ void SORCER_blockAddInstPopNull(SORCER_Context* ctx, SORCER_Block blk)
 }
 
 
-void SORCER_blockAddInstPopFree(SORCER_Context* ctx, SORCER_Block blk)
-{
-    SORCER_codeOutdate(ctx);
-    SORCER_BlockInfoVec* bt = ctx->blockTable;
-    SORCER_BlockInfo* binfo = bt->data + blk.id;
-    SORCER_Inst inst = { SORCER_OP_PopFree };
-    vec_push(binfo->code, inst);
-}
-
 
 SORCER_Var SORCER_blockAddInstPopVar(SORCER_Context* ctx, SORCER_Block blk)
 {
@@ -485,34 +472,7 @@ void SORCER_blockAddInstOpr(SORCER_Context* ctx, SORCER_Block blk, SORCER_Opr op
 }
 
 
-void SORCER_blockAddInstClean(SORCER_Context* ctx, SORCER_Block blk, u32 mask)
-{
-    SORCER_codeOutdate(ctx);
-    SORCER_BlockInfoVec* bt = ctx->blockTable;
-    SORCER_BlockInfo* binfo = bt->data + blk.id;
-    SORCER_Inst inst = { SORCER_OP_Clean, .arg.freeMask = mask };
-    vec_push(binfo->code, inst);
-}
 
-
-void SORCER_blockAddInstDrop(SORCER_Context* ctx, SORCER_Block blk, u32 a)
-{
-    SORCER_codeOutdate(ctx);
-    SORCER_BlockInfoVec* bt = ctx->blockTable;
-    SORCER_BlockInfo* binfo = bt->data + blk.id;
-    SORCER_Inst inst = { SORCER_OP_Drop, .arg.rdp = a };
-    vec_push(binfo->code, inst);
-}
-
-
-void SORCER_blockAddInstVarFree(SORCER_Context* ctx, SORCER_Block blk, SORCER_Var v)
-{
-    SORCER_codeOutdate(ctx);
-    SORCER_BlockInfoVec* bt = ctx->blockTable;
-    SORCER_BlockInfo* binfo = bt->data + blk.id;
-    SORCER_Inst inst = { SORCER_OP_VarFree, .arg.var = v };
-    vec_push(binfo->code, inst);
-}
 
 
 
@@ -684,11 +644,6 @@ next:
     }
     case SORCER_OP_PopNull:
     {
-        vec_pop(ds);
-        goto next;
-    }
-    case SORCER_OP_PopFree:
-    {
         SORCER_Cell top = vec_last(ds);
         vec_pop(ds);
         SORCER_cellFree(ctx, &top);
@@ -719,7 +674,8 @@ next:
             SORCER_Ret ret = vec_last(rs);
             varBase = ret.varBase;
         }
-        SORCER_Cell cell = vt->data[varBase + inst->arg.var.id];
+        SORCER_Cell cell;
+        SORCER_cellDup(ctx, &vt->data[varBase + inst->arg.var.id], &cell);
         vec_push(ds, cell);
         goto next;
     }
@@ -757,39 +713,11 @@ next:
         memcpy(inBuf->data, ds->data + ds->length - info->numOuts, sizeof(SORCER_Cell)*info->numIns);
 
         info->func(ctx, info->funcCtx, inBuf->data, ds->data + ds->length - info->numOuts);
-        goto next;
-    }
-    case SORCER_OP_Clean:
-    {
-        SORCER_CellVec* inBuf = ctx->inBuf;
-        assert(inBuf->length <= SORCER_OprIO_MAX);
-        for (u32 i = 0; i < inBuf->length; ++i)
+
+        for (u32 i = 0; i < info->numIns; ++i)
         {
-            if (inst->arg.freeMask & (1U << i))
-            {
-                SORCER_cellFree(ctx, inBuf->data + i);
-            }
+            SORCER_cellFree(ctx, inBuf->data + i);
         }
-        goto next;
-    }
-    case SORCER_OP_Drop:
-    {
-        SORCER_Cell t[1];
-        u32 dp = ds->length - 1 - inst->arg.rdp;
-        SORCER_cellDup(ctx, ds->data + dp, t);
-        ds->data[dp] = t[0];
-        goto next;
-    }
-    case SORCER_OP_VarFree:
-    {
-        u32 varBase = 0;
-        if (rs->length > 0)
-        {
-            SORCER_Ret ret = vec_last(rs);
-            varBase = ret.varBase;
-        }
-        SORCER_Cell* cell = vt->data + varBase + inst->arg.var.id;
-        SORCER_cellFree(ctx, cell);
         goto next;
     }
     case SORCER_OP_Ret:
@@ -802,6 +730,10 @@ next:
         vec_pop(rs);
         p = ret.address;
         assert(vt->length >= ret.varBase);
+        for (u32 i = ret.varBase; i < vt->length; ++i)
+        {
+            SORCER_cellFree(ctx, vt->data + i);
+        }
         vec_resize(vt, ret.varBase);
         goto next;
     }

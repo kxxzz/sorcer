@@ -37,12 +37,14 @@ static void test(void)
     SORCER_ArithContext arithCtx[1] = { 0 };
     SORCER_arith(ctx, arithCtx);
     SORCER_TxnErrorInfo errInfo[1] = { 0 };
+    SORCER_TxnFileInfoVec fileTable[1] = { 0 };
 
-    SORCER_Block blk = SORCER_blockFromTxnFile(ctx, "../1.txn", errInfo);
+    SORCER_Block blk = SORCER_blockFromTxnFile(ctx, "../1.txn", errInfo, fileTable);
     assert(blk.id != SORCER_Block_Invalid.id);
     assert(SORCER_TxnError_NONE == errInfo->error);
     SORCER_run(ctx, blk);
 
+    vec_free(fileTable);
     SORCER_ctxFree(ctx);
 }
 
