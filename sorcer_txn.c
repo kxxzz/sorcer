@@ -585,7 +585,7 @@ next:
             case SORCER_TxnKeyExpr_Var:
             {
                 SORCER_TxnLoadBlockInfo* curBlkInfo = SORCER_txnLoadBlockInfo(ctx, cur->block);
-                for (u32 i = 1; i < len; ++i)
+                for (u32 i = 0; i < len - 1; ++i)
                 {
                     u32 j = len - 1 - i;
                     const char* name = TXN_tokData(space, elms[j]);

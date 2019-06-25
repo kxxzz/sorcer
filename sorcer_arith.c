@@ -25,8 +25,9 @@ static void SORCER_cellDtor_Num(void* pool, void* x)
     APNUM_ratFree(pool, x);
 }
 
-static void SORCER_cellCopier_Num(void* pool, void* x, void** pOut)
+static void SORCER_cellCopier_Num(void* pool, const void* x, void** pOut)
 {
+    *pOut = APNUM_ratNew(pool);
     APNUM_ratDup(*pOut, x);
 }
 

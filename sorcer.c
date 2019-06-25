@@ -255,6 +255,7 @@ void SORCER_cellDup(SORCER_Context* ctx, const SORCER_Cell* x, SORCER_Cell* out)
     assert(x->type.id < tt->length);
     SORCER_TypeInfo* info = tt->data + x->type.id;
     void* pool = pt->data[x->type.id];
+    out->type = x->type;
     info->copier(pool, x->as.ptr, &out->as.ptr);
 }
 
