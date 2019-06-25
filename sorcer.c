@@ -19,6 +19,7 @@ typedef enum SORCER_OP
 
     SORCER_OP_Ret,
     SORCER_OP_Jmp,
+    SORCER_OP_ApplyJmp,
 
     SORCER_NumOPs
 } SORCER_OP;
@@ -553,26 +554,19 @@ static void SORCER_codeUpdate(SORCER_Context* ctx, SORCER_Block blk)
         for (u32 i = 0; i < blkInfo->code->length; ++i)
         {
             SORCER_Inst inst = blkInfo->code->data[i];
-            switch (inst.op)
-            {
-            case SORCER_OP_Jmp:
-            {
-                inst.arg.address += blkInfo->baseAddress;
-                break;
-            }
-            default:
-                break;
-            }
             // Tail Call Elimination
             if (i + 1 == blkInfo->code->length)
             {
                 switch (inst.op)
                 {
                 case SORCER_OP_Call:
+                {
+                    //inst.op = SORCER_OP_Jmp;
+                    break;
+                }
                 case SORCER_OP_Apply:
                 {
-                    SORCER_Inst inst0 = { SORCER_OP_Ret };
-                    vec_push(code, inst0);
+                    //inst.op = SORCER_OP_ApplyJmp;
                     break;
                 }
                 default:
@@ -695,10 +689,10 @@ next:
     }
     case SORCER_OP_Apply:
     {
-        SORCER_Cell top = vec_last(ds);
-        vec_pop(ds);
         SORCER_Ret ret = { p, vt->length };
         vec_push(rs, ret);
+        SORCER_Cell top = vec_last(ds);
+        vec_pop(ds);
         p = top.as.address;
         goto next;
     }
@@ -740,7 +734,34 @@ next:
     }
     case SORCER_OP_Jmp:
     {
+        if (rs->length > 0)
+        {
+            SORCER_Ret ret = vec_last(rs);
+            vec_pop(rs);
+            vec_resize(vt, ret.varBase);
+        }
+        else
+        {
+            vec_resize(vt, 0);
+        }
         p = inst->arg.address;
+        goto next;
+    }
+    case SORCER_OP_ApplyJmp:
+    {
+        if (rs->length > 0)
+        {
+            SORCER_Ret ret = vec_last(rs);
+            vec_pop(rs);
+            vec_resize(vt, ret.varBase);
+        }
+        else
+        {
+            vec_resize(vt, 0);
+        }
+        SORCER_Cell top = vec_last(ds);
+        vec_pop(ds);
+        p = top.as.address;
         goto next;
     }
     default:
