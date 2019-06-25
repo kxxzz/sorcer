@@ -18,8 +18,8 @@ typedef enum SORCER_OP
     SORCER_OP_Opr,
 
     SORCER_OP_Ret,
-    SORCER_OP_Jmp,
-    SORCER_OP_ApplyJmp,
+    SORCER_OP_TailCall,
+    SORCER_OP_TailApply,
 
     SORCER_NumOPs
 } SORCER_OP;
@@ -561,12 +561,12 @@ static void SORCER_codeUpdate(SORCER_Context* ctx, SORCER_Block blk)
                 {
                 case SORCER_OP_Call:
                 {
-                    //inst.op = SORCER_OP_Jmp;
+                    inst.op = SORCER_OP_TailCall;
                     break;
                 }
                 case SORCER_OP_Apply:
                 {
-                    //inst.op = SORCER_OP_ApplyJmp;
+                    inst.op = SORCER_OP_TailApply;
                     break;
                 }
                 default:
@@ -586,6 +586,7 @@ static void SORCER_codeUpdate(SORCER_Context* ctx, SORCER_Block blk)
         {
         case SORCER_OP_PushBlock:
         case SORCER_OP_Call:
+        case SORCER_OP_TailCall:
         {
             SORCER_BlockInfo* blkInfo = bt->data + inst->arg.block.id;
             inst->arg.address = blkInfo->baseAddress;
@@ -732,7 +733,7 @@ next:
         vec_resize(vt, ret.varBase);
         goto next;
     }
-    case SORCER_OP_Jmp:
+    case SORCER_OP_TailCall:
     {
         if (rs->length > 0)
         {
@@ -747,7 +748,7 @@ next:
         p = inst->arg.address;
         goto next;
     }
-    case SORCER_OP_ApplyJmp:
+    case SORCER_OP_TailApply:
     {
         if (rs->length > 0)
         {

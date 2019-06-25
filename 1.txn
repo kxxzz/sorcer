@@ -11,7 +11,7 @@ x x * 99 / 99 /
 
 (def ccc (var x)
     (def ddd 100 88 +)
-    100 6 * 4 / x + ddd)
+    100 6 * 4 / x + ddd /)
 
 200 ccc
 
