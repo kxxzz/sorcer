@@ -1,24 +1,28 @@
 (def a 123456789012345678901234567890 99 *)
 (def b 99999999999999999999 99 *)
 
-a b / (var x)
+a b / {x}
 
 x
 
-(var x)
+{x}
 
 x x * 99 / 99 /
 
-(def ccc (var x)
+(def ccc {x}
     (def ddd 100 88 +)
     100 6 * 4 / x + ddd /)
 
 200 ccc
 
 
+[
+    {x}
+    (def ddd 100 88 +)
+    100 6 * 4 / x + ddd /
+] {ccc1}
 
-
-
+200 ccc1 apply
 
 
 

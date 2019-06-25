@@ -5,6 +5,7 @@
 #include "sorcer.h"
 
 #include <assert.h>
+#include <stdio.h>
 
 #include <vec.h>
 #include <upool.h>

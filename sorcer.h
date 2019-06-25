@@ -30,16 +30,20 @@ void SORCER_ctxFree(SORCER_Context* ctx);
 
 
 typedef struct SORCER_Type { u32 id; } SORCER_Type;
-static SORCER_Type SORCER_Type_Invalid = { (u32)-1 };
+static const SORCER_Type SORCER_Type_Invalid = { (u32)-1 };
 
 typedef struct SORCER_Block { u32 id; } SORCER_Block;
-static SORCER_Block SORCER_Block_Invalid = { (u32)-1 };
+static const SORCER_Block SORCER_Block_Invalid = { (u32)-1 };
 
 typedef struct SORCER_Var { u32 id; } SORCER_Var;
-static SORCER_Var SORCER_Var_Invalid = { (u32)-1 };
+static const SORCER_Var SORCER_Var_Invalid = { (u32)-1 };
 
 typedef struct SORCER_Opr { u32 id; } SORCER_Opr;
-static SORCER_Opr SORCER_Opr_Invalid = { (u32)-1 };
+static const SORCER_Opr SORCER_Opr_Invalid = { (u32)-1 };
+
+
+
+static const SORCER_Type SORCER_Type_Block = { 0 };
 
 
 

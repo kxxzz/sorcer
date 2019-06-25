@@ -41,8 +41,6 @@ typedef struct SORCER_Inst
         SORCER_Block block;
         SORCER_Opr opr;
         u32 address;
-        u32 freeMask;
-        u32 rdp;
     } arg;
 } SORCER_Inst;
 
@@ -102,10 +100,32 @@ typedef struct SORCER_Context
 
 
 
+
+static u32 SORCER_cellToStr_Block(char* buf, u32 bufSize, void* pool, const SORCER_Cell* x)
+{
+    return snprintf(buf, bufSize, "0x%08x", x->as.address);
+}
+
+
 SORCER_Context* SORCER_ctxNew(void)
 {
     SORCER_Context* ctx = zalloc(sizeof(SORCER_Context));
     ctx->dataPool = upool_new(256);
+
+    SORCER_TypeInfo blkTypeInfo[1] =
+    {
+        {
+            "block",
+            NULL,
+            NULL,
+            NULL,
+            NULL,
+            NULL,
+            SORCER_cellToStr_Block,
+        }
+    };
+    SORCER_Type blkType = SORCER_typeNew(ctx, blkTypeInfo);
+    assert(SORCER_Type_Block.id == blkType.id);
     return ctx;
 }
 
@@ -234,7 +254,7 @@ bool SORCER_cellNew(SORCER_Context* ctx, SORCER_Type type, const char* str, SORC
     SORCER_TypeInfo* info = tt->data + type.id;
     void* pool = pt->data[type.id];
     out->type = type;
-    return info->ctor(pool, str, &out->as.ptr);
+    return info->ctor ? info->ctor(pool, str, &out->as.ptr) : false;
 }
 
 void SORCER_cellFree(SORCER_Context* ctx, SORCER_Cell* x)
@@ -244,8 +264,11 @@ void SORCER_cellFree(SORCER_Context* ctx, SORCER_Cell* x)
     assert(tt->length == pt->length);
     assert(x->type.id < tt->length);
     SORCER_TypeInfo* info = tt->data + x->type.id;
-    void* pool = pt->data[x->type.id];
-    info->dtor(pool, x->as.ptr);
+    if (info->dtor)
+    {
+        void* pool = pt->data[x->type.id];
+        info->dtor(pool, x->as.ptr);
+    }
 }
 
 void SORCER_cellDup(SORCER_Context* ctx, const SORCER_Cell* x, SORCER_Cell* out)
@@ -255,9 +278,16 @@ void SORCER_cellDup(SORCER_Context* ctx, const SORCER_Cell* x, SORCER_Cell* out)
     assert(tt->length == pt->length);
     assert(x->type.id < tt->length);
     SORCER_TypeInfo* info = tt->data + x->type.id;
-    void* pool = pt->data[x->type.id];
     out->type = x->type;
-    info->copier(pool, x->as.ptr, &out->as.ptr);
+    if (info->copier)
+    {
+        void* pool = pt->data[x->type.id];
+        info->copier(pool, x->as.ptr, &out->as.ptr);
+    }
+    else
+    {
+        out->as.ptr = x->as.ptr;
+    }
 }
 
 
@@ -270,6 +300,7 @@ u32 SORCER_cellToStr(char* buf, u32 bufSize, SORCER_Context* ctx, const SORCER_C
     assert(tt->length == pt->length);
     assert(x->type.id < tt->length);
     SORCER_TypeInfo* info = tt->data + x->type.id;
+    assert(info->toStr);
     void* pool = pt->data[x->type.id];
     return info->toStr(buf, bufSize, pool, x);
 }
@@ -677,7 +708,7 @@ next:
     }
     case SORCER_OP_PushBlock:
     {
-        SORCER_Cell cell = { .as.block = inst->arg.block };
+        SORCER_Cell cell = { SORCER_Type_Block.id, .as.block = inst->arg.block };
         vec_push(ds, cell);
         goto next;
     }

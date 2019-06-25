@@ -33,7 +33,6 @@ typedef enum SORCER_TxnKeyExpr
     SORCER_TxnKeyExpr_Invalid = -1,
 
     SORCER_TxnKeyExpr_Def,
-    SORCER_TxnKeyExpr_Var,
 
     SORCER_NumTxnKeyExprs
 } SORCER_TxnKeyExpr;
@@ -44,7 +43,6 @@ const char* SORCER_TxnKeyExprHeadNameTable(SORCER_TxnKeyExpr expr)
     static const char* a[SORCER_NumTxnKeyExprs] =
     {
         "def",
-        "var",
     };
     return a[expr];
 }
@@ -568,6 +566,21 @@ next:
         SORCER_txnLoadBlockSetLoaded(ctx, block);
         goto next;
     }
+    else if (TXN_nodeIsSeqCurly(space, node))
+    {
+        const TXN_Node* elms = TXN_seqElm(space, node);
+        u32 len = TXN_seqLen(space, node);
+        SORCER_TxnLoadBlockInfo* curBlkInfo = SORCER_txnLoadBlockInfo(ctx, cur->block);
+        for (u32 i = 0; i < len; ++i)
+        {
+            u32 j = len - 1 - i;
+            const char* name = TXN_tokData(space, elms[j]);
+            SORCER_Var var = SORCER_blockAddInstPopVar(sorcer, cur->block);
+            SORCER_TxnLoadVarInfo varInfo = { name, var };
+            vec_push(curBlkInfo->varTable, varInfo);
+        }
+        goto next;
+    }
     else if (SORCER_txnLoadCheckCall(space, node))
     {
         const TXN_Node* elms = TXN_seqElm(space, node);
@@ -580,19 +593,6 @@ next:
             {
             case SORCER_TxnKeyExpr_Def:
             {
-                goto next;
-            }
-            case SORCER_TxnKeyExpr_Var:
-            {
-                SORCER_TxnLoadBlockInfo* curBlkInfo = SORCER_txnLoadBlockInfo(ctx, cur->block);
-                for (u32 i = 0; i < len - 1; ++i)
-                {
-                    u32 j = len - 1 - i;
-                    const char* name = TXN_tokData(space, elms[j]);
-                    SORCER_Var var = SORCER_blockAddInstPopVar(sorcer, cur->block);
-                    SORCER_TxnLoadVarInfo varInfo = { name, var };
-                    vec_push(curBlkInfo->varTable, varInfo);
-                }
                 goto next;
             }
             default:
