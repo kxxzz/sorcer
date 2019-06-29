@@ -22,7 +22,7 @@
 
 
 #include <sorcer.h>
-#include <sorcer_txn.h>
+#include <sorcer_mana.h>
 #include <sorcer_arith.h>
 #include <sorcer_utils.h>
 
@@ -66,21 +66,21 @@ static void execCode(const char* filename, const char* code)
     SORCER_Context* ctx = SORCER_ctxNew();
     SORCER_ArithContext arithCtx[1] = { 0 };
     SORCER_arith(ctx, arithCtx);
-    SORCER_TxnErrorInfo txnErrInfo[1] = { 0 };
-    SORCER_TxnFileInfoVec fileTable[1] = { 0 };
+    SORCER_ManaErrorInfo errInfo[1] = { 0 };
+    SORCER_ManaFileInfoVec fileTable[1] = { 0 };
     SORCER_Block blk;
     if (code)
     {
-        blk = SORCER_blockFromTxnCode(ctx, code, txnErrInfo, fileTable);
+        blk = SORCER_blockFromManaCode(ctx, code, errInfo, fileTable);
     }
     else
     {
-        blk = SORCER_blockFromTxnFile(ctx, filename, txnErrInfo, fileTable);
+        blk = SORCER_blockFromManaFile(ctx, filename, errInfo, fileTable);
     }
     printf("[COMP DONE] \"%s\" [%s]\n", filename, nowStr(timeBuf));
     if (blk.id != SORCER_Block_Invalid.id)
     {
-        assert(SORCER_TxnError_NONE == txnErrInfo->error);
+        assert(SORCER_ManaError_NONE == errInfo->error);
 
         printf("[EXEC START] \"%s\" [%s]\n", filename, nowStr(timeBuf));
         SORCER_run(ctx, blk);
@@ -93,12 +93,12 @@ static void execCode(const char* filename, const char* code)
     }
     else
     {
-        const char* errname = SORCER_TxnErrorNameTable(txnErrInfo->error);
-        const char* filename = fileTable->data[txnErrInfo->file].path;
+        const char* errname = SORCER_ManaErrorNameTable(errInfo->error);
+        const char* filename = fileTable->data[errInfo->file].path;
         printf
         (
             "[ERROR] %s: \"%s\": %u:%u [%s]\n",
-            errname, filename, txnErrInfo->line, txnErrInfo->column, nowStr(timeBuf)
+            errname, filename, errInfo->line, errInfo->column, nowStr(timeBuf)
         );
     }
     vec_free(fileTable);

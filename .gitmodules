@@ -1,6 +1,3 @@
-[submodule "imp/txn"]
-	path = imp/txn
-	url = https://github.com/kxxzz/txn.git
 [submodule "imp/vec"]
 	path = imp/vec
 	url = https://github.com/kxxzz/vec.git
@@ -13,3 +10,6 @@
 [submodule "imp/apnum"]
 	path = imp/apnum
 	url = https://github.com/kxxzz/apnum.git
+[submodule "imp/mana"]
+	path = imp/mana
+	url = https://github.com/kxxzz/mana.git

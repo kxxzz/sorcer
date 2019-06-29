@@ -13,7 +13,7 @@
 
 
 #include <sorcer.h>
-#include <sorcer_txn.h>
+#include <sorcer_mana.h>
 #include <sorcer_arith.h>
 
 
@@ -36,12 +36,12 @@ static void test(void)
     SORCER_Context* ctx = SORCER_ctxNew();
     SORCER_ArithContext arithCtx[1] = { 0 };
     SORCER_arith(ctx, arithCtx);
-    SORCER_TxnErrorInfo errInfo[1] = { 0 };
-    SORCER_TxnFileInfoVec fileTable[1] = { 0 };
+    SORCER_ManaErrorInfo errInfo[1] = { 0 };
+    SORCER_ManaFileInfoVec fileTable[1] = { 0 };
 
-    SORCER_Block blk = SORCER_blockFromTxnFile(ctx, "../1.txn", errInfo, fileTable);
+    SORCER_Block blk = SORCER_blockFromManaFile(ctx, "../1.mana", errInfo, fileTable);
     assert(blk.id != SORCER_Block_Invalid.id);
-    assert(SORCER_TxnError_NONE == errInfo->error);
+    assert(SORCER_ManaError_NONE == errInfo->error);
     SORCER_run(ctx, blk);
 
     vec_free(fileTable);

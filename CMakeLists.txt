@@ -44,7 +44,7 @@ include_directories (imp/fileu)
 include_directories (imp/upool)
 include_directories (imp/upool/imp)
 include_directories (imp/apnum)
-include_directories (imp/txn)
+include_directories (imp/mana)
 include_directories (imp/argparse)
 
 file (GLOB IMP_SRC_FILES
@@ -58,8 +58,8 @@ file (GLOB IMP_SRC_FILES
     imp/upool/imp/*.c
     imp/apnum/*.h
     imp/apnum/*.c
-    imp/txn/*.h
-    imp/txn/*.c
+    imp/mana/*.h
+    imp/mana/*.c
     imp/argparse/*.h
     imp/argparse/*.c
     )
