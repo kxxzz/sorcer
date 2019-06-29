@@ -66,13 +66,13 @@ typedef vec_t(SORCER_ManaFileInfo) SORCER_ManaFileInfoVec;
 
 
 
-SORCER_Block SORCER_blockFromManaNode
+SORCER_Block SORCER_blockFromManaToks
 (
-    SORCER_Context* ctx, MANA_Space* space, MANA_Node node,
+    SORCER_Context* ctx, MANA_Space* space, u32 tokId0, u32 numToks,
     const MANA_SpaceSrcInfo* srcInfo, SORCER_ManaErrorInfo* errInfo, SORCER_ManaFileInfoVec* fileTable
 );
 
-SORCER_Block SORCER_blockFromManaCode
+SORCER_Block SORCER_blockFromManaStr
 (
     SORCER_Context* ctx, const char* path, SORCER_ManaErrorInfo* errInfo, SORCER_ManaFileInfoVec* fileTable
 );

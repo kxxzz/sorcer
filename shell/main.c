@@ -71,7 +71,7 @@ static void execCode(const char* filename, const char* code)
     SORCER_Block blk;
     if (code)
     {
-        blk = SORCER_blockFromManaCode(ctx, code, errInfo, fileTable);
+        blk = SORCER_blockFromManaStr(ctx, code, errInfo, fileTable);
     }
     else
     {
