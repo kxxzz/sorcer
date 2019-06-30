@@ -22,10 +22,10 @@ const char* SORCER_ManaKeywordNameTable(SORCER_ManaKeyword w)
     assert(w < SORCER_NumManaKeywords);
     static const char* a[SORCER_NumManaKeywords] =
     {
-        "[",
-        "]",
         "{",
         "}",
+        "[",
+        "]",
         "#",
     };
     return a[w];
@@ -335,7 +335,7 @@ next:;
         }
         else
         {
-            SORCER_manaLoadErrorAtTok(ctx, p, SORCER_ManaError_Syntax);
+            SORCER_manaLoadErrorAtTok(ctx, p - 1, SORCER_ManaError_Syntax);
             return false;
         }
     }
@@ -435,7 +435,6 @@ SORCER_Block SORCER_manaLoadBlock(SORCER_ManaLoadContext* ctx, u32 begin, u32 en
         }
         else
         {
-            SORCER_manaLoadErrorAtTok(ctx, ctx->p - 1, SORCER_ManaError_Syntax);
             goto failed;
         }
     }
