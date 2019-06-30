@@ -592,12 +592,13 @@ static void SORCER_codeUpdate(SORCER_Context* ctx, SORCER_Block blk)
                 {
                 case SORCER_OP_Call:
                 {
-                    inst.op = SORCER_OP_TailCall;
+                    // todo
+                    //inst.op = SORCER_OP_TailCall;
                     break;
                 }
                 case SORCER_OP_Apply:
                 {
-                    inst.op = SORCER_OP_TailApply;
+                    //inst.op = SORCER_OP_TailApply;
                     break;
                 }
                 default:
