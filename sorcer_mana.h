@@ -74,7 +74,7 @@ SORCER_Block SORCER_blockFromManaToks
 
 SORCER_Block SORCER_blockFromManaStr
 (
-    SORCER_Context* ctx, const char* path, SORCER_ManaErrorInfo* errInfo, SORCER_ManaFileInfoVec* fileTable
+    SORCER_Context* ctx, const char* str, SORCER_ManaErrorInfo* errInfo, SORCER_ManaFileInfoVec* fileTable
 );
 
 SORCER_Block SORCER_blockFromManaFile
