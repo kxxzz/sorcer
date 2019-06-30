@@ -8,8 +8,6 @@
 
 typedef enum SORCER_ManaKeyword
 {
-    SORCER_ManaKeyword_Invalid = -1,
-
     SORCER_ManaKeyword_BlockBegin,
     SORCER_ManaKeyword_BlockEnd,
     SORCER_ManaKeyword_VarsBegin,
@@ -298,7 +296,7 @@ static const char* SORCER_manaLoadDefNameHere(MANA_Space* space, u32 p)
 
 
 
-static SORCER_Block SORCER_manaLoadBlockDefTreeCallback(SORCER_ManaLoadContext* ctx, u32 p)
+static void SORCER_manaLoadBlockDefTreeCallback(SORCER_ManaLoadContext* ctx, u32 p)
 {
     SORCER_ManaLoadCallStack* callStack = ctx->callStack;
 
@@ -310,17 +308,16 @@ static SORCER_Block SORCER_manaLoadBlockDefTreeCallback(SORCER_ManaLoadContext* 
     if (defName)
     {
         SORCER_ManaLoadDefInfo def = { defName, curBlock };
-        SORCER_ManaLoadBlockInfo* scopeInfo = SORCER_manaLoadBlockInfo(ctx, curBlock);
+        SORCER_ManaLoadBlockInfo* scopeInfo = SORCER_manaLoadBlockInfo(ctx, blkInfo->scope);
         vec_push(scopeInfo->defTable, def);
     }
-    return curBlock;
 }
 
 
 
 
 
-static SORCER_Block SORCER_manaLoadBlockDefTree(SORCER_ManaLoadContext* ctx, u32 end)
+static bool SORCER_manaLoadBlockDefTree(SORCER_ManaLoadContext* ctx, u32 end)
 {
     SORCER_Context* sorcer = ctx->sorcer;
     MANA_Space* space = ctx->space;
@@ -334,12 +331,13 @@ next:;
     {
         if (callStack->length == callBase)
         {
-            return SORCER_manaLoadBlockDefTreeCallback(ctx, p);
+            SORCER_manaLoadBlockDefTreeCallback(ctx, p);
+            return true;
         }
         else
         {
             SORCER_manaLoadErrorAtTok(ctx, p, SORCER_ManaError_Syntax);
-            return SORCER_Block_Invalid;
+            return false;
         }
     }
     const char* pStr = MANA_tokDataPtr(space, p);
@@ -354,7 +352,7 @@ next:;
         else
         {
             SORCER_manaLoadErrorAtTok(ctx, p, SORCER_ManaError_Syntax);
-            return SORCER_Block_Invalid;
+            return false;
         }
     }
     else if (keyword[SORCER_ManaKeyword_BlockBegin] == pStr)
@@ -379,21 +377,27 @@ next:;
                 SORCER_ManaLoadCall c = { block, defName };
                 vec_push(callStack, c);
             }
-            else if ((keyword[SORCER_ManaKeyword_Apply] == pStr) || (keyword[SORCER_ManaKeyword_Invalid] == pStr))
+            else if ((keyword[SORCER_ManaKeyword_Apply] == pStr) ||
+                (
+                    (keyword[SORCER_ManaKeyword_BlockEnd] != pStr) &&
+                    (keyword[SORCER_ManaKeyword_VarsBegin] != pStr) &&
+                    (keyword[SORCER_ManaKeyword_VarsEnd] != pStr)
+                ))
             {
                 block = SORCER_manaLoadBlockNew(ctx, scope, p);
                 SORCER_ManaLoadBlockInfo* blkInfo = SORCER_manaLoadBlockInfo(ctx, block);
                 assert(-1 == blkInfo->end);
                 blkInfo->end = ctx->p;
+
+                SORCER_ManaLoadDefInfo def = { defName, block };
+                SORCER_ManaLoadBlockInfo* scopeInfo = SORCER_manaLoadBlockInfo(ctx, scope);
+                vec_push(scopeInfo->defTable, def);
             }
             else
             {
                 SORCER_manaLoadErrorAtTok(ctx, p, SORCER_ManaError_Syntax);
-                return SORCER_Block_Invalid;
+                return false;
             }
-            SORCER_ManaLoadDefInfo def = { defName, block };
-            SORCER_ManaLoadBlockInfo* scopeInfo = SORCER_manaLoadBlockInfo(ctx, scope);
-            vec_push(scopeInfo->defTable, def);
         }
     }
     goto next;
@@ -439,9 +443,16 @@ SORCER_Block SORCER_manaLoadBlock(SORCER_ManaLoadContext* ctx, u32 begin, u32 en
         SORCER_ManaLoadCall c = { blockRoot };
         vec_push(callStack, c);
         ctx->p = begin;
-        SORCER_manaLoadBlockDefTree(ctx, end);
-        ctx->p = begin;
-        SORCER_manaLoadBlockSetLoaded(ctx, blockRoot);
+        if (SORCER_manaLoadBlockDefTree(ctx, end))
+        {
+            ctx->p = begin;
+            SORCER_manaLoadBlockSetLoaded(ctx, blockRoot);
+        }
+        else
+        {
+            SORCER_manaLoadErrorAtTok(ctx, ctx->p - 1, SORCER_ManaError_Syntax);
+            goto failed;
+        }
     }
     u32 callBase = callStack->length;
 next:;
