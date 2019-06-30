@@ -378,22 +378,6 @@ next:;
                 SORCER_ManaLoadCall c = { block, defNameId };
                 vec_push(callStack, c);
             }
-            else if ((keyword[SORCER_ManaKeyword_Apply] == pStrId) ||
-                (
-                    (keyword[SORCER_ManaKeyword_BlockEnd] != pStrId) &&
-                    (keyword[SORCER_ManaKeyword_VarsBegin] != pStrId) &&
-                    (keyword[SORCER_ManaKeyword_VarsEnd] != pStrId)
-                ))
-            {
-                block = SORCER_manaLoadBlockNew(ctx, scope, p);
-                SORCER_ManaLoadBlockInfo* blkInfo = SORCER_manaLoadBlockInfo(ctx, block);
-                assert(-1 == blkInfo->end);
-                blkInfo->end = ctx->p;
-
-                SORCER_ManaLoadDefInfo def = { defNameId, block };
-                SORCER_ManaLoadBlockInfo* scopeInfo = SORCER_manaLoadBlockInfo(ctx, scope);
-                vec_push(scopeInfo->defTable, def);
-            }
             else
             {
                 SORCER_manaLoadErrorAtTok(ctx, p, SORCER_ManaError_Syntax);
@@ -474,18 +458,22 @@ next:;
     }
     SORCER_Block curBlk = vec_last(callStack).block;
     SORCER_ManaLoadBlockInfo* curBlkInfo = SORCER_manaLoadBlockInfo(ctx, curBlk);
-    if (curBlkInfo->end == p)
-    {
-        ctx->p = vec_last(callStack).retP;
-        vec_pop(callStack);
-        goto next;
-    }
     const char* pStr = MANA_tokDataPtr(space, p);
     u32 pStrId = MANA_tokDataId(space, p);
     if (keyword[SORCER_ManaKeyword_BlockEnd] == pStrId)
     {
-        SORCER_manaLoadErrorAtTok(ctx, p, SORCER_ManaError_Syntax);
-        return SORCER_Block_Invalid;
+        assert(curBlkInfo->end == p);
+        if (callStack->length > callBase)
+        {
+            ctx->p = vec_last(callStack).retP;
+            vec_pop(callStack);
+            goto next;
+        }
+        else
+        {
+            SORCER_manaLoadErrorAtTok(ctx, p, SORCER_ManaError_Syntax);
+            return SORCER_Block_Invalid;
+        }
     }
     else if (keyword[SORCER_ManaKeyword_BlockBegin] == pStrId)
     {
@@ -593,15 +581,8 @@ next:;
                         SORCER_manaLoadBlockSetLoaded(ctx, defInfo->block);
                         SORCER_ManaLoadCall c = { defInfo->block, -1, ctx->p - 1 };
                         vec_push(callStack, c);
-                        ctx->p = defBlkInfo->begin;
-                        if (keyword[SORCER_ManaKeyword_BlockBegin] == MANA_tokDataId(space, ctx->p))
-                        {
-                            ctx->p += 1;
-                        }
-                        else
-                        {
-                            assert(defBlkInfo->end == ctx->p + 1);
-                        }
+                        ctx->p = defBlkInfo->begin + 1;
+                        assert(keyword[SORCER_ManaKeyword_BlockBegin] == MANA_tokDataId(space, defBlkInfo->begin));
                         goto next;
                     }
                     SORCER_blockAddInstCall(sorcer, curBlk, defInfo->block);
