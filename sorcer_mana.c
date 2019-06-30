@@ -471,8 +471,8 @@ next:;
             return SORCER_Block_Invalid;
         }
     }
-    SORCER_Block scope = vec_last(callStack).block;
-    SORCER_ManaLoadBlockInfo* curBlkInfo = SORCER_manaLoadBlockInfo(ctx, scope);
+    SORCER_Block curBlk = vec_last(callStack).block;
+    SORCER_ManaLoadBlockInfo* curBlkInfo = SORCER_manaLoadBlockInfo(ctx, curBlk);
     if (curBlkInfo->end == p)
     {
         ctx->p = vec_last(callStack).retP;
@@ -507,8 +507,8 @@ next:;
             ctx->p = blkInfo->begin + 1;
             goto next;
         }
-        assert(scope.id == blkInfo->scope.id);
-        SORCER_blockAddInstPushBlock(sorcer, scope, block);
+        assert(curBlk.id == blkInfo->scope.id);
+        SORCER_blockAddInstPushBlock(sorcer, curBlk, block);
         ctx->p = blkInfo->end + 1;
         goto next;
     }
@@ -528,7 +528,7 @@ next:;
         for (u32 i = 0; i < varNameBuf->length; ++i)
         {
             u32 j = varNameBuf->length - 1 - i;
-            SORCER_Var var = SORCER_blockAddInstPopVar(sorcer, scope);
+            SORCER_Var var = SORCER_blockAddInstPopVar(sorcer, curBlk);
             SORCER_ManaLoadVarInfo varInfo = { varNameBuf->data[j], var };
             vec_push(curBlkInfo->varTable, varInfo);
         }
@@ -539,7 +539,7 @@ next:;
         const char* defName = SORCER_manaLoadDefNameHere(space, p);
         if (defName)
         {
-            SORCER_ManaLoadDefInfo* defInfo = SORCER_manaLoadFindDef(ctx, defName, scope);
+            SORCER_ManaLoadDefInfo* defInfo = SORCER_manaLoadFindDef(ctx, defName, curBlk);
             assert(defInfo);
             SORCER_ManaLoadBlockInfo* defBlkInfo = SORCER_manaLoadBlockInfo(ctx, defInfo->block);
             assert(defBlkInfo);
@@ -570,7 +570,7 @@ next:;
                     if (r)
                     {
                         SORCER_cellFree(sorcer, cell);
-                        SORCER_blockAddInstPushImm(sorcer, scope, type, str);
+                        SORCER_blockAddInstPushImm(sorcer, curBlk, type, str);
                         goto next;
                     }
                 }
@@ -581,16 +581,16 @@ next:;
             {
                 if (keyword[SORCER_ManaKeyword_Apply] == pStr)
                 {
-                    SORCER_blockAddInstApply(sorcer, scope);
+                    SORCER_blockAddInstApply(sorcer, curBlk);
                     goto next;
                 }
-                SORCER_ManaLoadVarInfo* varInfo = SORCER_manaLoadFindVar(ctx, pStr, scope);
+                SORCER_ManaLoadVarInfo* varInfo = SORCER_manaLoadFindVar(ctx, pStr, curBlk);
                 if (varInfo)
                 {
-                    SORCER_blockAddInstPushVar(sorcer, scope, varInfo->var);
+                    SORCER_blockAddInstPushVar(sorcer, curBlk, varInfo->var);
                     goto next;
                 }
-                SORCER_ManaLoadDefInfo* defInfo = SORCER_manaLoadFindDef(ctx, pStr, scope);
+                SORCER_ManaLoadDefInfo* defInfo = SORCER_manaLoadFindDef(ctx, pStr, curBlk);
                 if (defInfo)
                 {
                     SORCER_ManaLoadBlockInfo* defBlkInfo = SORCER_manaLoadBlockInfo(ctx, defInfo->block);
@@ -610,13 +610,13 @@ next:;
                         }
                         goto next;
                     }
-                    SORCER_blockAddInstCall(sorcer, scope, defInfo->block);
+                    SORCER_blockAddInstCall(sorcer, curBlk, defInfo->block);
                     goto next;
                 }
                 SORCER_Opr opr = SORCER_manaLoadFindOpr(ctx, pStr);
                 if (opr.id != SORCER_Opr_Invalid.id)
                 {
-                    SORCER_blockAddInstOpr(sorcer, scope, opr);
+                    SORCER_blockAddInstOpr(sorcer, curBlk, opr);
                     goto next;
                 }
 
@@ -634,7 +634,7 @@ next:;
                     if (r)
                     {
                         SORCER_cellFree(sorcer, cell);
-                        SORCER_blockAddInstPushImm(sorcer, scope, type, str);
+                        SORCER_blockAddInstPushImm(sorcer, curBlk, type, str);
                         goto next;
                     }
                 }
