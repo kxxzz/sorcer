@@ -482,17 +482,8 @@ next:;
     const char* pStr = MANA_tokDataPtr(space, p);
     if (keyword[SORCER_ManaKeyword_BlockEnd] == pStr)
     {
-        if (callStack->length > callBase)
-        {
-            ctx->p = vec_last(callStack).retP;
-            vec_pop(callStack);
-            goto next;
-        }
-        else
-        {
-            SORCER_manaLoadErrorAtTok(ctx, p, SORCER_ManaError_Syntax);
-            return SORCER_Block_Invalid;
-        }
+        SORCER_manaLoadErrorAtTok(ctx, p, SORCER_ManaError_Syntax);
+        return SORCER_Block_Invalid;
     }
     else if (keyword[SORCER_ManaKeyword_BlockBegin] == pStr)
     {
