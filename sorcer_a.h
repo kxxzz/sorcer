@@ -81,7 +81,6 @@ static u32 findInArray32(const u32* a, u32 n, u32 x)
 
 
 
-typedef vec_t(SORCER_Block) SORCER_BlockVec;
 
 
 
