@@ -278,7 +278,7 @@ static void SORCER_manaLoadBlocksRollback(SORCER_ManaLoadContext* ctx, u32 n)
 
 
 
-static const char* SORCER_manaLoadDefNameByTokId(MANA_Space* space, u32 p)
+static const char* SORCER_manaLoadDefNameHere(MANA_Space* space, u32 p)
 {
     const char* str = MANA_tokDataPtr(space, p);
     u32 size = MANA_tokDataSize(space, p);
@@ -366,7 +366,7 @@ next:;
     }
     else
     {
-        const char* defName = SORCER_manaLoadDefNameByTokId(space, p);
+        const char* defName = SORCER_manaLoadDefNameHere(space, p);
         if (defName)
         {
             u32 p = ctx->p++;
@@ -521,7 +521,7 @@ next:;
     else
     {
         SORCER_Block scope = vec_last(callStack).block;
-        const char* defName = SORCER_manaLoadDefNameByTokId(space, p);
+        const char* defName = SORCER_manaLoadDefNameHere(space, p);
         if (defName)
         {
             SORCER_ManaLoadDefInfo* defInfo = SORCER_manaLoadFindDef(ctx, defName, scope);
