@@ -15,6 +15,7 @@
 #include <sorcer.h>
 #include <sorcer_mana.h>
 #include <sorcer_arith.h>
+#include <sorcer_utils.h>
 
 
 
@@ -43,6 +44,8 @@ static void test(void)
     assert(blk.id != SORCER_Block_Invalid.id);
     assert(SORCER_ManaError_NONE == errInfo->error);
     SORCER_run(ctx, blk);
+
+    SORCER_dsFprint(stdout, ctx);
 
     vec_free(fileTable);
     SORCER_ctxFree(ctx);

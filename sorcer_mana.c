@@ -651,6 +651,12 @@ SORCER_Block SORCER_blockFromManaFile
     SORCER_Context* ctx, const char* path, SORCER_ManaErrorInfo* errInfo, SORCER_ManaFileInfoVec* fileTable
 )
 {
+    if (fileTable && !fileTable->length)
+    {
+        SORCER_ManaFileInfo info = { 0 };
+        stzncpy(info.path, path, SORCER_ManaFilePath_MAX);
+        vec_push(fileTable, info);
+    }
     char* str;
     u32 strSize = FILEU_readFile(path, &str);
     if (-1 == strSize)
@@ -660,12 +666,6 @@ SORCER_Block SORCER_blockFromManaFile
         errInfo->line = 0;
         errInfo->column = 0;
         return SORCER_Block_Invalid;
-    }
-    if (fileTable && !fileTable->length)
-    {
-        SORCER_ManaFileInfo info = { 0 };
-        stzncpy(info.path, path, SORCER_ManaFilePath_MAX);
-        vec_push(fileTable, info);
     }
     SORCER_Block blk = SORCER_blockFromManaStr(ctx, str, errInfo, fileTable);
     free(str);
