@@ -746,12 +746,12 @@ next:
         SORCER_Ret ret = { p, vt->length };
         vec_push(rs, ret);
         SORCER_Cell top = vec_last(ds);
-        vec_pop(ds);
         if (top.type.id != SORCER_Type_Block.id)
         {
             errInfo->error = SORCER_RunError_OprArgs;
             goto failed;
         }
+        vec_pop(ds);
         p = top.as.address;
         goto next;
     }
@@ -766,24 +766,27 @@ next:
             errInfo->error = SORCER_RunError_OprArgs;
             goto failed;
         }
-        vec_resize(inBuf, info->numIns);
-        vec_resize(ds, ds->length + info->numOuts - info->numIns);
 
-        memcpy(inBuf->data, ds->data + ds->length - info->numOuts, sizeof(SORCER_Cell)*info->numIns);
-
+        SORCER_Cell* ins = ds->data + ds->length - info->numIns;
         for (u32 i = 0; i < info->numIns; ++i)
         {
-            if (info->ins[i].id != inBuf->data[i].type.id)
+            if (info->ins[i].id != ins[i].type.id)
             {
                 errInfo->error = SORCER_RunError_OprArgs;
                 goto failed;
             }
         }
-        SORCER_Cell* outBuf = ds->data + ds->length - info->numOuts;
-        info->func(ctx, info->funcCtx, inBuf->data, outBuf);
+
+        vec_resize(inBuf, info->numIns);
+        vec_resize(ds, ds->length + info->numOuts - info->numIns);
+
+        memcpy(inBuf->data, ds->data + ds->length - info->numOuts, sizeof(SORCER_Cell)*info->numIns);
+
+        SORCER_Cell* outs = ds->data + ds->length - info->numOuts;
+        info->func(ctx, info->funcCtx, inBuf->data, outs);
         for (u32 i = 0; i < info->numOuts; ++i)
         {
-            outBuf[i].type = info->outs[i];
+            outs[i].type = info->outs[i];
         }
         for (u32 i = 0; i < info->numIns; ++i)
         {
@@ -833,12 +836,12 @@ next:
             SORCER_ctxCellVecResize(ctx, vt, 0);
         }
         SORCER_Cell top = vec_last(ds);
-        vec_pop(ds);
         if (top.type.id != SORCER_Type_Block.id)
         {
             errInfo->error = SORCER_RunError_OprArgs;
             goto failed;
         }
+        vec_pop(ds);
         p = top.as.address;
         goto next;
     }
@@ -847,6 +850,7 @@ next:
         goto next;
     }
 failed:
+    SORCER_ctxCellVecResize(ctx, vt, 0);
     return;
 }
 

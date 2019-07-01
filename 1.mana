@@ -12,8 +12,7 @@ fff:
     a x * 99 / 99 /
 }
 
-{ fff fff / } [bbb]
-
+{ fff fff } [bbb]
 
 
 ccc: {[x] ddd: {100 88 +} 100 6 * 4 / x + ddd /}
@@ -25,10 +24,14 @@ ccc: {[x] ddd: {100 88 +} 100 6 * 4 / x + ddd /}
 
 200 ccc1 #
 
-bbb #
 
+ddd:
+{
+    100 [bbb]
+    { bbb # } [xxx] xxx
+}
 
-
+ddd #
 
 
 
