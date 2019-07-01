@@ -86,7 +86,6 @@ static void execCode(const char* filename, const char* code)
 
         printf("[EXEC START] \"%s\" [%s]\n", filename, nowStr(timeBuf));
         SORCER_run(ctx, blk, runErr);
-        printf("[EXEC DONE] \"%s\" [%s]\n", filename, nowStr(timeBuf));
 
         if (runErr->error)
         {
@@ -100,6 +99,8 @@ static void execCode(const char* filename, const char* code)
         }
         else
         {
+            printf("[EXEC DONE] \"%s\" [%s]\n", filename, nowStr(timeBuf));
+
             printf("<DataStack>\n");
             printf("-------------\n");
             SORCER_dsFprint(stdout, ctx);
