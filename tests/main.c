@@ -37,13 +37,16 @@ static void test(void)
     SORCER_Context* ctx = SORCER_ctxNew();
     SORCER_ArithContext arithCtx[1] = { 0 };
     SORCER_arith(ctx, arithCtx);
-    SORCER_ManaErrorInfo errInfo[1] = { 0 };
     SORCER_ManaFileInfoVec fileTable[1] = { 0 };
 
-    SORCER_Block blk = SORCER_blockFromManaFile(ctx, "../1.mana", errInfo, fileTable);
+    SORCER_ManaErrorInfo compErrInfo[1] = { 0 };
+    SORCER_Block blk = SORCER_blockFromManaFile(ctx, "../1.mana", compErrInfo, fileTable);
     assert(blk.id != SORCER_Block_Invalid.id);
-    assert(SORCER_ManaError_NONE == errInfo->error);
-    SORCER_run(ctx, blk);
+    assert(SORCER_ManaError_NONE == compErrInfo->error);
+
+    SORCER_RunErrorInfo runErrInfo[1];
+    SORCER_run(ctx, blk, runErrInfo);
+    assert(SORCER_RunError_NONE == runErrInfo->error);
 
     SORCER_dsFprint(stdout, ctx);
 

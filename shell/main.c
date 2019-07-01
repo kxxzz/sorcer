@@ -66,35 +66,35 @@ static void execCode(const char* filename, const char* code)
     SORCER_Context* ctx = SORCER_ctxNew();
     SORCER_ArithContext arithCtx[1] = { 0 };
     SORCER_arith(ctx, arithCtx);
-    SORCER_ManaErrorInfo errInfo[1] = { 0 };
+    SORCER_ManaErrorInfo compErrInfo[1] = { 0 };
     SORCER_ManaFileInfoVec fileTable[1] = { 0 };
     SORCER_Block blk;
     if (code)
     {
-        blk = SORCER_blockFromManaStr(ctx, code, errInfo, fileTable);
+        blk = SORCER_blockFromManaStr(ctx, code, compErrInfo, fileTable);
     }
     else
     {
-        blk = SORCER_blockFromManaFile(ctx, filename, errInfo, fileTable);
+        blk = SORCER_blockFromManaFile(ctx, filename, compErrInfo, fileTable);
     }
     printf("[COMP DONE] \"%s\" [%s]\n", filename, nowStr(timeBuf));
     if (blk.id != SORCER_Block_Invalid.id)
     {
-        assert(SORCER_ManaError_NONE == errInfo->error);
+        assert(SORCER_ManaError_NONE == compErrInfo->error);
 
-        SORCER_RunErrorInfo runErr[1];
+        SORCER_RunErrorInfo runErrInfo[1];
 
         printf("[EXEC START] \"%s\" [%s]\n", filename, nowStr(timeBuf));
-        SORCER_run(ctx, blk, runErr);
+        SORCER_run(ctx, blk, runErrInfo);
 
-        if (runErr->error)
+        if (runErrInfo->error)
         {
-            const char* errname = SORCER_RunErrorNameTable(runErr->error);
-            const char* filename = fileTable->data[runErr->file].path;
+            const char* errname = SORCER_RunErrorNameTable(runErrInfo->error);
+            const char* filename = fileTable->data[runErrInfo->file].path;
             printf
             (
                 "[EXEC ERROR] %s: \"%s\": %u:%u [%s]\n",
-                errname, filename, runErr->line, runErr->column, nowStr(timeBuf)
+                errname, filename, runErrInfo->line, runErrInfo->column, nowStr(timeBuf)
             );
         }
         else
@@ -109,12 +109,12 @@ static void execCode(const char* filename, const char* code)
     }
     else
     {
-        const char* errname = SORCER_ManaErrorNameTable(errInfo->error);
-        const char* filename = fileTable->data[errInfo->file].path;
+        const char* errname = SORCER_ManaErrorNameTable(compErrInfo->error);
+        const char* filename = fileTable->data[compErrInfo->file].path;
         printf
         (
             "[COMP ERROR] %s: \"%s\": %u:%u [%s]\n",
-            errname, filename, errInfo->line, errInfo->column, nowStr(timeBuf)
+            errname, filename, compErrInfo->line, compErrInfo->column, nowStr(timeBuf)
         );
     }
     vec_free(fileTable);
