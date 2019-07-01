@@ -788,10 +788,6 @@ next:
         {
             outs[i].type = info->outs[i];
         }
-        for (u32 i = 0; i < info->numIns; ++i)
-        {
-            SORCER_cellFree(ctx, inBuf->data + i);
-        }
         goto next;
     }
     case SORCER_OP_Ret:

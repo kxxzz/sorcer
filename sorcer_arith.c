@@ -73,8 +73,7 @@ SORCER_Opr SORCER_ArithOprTable(SORCER_ArithContext* ctx, SORCER_ArithOpr aop)
 static void SORCER_oprFunc_Neg(SORCER_Context* ctx, void* funcCtx, const SORCER_Cell* ins, SORCER_Cell* outs)
 {
     APNUM_pool_t pool = SORCER_pool(ctx, SORCER_ArithTypeTable(funcCtx, SORCER_ArithType_NUM));
-    outs[0].as.ptr = APNUM_ratNew(pool);
-    APNUM_ratDup(outs[0].as.ptr, ins[0].as.ptr);
+    outs[0].as.ptr = ins[0].as.ptr;
     APNUM_ratNeg(outs[0].as.ptr);
 }
 
@@ -83,6 +82,8 @@ static void SORCER_oprFunc_Add(SORCER_Context* ctx, void* funcCtx, const SORCER_
     APNUM_pool_t pool = SORCER_pool(ctx, SORCER_ArithTypeTable(funcCtx, SORCER_ArithType_NUM));
     outs[0].as.ptr = APNUM_ratNew(pool);
     APNUM_ratAdd(pool, outs[0].as.ptr, ins[0].as.ptr, ins[1].as.ptr);
+    APNUM_ratFree(pool, ins[0].as.ptr);
+    APNUM_ratFree(pool, ins[1].as.ptr);
 }
 
 static void SORCER_oprFunc_Sub(SORCER_Context* ctx, void* funcCtx, const SORCER_Cell* ins, SORCER_Cell* outs)
@@ -90,6 +91,8 @@ static void SORCER_oprFunc_Sub(SORCER_Context* ctx, void* funcCtx, const SORCER_
     APNUM_pool_t pool = SORCER_pool(ctx, SORCER_ArithTypeTable(funcCtx, SORCER_ArithType_NUM));
     outs[0].as.ptr = APNUM_ratNew(pool);
     APNUM_ratSub(pool, outs[0].as.ptr, ins[0].as.ptr, ins[1].as.ptr);
+    APNUM_ratFree(pool, ins[0].as.ptr);
+    APNUM_ratFree(pool, ins[1].as.ptr);
 }
 
 static void SORCER_oprFunc_Mul(SORCER_Context* ctx, void* funcCtx, const SORCER_Cell* ins, SORCER_Cell* outs)
@@ -97,6 +100,8 @@ static void SORCER_oprFunc_Mul(SORCER_Context* ctx, void* funcCtx, const SORCER_
     APNUM_pool_t pool = SORCER_pool(ctx, SORCER_ArithTypeTable(funcCtx, SORCER_ArithType_NUM));
     outs[0].as.ptr = APNUM_ratNew(pool);
     APNUM_ratMul(pool, outs[0].as.ptr, ins[0].as.ptr, ins[1].as.ptr);
+    APNUM_ratFree(pool, ins[0].as.ptr);
+    APNUM_ratFree(pool, ins[1].as.ptr);
 }
 
 static void SORCER_oprFunc_Div(SORCER_Context* ctx, void* funcCtx, const SORCER_Cell* ins, SORCER_Cell* outs)
@@ -104,6 +109,8 @@ static void SORCER_oprFunc_Div(SORCER_Context* ctx, void* funcCtx, const SORCER_
     APNUM_pool_t pool = SORCER_pool(ctx, SORCER_ArithTypeTable(funcCtx, SORCER_ArithType_NUM));
     outs[0].as.ptr = APNUM_ratNew(pool);
     APNUM_ratDiv(pool, outs[0].as.ptr, ins[0].as.ptr, ins[1].as.ptr);
+    APNUM_ratFree(pool, ins[0].as.ptr);
+    APNUM_ratFree(pool, ins[1].as.ptr);
 }
 
 
