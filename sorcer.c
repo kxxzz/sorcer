@@ -649,8 +649,9 @@ static void SORCER_codeUpdate(SORCER_Context* ctx, SORCER_Block blk)
 
 
 
-void SORCER_run(SORCER_Context* ctx, SORCER_Block blk)
+void SORCER_run(SORCER_Context* ctx, SORCER_Block blk, SORCER_RunErrorInfo* errInfo)
 {
+    memset(errInfo, 0, sizeof(*errInfo));
     SORCER_codeUpdate(ctx, blk);
 
     SORCER_InstVec* code = ctx->code;
@@ -735,6 +736,11 @@ next:
         SORCER_CellVec* inBuf = ctx->inBuf;
         SORCER_CellVec* ds = ctx->dataStack;
 
+        if (ds->length < info->numIns)
+        {
+            errInfo->error = SORCER_RunError_OprArgs;
+            goto failed;
+        }
         vec_resize(inBuf, info->numIns);
         vec_resize(ds, ds->length + info->numOuts - info->numIns);
 
@@ -801,6 +807,8 @@ next:
         assert(false);
         goto next;
     }
+failed:
+    return;
 }
 
 

@@ -82,14 +82,29 @@ static void execCode(const char* filename, const char* code)
     {
         assert(SORCER_ManaError_NONE == errInfo->error);
 
+        SORCER_RunErrorInfo runErr[1];
+
         printf("[EXEC START] \"%s\" [%s]\n", filename, nowStr(timeBuf));
-        SORCER_run(ctx, blk);
+        SORCER_run(ctx, blk, runErr);
         printf("[EXEC DONE] \"%s\" [%s]\n", filename, nowStr(timeBuf));
 
-        printf("<DataStack>\n");
-        printf("-------------\n");
-        SORCER_dsFprint(stdout, ctx);
-        printf("-------------\n");
+        if (runErr->error)
+        {
+            const char* errname = SORCER_RunErrorNameTable(runErr->error);
+            const char* filename = fileTable->data[runErr->file].path;
+            printf
+            (
+                "[EXEC ERROR] %s: \"%s\": %u:%u [%s]\n",
+                errname, filename, runErr->line, runErr->column, nowStr(timeBuf)
+            );
+        }
+        else
+        {
+            printf("<DataStack>\n");
+            printf("-------------\n");
+            SORCER_dsFprint(stdout, ctx);
+            printf("-------------\n");
+        }
     }
     else
     {
@@ -97,7 +112,7 @@ static void execCode(const char* filename, const char* code)
         const char* filename = fileTable->data[errInfo->file].path;
         printf
         (
-            "[ERROR] %s: \"%s\": %u:%u [%s]\n",
+            "[COMP ERROR] %s: \"%s\": %u:%u [%s]\n",
             errname, filename, errInfo->line, errInfo->column, nowStr(timeBuf)
         );
     }

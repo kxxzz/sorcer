@@ -144,7 +144,35 @@ void SORCER_blockAddInlineBlock(SORCER_Context* ctx, SORCER_Block blk, SORCER_Bl
 
 
 
-void SORCER_run(SORCER_Context* ctx, SORCER_Block blk);
+
+typedef enum SORCER_RunError
+{
+    SORCER_RunError_NONE = 0,
+
+    SORCER_RunError_OprArgs,
+
+    SORCER_NumRunErrors
+} SORCER_RunError;
+
+static const char* SORCER_RunErrorNameTable(SORCER_RunError err)
+{
+    const char* a[SORCER_NumRunErrors] =
+    {
+        "NONE",
+        "OprArgs",
+    };
+    return a[err];
+}
+
+typedef struct SORCER_RunErrorInfo
+{
+    SORCER_RunError error;
+    u32 file;
+    u32 line;
+    u32 column;
+} SORCER_RunErrorInfo;
+
+void SORCER_run(SORCER_Context* ctx, SORCER_Block blk, SORCER_RunErrorInfo* errInfo);
 
 
 
