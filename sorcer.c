@@ -103,7 +103,7 @@ typedef struct SORCER_Context
 
 static u32 SORCER_cellToStr_Block(char* buf, u32 bufSize, void* pool, const SORCER_Cell* x)
 {
-    return snprintf(buf, bufSize, "0x%08x", x->as.address);
+    return snprintf(buf, bufSize, "<block 0x%08x>", x->as.address);
 }
 
 
