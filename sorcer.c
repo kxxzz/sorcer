@@ -592,13 +592,12 @@ static void SORCER_codeUpdate(SORCER_Context* ctx, SORCER_Block blk)
                 {
                 case SORCER_OP_Call:
                 {
-                    // todo
-                    //inst.op = SORCER_OP_TailCall;
+                    inst.op = SORCER_OP_TailCall;
                     break;
                 }
                 case SORCER_OP_Apply:
                 {
-                    //inst.op = SORCER_OP_TailApply;
+                    inst.op = SORCER_OP_TailApply;
                     break;
                 }
                 default:
@@ -776,7 +775,6 @@ next:
         if (rs->length > 0)
         {
             SORCER_Ret ret = vec_last(rs);
-            vec_pop(rs);
             vec_resize(vt, ret.varBase);
         }
         else
@@ -791,7 +789,6 @@ next:
         if (rs->length > 0)
         {
             SORCER_Ret ret = vec_last(rs);
-            vec_pop(rs);
             vec_resize(vt, ret.varBase);
         }
         else
