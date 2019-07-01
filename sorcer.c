@@ -131,6 +131,7 @@ SORCER_Context* SORCER_ctxNew(void)
 
 void SORCER_ctxFree(SORCER_Context* ctx)
 {
+    assert(0 == ctx->varTable->length);
     vec_free(ctx->varTable);
     vec_free(ctx->inBuf);
 
@@ -165,6 +166,26 @@ void SORCER_ctxFree(SORCER_Context* ctx)
     vec_free(ctx->typeTable);
     free(ctx);
 }
+
+
+
+
+
+
+
+
+
+static void SORCER_ctxCellVecResize(SORCER_Context* ctx, SORCER_CellVec* a, u32 n)
+{
+    for (u32 i = n; i < a->length; ++i)
+    {
+        SORCER_cellFree(ctx, a->data + i);
+    }
+    vec_resize(a, n);
+}
+
+
+
 
 
 
@@ -726,6 +747,11 @@ next:
         vec_push(rs, ret);
         SORCER_Cell top = vec_last(ds);
         vec_pop(ds);
+        if (top.type.id != SORCER_Type_Block.id)
+        {
+            errInfo->error = SORCER_RunError_OprArgs;
+            goto failed;
+        }
         p = top.as.address;
         goto next;
     }
@@ -745,8 +771,20 @@ next:
 
         memcpy(inBuf->data, ds->data + ds->length - info->numOuts, sizeof(SORCER_Cell)*info->numIns);
 
-        info->func(ctx, info->funcCtx, inBuf->data, ds->data + ds->length - info->numOuts);
-
+        for (u32 i = 0; i < info->numIns; ++i)
+        {
+            if (info->ins[i].id != inBuf->data[i].type.id)
+            {
+                errInfo->error = SORCER_RunError_OprArgs;
+                goto failed;
+            }
+        }
+        SORCER_Cell* outBuf = ds->data + ds->length - info->numOuts;
+        info->func(ctx, info->funcCtx, inBuf->data, outBuf);
+        for (u32 i = 0; i < info->numOuts; ++i)
+        {
+            outBuf[i].type = info->outs[i];
+        }
         for (u32 i = 0; i < info->numIns; ++i)
         {
             SORCER_cellFree(ctx, inBuf->data + i);
@@ -757,17 +795,14 @@ next:
     {
         if (!rs->length)
         {
+            SORCER_ctxCellVecResize(ctx, vt, 0);
             return;
         }
         SORCER_Ret ret = vec_last(rs);
         vec_pop(rs);
         p = ret.address;
         assert(vt->length >= ret.varBase);
-        for (u32 i = ret.varBase; i < vt->length; ++i)
-        {
-            SORCER_cellFree(ctx, vt->data + i);
-        }
-        vec_resize(vt, ret.varBase);
+        SORCER_ctxCellVecResize(ctx, vt, ret.varBase);
         goto next;
     }
     case SORCER_OP_TailCall:
@@ -775,11 +810,12 @@ next:
         if (rs->length > 0)
         {
             SORCER_Ret ret = vec_last(rs);
-            vec_resize(vt, ret.varBase);
+            assert(vt->length >= ret.varBase);
+            SORCER_ctxCellVecResize(ctx, vt, ret.varBase);
         }
         else
         {
-            vec_resize(vt, 0);
+            SORCER_ctxCellVecResize(ctx, vt, 0);
         }
         p = inst->arg.address;
         goto next;
@@ -789,14 +825,20 @@ next:
         if (rs->length > 0)
         {
             SORCER_Ret ret = vec_last(rs);
-            vec_resize(vt, ret.varBase);
+            assert(vt->length >= ret.varBase);
+            SORCER_ctxCellVecResize(ctx, vt, ret.varBase);
         }
         else
         {
-            vec_resize(vt, 0);
+            SORCER_ctxCellVecResize(ctx, vt, 0);
         }
         SORCER_Cell top = vec_last(ds);
         vec_pop(ds);
+        if (top.type.id != SORCER_Type_Block.id)
+        {
+            errInfo->error = SORCER_RunError_OprArgs;
+            goto failed;
+        }
         p = top.as.address;
         goto next;
     }
