@@ -52,8 +52,7 @@ typedef union SR_CellValue
 {
     u64 val;
     void* ptr;
-    SR_Block block;
-    u32 address;
+    SR_Block blk;
 } SR_CellValue;
 
 typedef struct SR_Cell

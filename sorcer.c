@@ -103,7 +103,7 @@ typedef struct SR_Context
 
 static u32 SR_cellToStr_Block(char* buf, u32 bufSize, void* pool, const SR_CellValue* x)
 {
-    return snprintf(buf, bufSize, "<block 0x%08x>", x->address);
+    return snprintf(buf, bufSize, "<block 0x%08llx>", x->val);
 }
 
 
@@ -730,7 +730,7 @@ next:
     }
     case SR_OP_PushBlock:
     {
-        SR_Cell cell = { SR_Type_Block.id, { { .block = inst->arg.block } } };
+        SR_Cell cell = { SR_Type_Block.id, { { .blk = inst->arg.block } } };
         vec_push(ds, cell);
         goto next;
     }
@@ -752,7 +752,7 @@ next:
             goto failed;
         }
         vec_pop(ds);
-        p = top.value->address;
+        p = (u32)top.value->val;
         goto next;
     }
     case SR_OP_Opr:
@@ -838,7 +838,7 @@ next:
             goto failed;
         }
         vec_pop(ds);
-        p = top.value->address;
+        p = (u32)top.value->val;
         goto next;
     }
     default:
