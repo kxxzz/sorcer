@@ -6,36 +6,36 @@
 
 
 
-typedef enum SORCER_ArithType
+typedef enum SR_ArithType
 {
-    SORCER_ArithType_NUM = 0,
+    SR_ArithType_NUM = 0,
 
-    SORCER_NumArithTypes
-} SORCER_ArithType;
+    SR_NumArithTypes
+} SR_ArithType;
 
-typedef enum SORCER_ArithOpr
+typedef enum SR_ArithOpr
 {
-    SORCER_ArithOpr_Neg = 0,
-    SORCER_ArithOpr_Add,
-    SORCER_ArithOpr_Sub,
-    SORCER_ArithOpr_Mul,
-    SORCER_ArithOpr_Div,
+    SR_ArithOpr_Neg = 0,
+    SR_ArithOpr_Add,
+    SR_ArithOpr_Sub,
+    SR_ArithOpr_Mul,
+    SR_ArithOpr_Div,
 
-    SORCER_NumArithOprs
-} SORCER_ArithOpr;
+    SR_NumArithOprs
+} SR_ArithOpr;
 
-typedef struct SORCER_ArithContext
+typedef struct SR_ArithContext
 {
-    SORCER_Type type[SORCER_NumArithTypes];
-    SORCER_Opr opr[SORCER_NumArithOprs];
-} SORCER_ArithContext;
+    SR_Type type[SR_NumArithTypes];
+    SR_Opr opr[SR_NumArithOprs];
+} SR_ArithContext;
 
-SORCER_Type SORCER_ArithTypeTable(SORCER_ArithContext* ctx, SORCER_ArithType at);
-SORCER_Opr SORCER_ArithOprTable(SORCER_ArithContext* ctx, SORCER_ArithOpr aop);
+SR_Type SR_ArithTypeTable(SR_ArithContext* ctx, SR_ArithType at);
+SR_Opr SR_ArithOprTable(SR_ArithContext* ctx, SR_ArithOpr aop);
 
 
 
-void SORCER_arith(SORCER_Context* ctx, SORCER_ArithContext* arithCtx);
+void SR_arith(SR_Context* ctx, SR_ArithContext* arithCtx);
 
 
 

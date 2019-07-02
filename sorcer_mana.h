@@ -9,25 +9,25 @@
 
 
 
-typedef enum SORCER_ManaError
+typedef enum SR_ManaError
 {
-    SORCER_ManaError_NONE = 0,
+    SR_ManaError_NONE = 0,
 
-    SORCER_ManaError_SrcFile,
-    SORCER_ManaError_Syntax,
-    SORCER_ManaError_UnkWord,
-    SORCER_ManaError_UnkFunType,
-    SORCER_ManaError_UnkTypeDecl,
-    SORCER_ManaError_BranchUneq,
-    SORCER_ManaError_RecurNoBaseCase,
-    SORCER_ManaError_TypeUnsolvable,
+    SR_ManaError_SrcFile,
+    SR_ManaError_Syntax,
+    SR_ManaError_UnkWord,
+    SR_ManaError_UnkFunType,
+    SR_ManaError_UnkTypeDecl,
+    SR_ManaError_BranchUneq,
+    SR_ManaError_RecurNoBaseCase,
+    SR_ManaError_TypeUnsolvable,
 
-    SORCER_NumManaErrors
-} SORCER_ManaError;
+    SR_NumManaErrors
+} SR_ManaError;
 
-static const char* SORCER_ManaErrorNameTable(SORCER_ManaError err)
+static const char* SR_ManaErrorNameTable(SR_ManaError err)
 {
-    const char* a[SORCER_NumManaErrors] =
+    const char* a[SR_NumManaErrors] =
     {
         "NONE",
         "SrcFile",
@@ -42,44 +42,44 @@ static const char* SORCER_ManaErrorNameTable(SORCER_ManaError err)
     return a[err];
 }
 
-typedef struct SORCER_ManaErrorInfo
+typedef struct SR_ManaErrorInfo
 {
-    SORCER_ManaError error;
+    SR_ManaError error;
     u32 file;
     u32 line;
     u32 column;
-} SORCER_ManaErrorInfo;
+} SR_ManaErrorInfo;
 
 
 
 enum
 {
-    SORCER_ManaFilePath_MAX = 260,
+    SR_ManaFilePath_MAX = 260,
 };
 
-typedef struct SORCER_ManaFileInfo
+typedef struct SR_ManaFileInfo
 {
-    char path[SORCER_ManaFilePath_MAX];
-} SORCER_ManaFileInfo;
+    char path[SR_ManaFilePath_MAX];
+} SR_ManaFileInfo;
 
-typedef vec_t(SORCER_ManaFileInfo) SORCER_ManaFileInfoVec;
+typedef vec_t(SR_ManaFileInfo) SR_ManaFileInfoVec;
 
 
 
-SORCER_Block SORCER_blockFromManaToks
+SR_Block SR_blockFromManaToks
 (
-    SORCER_Context* ctx, MANA_Space* space, u32 tokId0, u32 numToks,
-    const MANA_SpaceSrcInfo* srcInfo, SORCER_ManaErrorInfo* errInfo, SORCER_ManaFileInfoVec* fileTable
+    SR_Context* ctx, MANA_Space* space, u32 tokId0, u32 numToks,
+    const MANA_SpaceSrcInfo* srcInfo, SR_ManaErrorInfo* errInfo, SR_ManaFileInfoVec* fileTable
 );
 
-SORCER_Block SORCER_blockFromManaStr
+SR_Block SR_blockFromManaStr
 (
-    SORCER_Context* ctx, const char* str, SORCER_ManaErrorInfo* errInfo, SORCER_ManaFileInfoVec* fileTable
+    SR_Context* ctx, const char* str, SR_ManaErrorInfo* errInfo, SR_ManaFileInfoVec* fileTable
 );
 
-SORCER_Block SORCER_blockFromManaFile
+SR_Block SR_blockFromManaFile
 (
-    SORCER_Context* ctx, const char* path, SORCER_ManaErrorInfo* errInfo, SORCER_ManaFileInfoVec* fileTable
+    SR_Context* ctx, const char* path, SR_ManaErrorInfo* errInfo, SR_ManaFileInfoVec* fileTable
 );
 
 

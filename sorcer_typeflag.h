@@ -9,7 +9,7 @@
 
 enum
 {
-    SORCER_TypeFlag_String = 1U << 0,
+    SR_TypeFlag_String = 1U << 0,
 };
 
 

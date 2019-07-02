@@ -63,33 +63,33 @@ static void execCode(const char* filename, const char* code)
 {
     char timeBuf[TimeStrBuf_MAX];
     printf("[COMP START] \"%s\" [%s]\n", filename, nowStr(timeBuf));
-    SORCER_Context* ctx = SORCER_ctxNew();
-    SORCER_ArithContext arithCtx[1] = { 0 };
-    SORCER_arith(ctx, arithCtx);
-    SORCER_ManaErrorInfo compErrInfo[1] = { 0 };
-    SORCER_ManaFileInfoVec fileTable[1] = { 0 };
-    SORCER_Block blk;
+    SR_Context* ctx = SR_ctxNew();
+    SR_ArithContext arithCtx[1] = { 0 };
+    SR_arith(ctx, arithCtx);
+    SR_ManaErrorInfo compErrInfo[1] = { 0 };
+    SR_ManaFileInfoVec fileTable[1] = { 0 };
+    SR_Block blk;
     if (code)
     {
-        blk = SORCER_blockFromManaStr(ctx, code, compErrInfo, fileTable);
+        blk = SR_blockFromManaStr(ctx, code, compErrInfo, fileTable);
     }
     else
     {
-        blk = SORCER_blockFromManaFile(ctx, filename, compErrInfo, fileTable);
+        blk = SR_blockFromManaFile(ctx, filename, compErrInfo, fileTable);
     }
     printf("[COMP DONE] \"%s\" [%s]\n", filename, nowStr(timeBuf));
-    if (blk.id != SORCER_Block_Invalid.id)
+    if (blk.id != SR_Block_Invalid.id)
     {
-        assert(SORCER_ManaError_NONE == compErrInfo->error);
+        assert(SR_ManaError_NONE == compErrInfo->error);
 
-        SORCER_RunErrorInfo runErrInfo[1];
+        SR_RunErrorInfo runErrInfo[1];
 
         printf("[EXEC START] \"%s\" [%s]\n", filename, nowStr(timeBuf));
-        SORCER_run(ctx, blk, runErrInfo);
+        SR_run(ctx, blk, runErrInfo);
 
         if (runErrInfo->error)
         {
-            const char* errname = SORCER_RunErrorNameTable(runErrInfo->error);
+            const char* errname = SR_RunErrorNameTable(runErrInfo->error);
             const char* filename = fileTable->data[runErrInfo->file].path;
             printf
             (
@@ -103,13 +103,13 @@ static void execCode(const char* filename, const char* code)
 
             printf("<DataStack>\n");
             printf("-------------\n");
-            SORCER_dsFprint(stdout, ctx);
+            SR_dsFprint(stdout, ctx);
             printf("-------------\n");
         }
     }
     else
     {
-        const char* errname = SORCER_ManaErrorNameTable(compErrInfo->error);
+        const char* errname = SR_ManaErrorNameTable(compErrInfo->error);
         const char* filename = fileTable->data[compErrInfo->file].path;
         printf
         (
@@ -118,7 +118,7 @@ static void execCode(const char* filename, const char* code)
         );
     }
     vec_free(fileTable);
-    SORCER_ctxFree(ctx);
+    SR_ctxFree(ctx);
 }
 
 

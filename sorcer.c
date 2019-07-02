@@ -4,60 +4,60 @@
 
 
 
-typedef enum SORCER_OP
+typedef enum SR_OP
 {
-    SORCER_OP_Nop = 0,
+    SR_OP_Nop = 0,
 
-    SORCER_OP_PopNull,
-    SORCER_OP_PopVar,
-    SORCER_OP_PushImm,
-    SORCER_OP_PushVar,
-    SORCER_OP_PushBlock,
-    SORCER_OP_Call,
-    SORCER_OP_Apply,
-    SORCER_OP_Opr,
+    SR_OP_PopNull,
+    SR_OP_PopVar,
+    SR_OP_PushImm,
+    SR_OP_PushVar,
+    SR_OP_PushBlock,
+    SR_OP_Call,
+    SR_OP_Apply,
+    SR_OP_Opr,
 
-    SORCER_OP_Ret,
-    SORCER_OP_TailCall,
-    SORCER_OP_TailApply,
+    SR_OP_Ret,
+    SR_OP_TailCall,
+    SR_OP_TailApply,
 
-    SORCER_NumOPs
-} SORCER_OP;
+    SR_NumOPs
+} SR_OP;
 
 
-typedef struct SORCER_InstImm
+typedef struct SR_InstImm
 {
-    SORCER_Type type;
+    SR_Type type;
     u32 src;
-} SORCER_InstImm;
+} SR_InstImm;
 
-typedef struct SORCER_Inst
+typedef struct SR_Inst
 {
-    SORCER_OP op;
+    SR_OP op;
     union
     {
-        SORCER_InstImm imm;
-        SORCER_Var var;
-        SORCER_Block block;
-        SORCER_Opr opr;
+        SR_InstImm imm;
+        SR_Var var;
+        SR_Block block;
+        SR_Opr opr;
         u32 address;
     } arg;
-} SORCER_Inst;
+} SR_Inst;
 
-typedef vec_t(SORCER_Inst) SORCER_InstVec;
-
-
+typedef vec_t(SR_Inst) SR_InstVec;
 
 
-typedef struct SORCER_BlockInfo
+
+
+typedef struct SR_BlockInfo
 {
     u32 varCount;
-    SORCER_InstVec code[1];
+    SR_InstVec code[1];
     u32 calleeCount;
     u32 baseAddress;
-} SORCER_BlockInfo;
+} SR_BlockInfo;
 
-static void SORCER_blockInfoFree(SORCER_BlockInfo* a)
+static void SR_blockInfoFree(SR_BlockInfo* a)
 {
     vec_free(a->code);
 }
@@ -65,54 +65,54 @@ static void SORCER_blockInfoFree(SORCER_BlockInfo* a)
 
 
 
-typedef struct SORCER_Ret
+typedef struct SR_Ret
 {
     u32 address;
     u32 varBase;
-} SORCER_Ret;
+} SR_Ret;
 
 
 
-typedef vec_t(SORCER_TypeInfo) SORCER_TypeInfoVec;
-typedef vec_t(SORCER_Cell) SORCER_CellVec;
-typedef vec_t(SORCER_OprInfo) SORCER_OprInfoVec;
-typedef vec_t(SORCER_BlockInfo) SORCER_BlockInfoVec;
-typedef vec_t(SORCER_Ret) SORCER_RetVec;
+typedef vec_t(SR_TypeInfo) SR_TypeInfoVec;
+typedef vec_t(SR_Cell) SR_CellVec;
+typedef vec_t(SR_OprInfo) SR_OprInfoVec;
+typedef vec_t(SR_BlockInfo) SR_BlockInfoVec;
+typedef vec_t(SR_Ret) SR_RetVec;
 
 
-typedef struct SORCER_Context
+typedef struct SR_Context
 {
-    SORCER_TypeInfoVec typeTable[1];
-    SORCER_OprInfoVec oprTable[1];
-    SORCER_BlockInfoVec blockTable[1];
+    SR_TypeInfoVec typeTable[1];
+    SR_OprInfoVec oprTable[1];
+    SR_BlockInfoVec blockTable[1];
     vec_ptr typePoolTable[1];
     upool_t dataPool;
 
-    SORCER_CellVec dataStack[1];
+    SR_CellVec dataStack[1];
 
     bool codeUpdated;
-    SORCER_InstVec code[1];
-    SORCER_RetVec retStack[1];
+    SR_InstVec code[1];
+    SR_RetVec retStack[1];
 
-    SORCER_CellVec inBuf[1];
-    SORCER_CellVec varTable[1];
-} SORCER_Context;
-
-
+    SR_CellVec inBuf[1];
+    SR_CellVec varTable[1];
+} SR_Context;
 
 
-static u32 SORCER_cellToStr_Block(char* buf, u32 bufSize, void* pool, const SORCER_Cell* x)
+
+
+static u32 SR_cellToStr_Block(char* buf, u32 bufSize, void* pool, const SR_CellValue* x)
 {
-    return snprintf(buf, bufSize, "<block 0x%08x>", x->as.address);
+    return snprintf(buf, bufSize, "<block 0x%08x>", x->address);
 }
 
 
-SORCER_Context* SORCER_ctxNew(void)
+SR_Context* SR_ctxNew(void)
 {
-    SORCER_Context* ctx = zalloc(sizeof(SORCER_Context));
+    SR_Context* ctx = zalloc(sizeof(SR_Context));
     ctx->dataPool = upool_new(256);
 
-    SORCER_TypeInfo blkTypeInfo[1] =
+    SR_TypeInfo blkTypeInfo[1] =
     {
         {
             "block",
@@ -121,15 +121,15 @@ SORCER_Context* SORCER_ctxNew(void)
             NULL,
             NULL,
             NULL,
-            SORCER_cellToStr_Block,
+            SR_cellToStr_Block,
         }
     };
-    SORCER_Type blkType = SORCER_typeNew(ctx, blkTypeInfo);
-    assert(SORCER_Type_Block.id == blkType.id);
+    SR_Type blkType = SR_typeNew(ctx, blkTypeInfo);
+    assert(SR_Type_Block.id == blkType.id);
     return ctx;
 }
 
-void SORCER_ctxFree(SORCER_Context* ctx)
+void SR_ctxFree(SR_Context* ctx)
 {
     assert(0 == ctx->varTable->length);
     vec_free(ctx->varTable);
@@ -140,7 +140,7 @@ void SORCER_ctxFree(SORCER_Context* ctx)
 
     for (u32 i = 0; i < ctx->dataStack->length; ++i)
     {
-        SORCER_cellFree(ctx, ctx->dataStack->data + i);
+        SR_cellFree(ctx, ctx->dataStack->data + i);
     }
     vec_free(ctx->dataStack);
 
@@ -149,7 +149,7 @@ void SORCER_ctxFree(SORCER_Context* ctx)
     assert(ctx->typePoolTable->length == ctx->typeTable->length);
     for (u32 i = 0; i < ctx->typeTable->length; ++i)
     {
-        SORCER_TypeInfo* info = ctx->typeTable->data + i;
+        SR_TypeInfo* info = ctx->typeTable->data + i;
         if (info->poolDtor)
         {
             info->poolDtor(ctx->typePoolTable->data[i]);
@@ -159,7 +159,7 @@ void SORCER_ctxFree(SORCER_Context* ctx)
 
     for (u32 i = 0; i < ctx->blockTable->length; ++i)
     {
-        SORCER_blockInfoFree(ctx->blockTable->data + i);
+        SR_blockInfoFree(ctx->blockTable->data + i);
     }
     vec_free(ctx->blockTable);
     vec_free(ctx->oprTable);
@@ -175,11 +175,11 @@ void SORCER_ctxFree(SORCER_Context* ctx)
 
 
 
-static void SORCER_ctxCellVecResize(SORCER_Context* ctx, SORCER_CellVec* a, u32 n)
+static void SR_ctxCellVecResize(SR_Context* ctx, SR_CellVec* a, u32 n)
 {
     for (u32 i = n; i < a->length; ++i)
     {
-        SORCER_cellFree(ctx, a->data + i);
+        SR_cellFree(ctx, a->data + i);
     }
     vec_resize(a, n);
 }
@@ -195,9 +195,9 @@ static void SORCER_ctxCellVecResize(SORCER_Context* ctx, SORCER_CellVec* a, u32 
 
 
 
-SORCER_Type SORCER_typeNew(SORCER_Context* ctx, const SORCER_TypeInfo* info)
+SR_Type SR_typeNew(SR_Context* ctx, const SR_TypeInfo* info)
 {
-    SORCER_TypeInfoVec* tt = ctx->typeTable;
+    SR_TypeInfoVec* tt = ctx->typeTable;
     vec_ptr* pt = ctx->typePoolTable;
     assert(tt->length == pt->length);
     void* pool = NULL;
@@ -207,40 +207,40 @@ SORCER_Type SORCER_typeNew(SORCER_Context* ctx, const SORCER_TypeInfo* info)
     }
     vec_push(pt, pool);
     vec_push(tt, *info);
-    SORCER_Type a = { tt->length - 1 };
+    SR_Type a = { tt->length - 1 };
     return a;
 }
 
 
-SORCER_Type SORCER_typeByName(SORCER_Context* ctx, const char* name)
+SR_Type SR_typeByName(SR_Context* ctx, const char* name)
 {
-    SORCER_TypeInfoVec* tt = ctx->typeTable;
+    SR_TypeInfoVec* tt = ctx->typeTable;
     for (u32 i = 0; i < tt->length; ++i)
     {
         u32 idx = tt->length - 1 - i;
         const char* s = tt->data[idx].name;
         if (0 == strcmp(s, name))
         {
-            SORCER_Type type = { idx };
+            SR_Type type = { idx };
             return type;
         }
     }
-    return SORCER_Type_Invalid;
+    return SR_Type_Invalid;
 }
 
 
-SORCER_Type SORCER_typeByIndex(SORCER_Context* ctx, u32 idx)
+SR_Type SR_typeByIndex(SR_Context* ctx, u32 idx)
 {
-    SORCER_TypeInfoVec* tt = ctx->typeTable;
+    SR_TypeInfoVec* tt = ctx->typeTable;
     assert(idx < tt->length);
-    SORCER_Type type = { idx };
+    SR_Type type = { idx };
     return type;
 }
 
 
-const SORCER_TypeInfo* SORCER_typeInfo(SORCER_Context* ctx, SORCER_Type type)
+const SR_TypeInfo* SR_typeInfo(SR_Context* ctx, SR_Type type)
 {
-    SORCER_TypeInfoVec* tt = ctx->typeTable;
+    SR_TypeInfoVec* tt = ctx->typeTable;
     assert(type.id < tt->length);
     return tt->data + type.id;
 }
@@ -248,15 +248,15 @@ const SORCER_TypeInfo* SORCER_typeInfo(SORCER_Context* ctx, SORCER_Type type)
 
 
 
-u32 SORCER_ctxTypesTotal(SORCER_Context* ctx)
+u32 SR_ctxTypesTotal(SR_Context* ctx)
 {
-    SORCER_TypeInfoVec* tt = ctx->typeTable;
+    SR_TypeInfoVec* tt = ctx->typeTable;
     return tt->length;
 }
 
 
 
-void* SORCER_pool(SORCER_Context* ctx, SORCER_Type type)
+void* SR_pool(SR_Context* ctx, SR_Type type)
 {
     vec_ptr* pt = ctx->typePoolTable;
     assert(type.id < pt->length);
@@ -266,64 +266,64 @@ void* SORCER_pool(SORCER_Context* ctx, SORCER_Type type)
 
 
 
-bool SORCER_cellNew(SORCER_Context* ctx, SORCER_Type type, const char* str, SORCER_Cell* out)
+bool SR_cellNew(SR_Context* ctx, SR_Type type, const char* str, SR_Cell* out)
 {
-    SORCER_TypeInfoVec* tt = ctx->typeTable;
+    SR_TypeInfoVec* tt = ctx->typeTable;
     vec_ptr* pt = ctx->typePoolTable;
     assert(tt->length == pt->length);
     assert(type.id < tt->length);
-    SORCER_TypeInfo* info = tt->data + type.id;
+    SR_TypeInfo* info = tt->data + type.id;
     void* pool = pt->data[type.id];
     out->type = type;
-    return info->ctor ? info->ctor(pool, str, &out->as.ptr) : false;
+    return info->ctor ? info->ctor(pool, str, out->value) : false;
 }
 
-void SORCER_cellFree(SORCER_Context* ctx, SORCER_Cell* x)
+void SR_cellFree(SR_Context* ctx, SR_Cell* x)
 {
-    SORCER_TypeInfoVec* tt = ctx->typeTable;
+    SR_TypeInfoVec* tt = ctx->typeTable;
     vec_ptr* pt = ctx->typePoolTable;
     assert(tt->length == pt->length);
     assert(x->type.id < tt->length);
-    SORCER_TypeInfo* info = tt->data + x->type.id;
+    SR_TypeInfo* info = tt->data + x->type.id;
     if (info->dtor)
     {
         void* pool = pt->data[x->type.id];
-        info->dtor(pool, x->as.ptr);
+        info->dtor(pool, x->value);
     }
 }
 
-void SORCER_cellDup(SORCER_Context* ctx, const SORCER_Cell* x, SORCER_Cell* out)
+void SR_cellDup(SR_Context* ctx, const SR_Cell* x, SR_Cell* out)
 {
-    SORCER_TypeInfoVec* tt = ctx->typeTable;
+    SR_TypeInfoVec* tt = ctx->typeTable;
     vec_ptr* pt = ctx->typePoolTable;
     assert(tt->length == pt->length);
     assert(x->type.id < tt->length);
-    SORCER_TypeInfo* info = tt->data + x->type.id;
+    SR_TypeInfo* info = tt->data + x->type.id;
     out->type = x->type;
     if (info->copier)
     {
         void* pool = pt->data[x->type.id];
-        info->copier(pool, x->as.ptr, &out->as.ptr);
+        info->copier(pool, x->value, out->value);
     }
     else
     {
-        out->as.ptr = x->as.ptr;
+        *out->value = *x->value;
     }
 }
 
 
 
 
-u32 SORCER_cellToStr(char* buf, u32 bufSize, SORCER_Context* ctx, const SORCER_Cell* x)
+u32 SR_cellToStr(char* buf, u32 bufSize, SR_Context* ctx, const SR_Cell* x)
 {
-    SORCER_TypeInfoVec* tt = ctx->typeTable;
+    SR_TypeInfoVec* tt = ctx->typeTable;
     vec_ptr* pt = ctx->typePoolTable;
     assert(tt->length == pt->length);
     assert(x->type.id < tt->length);
-    SORCER_TypeInfo* info = tt->data + x->type.id;
+    SR_TypeInfo* info = tt->data + x->type.id;
     assert(info->toStr);
     void* pool = pt->data[x->type.id];
-    return info->toStr(buf, bufSize, pool, x);
+    return info->toStr(buf, bufSize, pool, x->value);
 }
 
 
@@ -335,44 +335,44 @@ u32 SORCER_cellToStr(char* buf, u32 bufSize, SORCER_Context* ctx, const SORCER_C
 
 
 
-SORCER_Opr SORCER_oprNew(SORCER_Context* ctx, const SORCER_OprInfo* info)
+SR_Opr SR_oprNew(SR_Context* ctx, const SR_OprInfo* info)
 {
-    SORCER_OprInfoVec* ot = ctx->oprTable;
+    SR_OprInfoVec* ot = ctx->oprTable;
     vec_push(ot, *info);
-    SORCER_Opr a = { ot->length - 1 };
+    SR_Opr a = { ot->length - 1 };
     return a;
 }
 
 
-SORCER_Opr SORCER_oprByName(SORCER_Context* ctx, const char* name)
+SR_Opr SR_oprByName(SR_Context* ctx, const char* name)
 {
-    SORCER_OprInfoVec* ot = ctx->oprTable;
+    SR_OprInfoVec* ot = ctx->oprTable;
     for (u32 i = 0; i < ot->length; ++i)
     {
         u32 idx = ot->length - 1 - i;
         const char* s = ot->data[idx].name;
         if (0 == strcmp(s, name))
         {
-            SORCER_Opr opr = { idx };
+            SR_Opr opr = { idx };
             return opr;
         }
     }
-    return SORCER_Opr_Invalid;
+    return SR_Opr_Invalid;
 }
 
 
-SORCER_Opr SORCER_oprByIndex(SORCER_Context* ctx, u32 idx)
+SR_Opr SR_oprByIndex(SR_Context* ctx, u32 idx)
 {
-    SORCER_OprInfoVec* ot = ctx->oprTable;
+    SR_OprInfoVec* ot = ctx->oprTable;
     assert(idx < ot->length);
-    SORCER_Opr opr = { idx };
+    SR_Opr opr = { idx };
     return opr;
 }
 
 
-const SORCER_OprInfo* SORCER_oprInfo(SORCER_Context* ctx, SORCER_Opr opr)
+const SR_OprInfo* SR_oprInfo(SR_Context* ctx, SR_Opr opr)
 {
-    SORCER_OprInfoVec* ot = ctx->oprTable;
+    SR_OprInfoVec* ot = ctx->oprTable;
     assert(opr.id < ot->length);
     return ot->data + opr.id;
 }
@@ -382,16 +382,16 @@ const SORCER_OprInfo* SORCER_oprInfo(SORCER_Context* ctx, SORCER_Opr opr)
 
 
 
-u32 SORCER_ctxBlocksTotal(SORCER_Context* ctx)
+u32 SR_ctxBlocksTotal(SR_Context* ctx)
 {
     return ctx->blockTable->length;
 }
 
-void SORCER_ctxBlocksRollback(SORCER_Context* ctx, u32 n)
+void SR_ctxBlocksRollback(SR_Context* ctx, u32 n)
 {
     for (u32 i = n; i < ctx->blockTable->length; ++i)
     {
-        SORCER_blockInfoFree(ctx->blockTable->data + i);
+        SR_blockInfoFree(ctx->blockTable->data + i);
     }
     vec_resize(ctx->blockTable, n);
 }
@@ -407,7 +407,7 @@ void SORCER_ctxBlocksRollback(SORCER_Context* ctx, u32 n)
 
 
 
-static void SORCER_codeOutdate(SORCER_Context* ctx)
+static void SR_codeOutdate(SR_Context* ctx)
 {
     if (ctx->codeUpdated)
     {
@@ -418,13 +418,13 @@ static void SORCER_codeOutdate(SORCER_Context* ctx)
 
 
 
-SORCER_Block SORCER_blockNew(SORCER_Context* ctx)
+SR_Block SR_blockNew(SR_Context* ctx)
 {
-    SORCER_codeOutdate(ctx);
-    SORCER_BlockInfoVec* bt = ctx->blockTable;
-    SORCER_BlockInfo binfo = { 0 };
+    SR_codeOutdate(ctx);
+    SR_BlockInfoVec* bt = ctx->blockTable;
+    SR_BlockInfo binfo = { 0 };
     vec_push(bt, binfo);
-    SORCER_Block a = { bt->length - 1 };
+    SR_Block a = { bt->length - 1 };
     return a;
 }
 
@@ -437,24 +437,24 @@ SORCER_Block SORCER_blockNew(SORCER_Context* ctx)
 
 
 
-void SORCER_blockAddInstPopNull(SORCER_Context* ctx, SORCER_Block blk)
+void SR_blockAddInstPopNull(SR_Context* ctx, SR_Block blk)
 {
-    SORCER_codeOutdate(ctx);
-    SORCER_BlockInfoVec* bt = ctx->blockTable;
-    SORCER_BlockInfo* binfo = bt->data + blk.id;
-    SORCER_Inst inst = { SORCER_OP_PopNull };
+    SR_codeOutdate(ctx);
+    SR_BlockInfoVec* bt = ctx->blockTable;
+    SR_BlockInfo* binfo = bt->data + blk.id;
+    SR_Inst inst = { SR_OP_PopNull };
     vec_push(binfo->code, inst);
 }
 
 
 
-SORCER_Var SORCER_blockAddInstPopVar(SORCER_Context* ctx, SORCER_Block blk)
+SR_Var SR_blockAddInstPopVar(SR_Context* ctx, SR_Block blk)
 {
-    SORCER_codeOutdate(ctx);
-    SORCER_BlockInfoVec* bt = ctx->blockTable;
-    SORCER_BlockInfo* binfo = bt->data + blk.id;
-    SORCER_Var var = { binfo->varCount++ };
-    SORCER_Inst inst = { SORCER_OP_PopVar, .arg.var = var };
+    SR_codeOutdate(ctx);
+    SR_BlockInfoVec* bt = ctx->blockTable;
+    SR_BlockInfo* binfo = bt->data + blk.id;
+    SR_Var var = { binfo->varCount++ };
+    SR_Inst inst = { SR_OP_PopVar, .arg.var = var };
     vec_push(binfo->code, inst);
     return var;
 }
@@ -462,66 +462,66 @@ SORCER_Var SORCER_blockAddInstPopVar(SORCER_Context* ctx, SORCER_Block blk)
 
 
 
-void SORCER_blockAddInstPushImm(SORCER_Context* ctx, SORCER_Block blk, SORCER_Type type, const char* str)
+void SR_blockAddInstPushImm(SR_Context* ctx, SR_Block blk, SR_Type type, const char* str)
 {
-    SORCER_codeOutdate(ctx);
-    SORCER_BlockInfoVec* bt = ctx->blockTable;
-    SORCER_BlockInfo* binfo = bt->data + blk.id;
+    SR_codeOutdate(ctx);
+    SR_BlockInfoVec* bt = ctx->blockTable;
+    SR_BlockInfo* binfo = bt->data + blk.id;
     u32 off = upool_elm(ctx->dataPool, str, (u32)strlen(str) + 1, NULL);
-    SORCER_InstImm imm = { type, off };
-    SORCER_Inst inst = { SORCER_OP_PushImm, .arg.imm = imm };
+    SR_InstImm imm = { type, off };
+    SR_Inst inst = { SR_OP_PushImm, .arg.imm = imm };
     vec_push(binfo->code, inst);
 }
 
 
-void SORCER_blockAddInstPushVar(SORCER_Context* ctx, SORCER_Block blk, SORCER_Var v)
+void SR_blockAddInstPushVar(SR_Context* ctx, SR_Block blk, SR_Var v)
 {
-    SORCER_codeOutdate(ctx);
-    SORCER_BlockInfoVec* bt = ctx->blockTable;
-    SORCER_BlockInfo* binfo = bt->data + blk.id;
-    SORCER_Inst inst = { SORCER_OP_PushVar, .arg.var = v };
+    SR_codeOutdate(ctx);
+    SR_BlockInfoVec* bt = ctx->blockTable;
+    SR_BlockInfo* binfo = bt->data + blk.id;
+    SR_Inst inst = { SR_OP_PushVar, .arg.var = v };
     vec_push(binfo->code, inst);
 }
 
 
-void SORCER_blockAddInstPushBlock(SORCER_Context* ctx, SORCER_Block blk, SORCER_Block b)
+void SR_blockAddInstPushBlock(SR_Context* ctx, SR_Block blk, SR_Block b)
 {
-    SORCER_codeOutdate(ctx);
-    SORCER_BlockInfoVec* bt = ctx->blockTable;
-    SORCER_BlockInfo* binfo = bt->data + blk.id;
+    SR_codeOutdate(ctx);
+    SR_BlockInfoVec* bt = ctx->blockTable;
+    SR_BlockInfo* binfo = bt->data + blk.id;
     ++bt->data[b.id].calleeCount;
-    SORCER_Inst inst = { SORCER_OP_PushBlock, .arg.block = b };
+    SR_Inst inst = { SR_OP_PushBlock, .arg.block = b };
     vec_push(binfo->code, inst);
 }
 
 
-void SORCER_blockAddInstCall(SORCER_Context* ctx, SORCER_Block blk, SORCER_Block callee)
+void SR_blockAddInstCall(SR_Context* ctx, SR_Block blk, SR_Block callee)
 {
-    SORCER_codeOutdate(ctx);
-    SORCER_BlockInfoVec* bt = ctx->blockTable;
-    SORCER_BlockInfo* binfo = bt->data + blk.id;
+    SR_codeOutdate(ctx);
+    SR_BlockInfoVec* bt = ctx->blockTable;
+    SR_BlockInfo* binfo = bt->data + blk.id;
     ++bt->data[callee.id].calleeCount;
-    SORCER_Inst inst = { SORCER_OP_Call, .arg.block = callee };
+    SR_Inst inst = { SR_OP_Call, .arg.block = callee };
     vec_push(binfo->code, inst);
 }
 
 
-void SORCER_blockAddInstApply(SORCER_Context* ctx, SORCER_Block blk)
+void SR_blockAddInstApply(SR_Context* ctx, SR_Block blk)
 {
-    SORCER_codeOutdate(ctx);
-    SORCER_BlockInfoVec* bt = ctx->blockTable;
-    SORCER_BlockInfo* binfo = bt->data + blk.id;
-    SORCER_Inst inst = { SORCER_OP_Apply };
+    SR_codeOutdate(ctx);
+    SR_BlockInfoVec* bt = ctx->blockTable;
+    SR_BlockInfo* binfo = bt->data + blk.id;
+    SR_Inst inst = { SR_OP_Apply };
     vec_push(binfo->code, inst);
 }
 
 
-void SORCER_blockAddInstOpr(SORCER_Context* ctx, SORCER_Block blk, SORCER_Opr opr)
+void SR_blockAddInstOpr(SR_Context* ctx, SR_Block blk, SR_Opr opr)
 {
-    SORCER_codeOutdate(ctx);
-    SORCER_BlockInfoVec* bt = ctx->blockTable;
-    SORCER_BlockInfo* binfo = bt->data + blk.id;
-    SORCER_Inst inst = { SORCER_OP_Opr, .arg.opr = opr };
+    SR_codeOutdate(ctx);
+    SR_BlockInfoVec* bt = ctx->blockTable;
+    SR_BlockInfo* binfo = bt->data + blk.id;
+    SR_Inst inst = { SR_OP_Opr, .arg.opr = opr };
     vec_push(binfo->code, inst);
 }
 
@@ -537,18 +537,18 @@ void SORCER_blockAddInstOpr(SORCER_Context* ctx, SORCER_Block blk, SORCER_Opr op
 
 
 
-void SORCER_blockAddInlineBlock(SORCER_Context* ctx, SORCER_Block blk, SORCER_Block ib)
+void SR_blockAddInlineBlock(SR_Context* ctx, SR_Block blk, SR_Block ib)
 {
-    SORCER_BlockInfoVec* bt = ctx->blockTable;
-    SORCER_BlockInfo* bInfo = bt->data + blk.id;
-    SORCER_BlockInfo* iInfo = bt->data + ib.id;
+    SR_BlockInfoVec* bt = ctx->blockTable;
+    SR_BlockInfo* bInfo = bt->data + blk.id;
+    SR_BlockInfo* iInfo = bt->data + ib.id;
     for (u32 i = 0; i < iInfo->code->length; ++i)
     {
-        SORCER_Inst inst = iInfo->code->data[i];
+        SR_Inst inst = iInfo->code->data[i];
         switch (inst.op)
         {
-        case SORCER_OP_PopVar:
-        case SORCER_OP_PushVar:
+        case SR_OP_PopVar:
+        case SR_OP_PushVar:
         {
             inst.arg.var.id += bInfo->varCount;
             break;
@@ -584,7 +584,7 @@ void SORCER_blockAddInlineBlock(SORCER_Context* ctx, SORCER_Block blk, SORCER_Bl
 
 
 
-static void SORCER_codeUpdate(SORCER_Context* ctx, SORCER_Block blk)
+static void SR_codeUpdate(SR_Context* ctx, SR_Block blk)
 {
     if (ctx->codeUpdated)
     {
@@ -592,12 +592,12 @@ static void SORCER_codeUpdate(SORCER_Context* ctx, SORCER_Block blk)
     }
     ctx->codeUpdated = true;
 
-    SORCER_InstVec* code = ctx->code;
-    SORCER_BlockInfoVec* bt = ctx->blockTable;
+    SR_InstVec* code = ctx->code;
+    SR_BlockInfoVec* bt = ctx->blockTable;
 
     for (u32 bi = 0; bi < bt->length; ++bi)
     {
-        SORCER_BlockInfo* blkInfo = bt->data + bi;
+        SR_BlockInfo* blkInfo = bt->data + bi;
         if (!blkInfo->calleeCount && (bi != blk.id))
         {
             continue;
@@ -605,20 +605,20 @@ static void SORCER_codeUpdate(SORCER_Context* ctx, SORCER_Block blk)
         blkInfo->baseAddress = code->length;
         for (u32 i = 0; i < blkInfo->code->length; ++i)
         {
-            SORCER_Inst inst = blkInfo->code->data[i];
+            SR_Inst inst = blkInfo->code->data[i];
             // Tail Call Elimination
             if (i + 1 == blkInfo->code->length)
             {
                 switch (inst.op)
                 {
-                case SORCER_OP_Call:
+                case SR_OP_Call:
                 {
-                    inst.op = SORCER_OP_TailCall;
+                    inst.op = SR_OP_TailCall;
                     break;
                 }
-                case SORCER_OP_Apply:
+                case SR_OP_Apply:
                 {
-                    inst.op = SORCER_OP_TailApply;
+                    inst.op = SR_OP_TailApply;
                     break;
                 }
                 default:
@@ -627,20 +627,20 @@ static void SORCER_codeUpdate(SORCER_Context* ctx, SORCER_Block blk)
             }
             vec_push(code, inst);
         }
-        SORCER_Inst ret = { SORCER_OP_Ret };
+        SR_Inst ret = { SR_OP_Ret };
         vec_push(code, ret);
     }
 
     for (u32 i = 0; i < code->length; ++i)
     {
-        SORCER_Inst* inst = code->data + i;
+        SR_Inst* inst = code->data + i;
         switch (inst->op)
         {
-        case SORCER_OP_PushBlock:
-        case SORCER_OP_Call:
-        case SORCER_OP_TailCall:
+        case SR_OP_PushBlock:
+        case SR_OP_Call:
+        case SR_OP_TailCall:
         {
-            SORCER_BlockInfo* blkInfo = bt->data + inst->arg.block.id;
+            SR_BlockInfo* blkInfo = bt->data + inst->arg.block.id;
             inst->arg.address = blkInfo->baseAddress;
             break;
         }
@@ -669,110 +669,110 @@ static void SORCER_codeUpdate(SORCER_Context* ctx, SORCER_Block blk)
 
 
 
-void SORCER_run(SORCER_Context* ctx, SORCER_Block blk, SORCER_RunErrorInfo* errInfo)
+void SR_run(SR_Context* ctx, SR_Block blk, SR_RunErrorInfo* errInfo)
 {
     memset(errInfo, 0, sizeof(*errInfo));
-    SORCER_codeUpdate(ctx, blk);
+    SR_codeUpdate(ctx, blk);
 
-    SORCER_InstVec* code = ctx->code;
-    SORCER_BlockInfoVec* bt = ctx->blockTable;
-    SORCER_CellVec* ds = ctx->dataStack;
-    SORCER_RetVec* rs = ctx->retStack;
-    SORCER_CellVec* vt = ctx->varTable;
+    SR_InstVec* code = ctx->code;
+    SR_BlockInfoVec* bt = ctx->blockTable;
+    SR_CellVec* ds = ctx->dataStack;
+    SR_RetVec* rs = ctx->retStack;
+    SR_CellVec* vt = ctx->varTable;
 
     assert(blk.id < bt->length);
     u32 p = bt->data[blk.id].baseAddress;
-    const SORCER_Inst* inst = NULL;
+    const SR_Inst* inst = NULL;
 next:
     inst = code->data + p++;
     switch (inst->op)
     {
-    case SORCER_OP_Nop:
+    case SR_OP_Nop:
     {
         goto next;
     }
-    case SORCER_OP_PopNull:
+    case SR_OP_PopNull:
     {
-        SORCER_Cell top = vec_last(ds);
+        SR_Cell top = vec_last(ds);
         vec_pop(ds);
-        SORCER_cellFree(ctx, &top);
+        SR_cellFree(ctx, &top);
         goto next;
     }
-    case SORCER_OP_PopVar:
+    case SR_OP_PopVar:
     {
-        SORCER_Cell top = vec_last(ds);
+        SR_Cell top = vec_last(ds);
         vec_pop(ds);
         vec_push(vt, top);
         goto next;
     }
-    case SORCER_OP_PushImm:
+    case SR_OP_PushImm:
     {
-        const SORCER_InstImm* imm = &inst->arg.imm;
+        const SR_InstImm* imm = &inst->arg.imm;
         const char* str = upool_elmData(ctx->dataPool, imm->src);
-        SORCER_Cell cell;
-        bool r = SORCER_cellNew(ctx, imm->type, str, &cell);
+        SR_Cell cell;
+        bool r = SR_cellNew(ctx, imm->type, str, &cell);
         assert(r);
         vec_push(ds, cell);
         goto next;
     }
-    case SORCER_OP_PushVar:
+    case SR_OP_PushVar:
     {
         u32 varBase = 0;
         if (rs->length > 0)
         {
-            SORCER_Ret ret = vec_last(rs);
+            SR_Ret ret = vec_last(rs);
             varBase = ret.varBase;
         }
-        SORCER_Cell cell;
-        SORCER_cellDup(ctx, &vt->data[varBase + inst->arg.var.id], &cell);
+        SR_Cell cell;
+        SR_cellDup(ctx, &vt->data[varBase + inst->arg.var.id], &cell);
         vec_push(ds, cell);
         goto next;
     }
-    case SORCER_OP_PushBlock:
+    case SR_OP_PushBlock:
     {
-        SORCER_Cell cell = { SORCER_Type_Block.id, .as.block = inst->arg.block };
+        SR_Cell cell = { SR_Type_Block.id, { { .block = inst->arg.block } } };
         vec_push(ds, cell);
         goto next;
     }
-    case SORCER_OP_Call:
+    case SR_OP_Call:
     {
-        SORCER_Ret ret = { p, vt->length };
+        SR_Ret ret = { p, vt->length };
         vec_push(rs, ret);
         p = inst->arg.address;
         goto next;
     }
-    case SORCER_OP_Apply:
+    case SR_OP_Apply:
     {
-        SORCER_Ret ret = { p, vt->length };
+        SR_Ret ret = { p, vt->length };
         vec_push(rs, ret);
-        SORCER_Cell top = vec_last(ds);
-        if (top.type.id != SORCER_Type_Block.id)
+        SR_Cell top = vec_last(ds);
+        if (top.type.id != SR_Type_Block.id)
         {
-            errInfo->error = SORCER_RunError_OprArgs;
+            errInfo->error = SR_RunError_OprArgs;
             goto failed;
         }
         vec_pop(ds);
-        p = top.as.address;
+        p = top.value->address;
         goto next;
     }
-    case SORCER_OP_Opr:
+    case SR_OP_Opr:
     {
-        const SORCER_OprInfo* info = ctx->oprTable->data + inst->arg.opr.id;
-        SORCER_CellVec* inBuf = ctx->inBuf;
-        SORCER_CellVec* ds = ctx->dataStack;
+        const SR_OprInfo* info = ctx->oprTable->data + inst->arg.opr.id;
+        SR_CellVec* inBuf = ctx->inBuf;
+        SR_CellVec* ds = ctx->dataStack;
 
         if (ds->length < info->numIns)
         {
-            errInfo->error = SORCER_RunError_OprArgs;
+            errInfo->error = SR_RunError_OprArgs;
             goto failed;
         }
 
-        SORCER_Cell* ins = ds->data + ds->length - info->numIns;
+        SR_Cell* ins = ds->data + ds->length - info->numIns;
         for (u32 i = 0; i < info->numIns; ++i)
         {
             if (info->ins[i].id != ins[i].type.id)
             {
-                errInfo->error = SORCER_RunError_OprArgs;
+                errInfo->error = SR_RunError_OprArgs;
                 goto failed;
             }
         }
@@ -780,9 +780,9 @@ next:
         vec_resize(inBuf, info->numIns);
         vec_resize(ds, ds->length + info->numOuts - info->numIns);
 
-        memcpy(inBuf->data, ds->data + ds->length - info->numOuts, sizeof(SORCER_Cell)*info->numIns);
+        memcpy(inBuf->data, ds->data + ds->length - info->numOuts, sizeof(SR_Cell)*info->numIns);
 
-        SORCER_Cell* outs = ds->data + ds->length - info->numOuts;
+        SR_Cell* outs = ds->data + ds->length - info->numOuts;
         info->func(ctx, info->funcCtx, inBuf->data, outs);
         for (u32 i = 0; i < info->numOuts; ++i)
         {
@@ -790,55 +790,55 @@ next:
         }
         goto next;
     }
-    case SORCER_OP_Ret:
+    case SR_OP_Ret:
     {
         if (!rs->length)
         {
-            SORCER_ctxCellVecResize(ctx, vt, 0);
+            SR_ctxCellVecResize(ctx, vt, 0);
             return;
         }
-        SORCER_Ret ret = vec_last(rs);
+        SR_Ret ret = vec_last(rs);
         vec_pop(rs);
         p = ret.address;
         assert(vt->length >= ret.varBase);
-        SORCER_ctxCellVecResize(ctx, vt, ret.varBase);
+        SR_ctxCellVecResize(ctx, vt, ret.varBase);
         goto next;
     }
-    case SORCER_OP_TailCall:
+    case SR_OP_TailCall:
     {
         if (rs->length > 0)
         {
-            SORCER_Ret ret = vec_last(rs);
+            SR_Ret ret = vec_last(rs);
             assert(vt->length >= ret.varBase);
-            SORCER_ctxCellVecResize(ctx, vt, ret.varBase);
+            SR_ctxCellVecResize(ctx, vt, ret.varBase);
         }
         else
         {
-            SORCER_ctxCellVecResize(ctx, vt, 0);
+            SR_ctxCellVecResize(ctx, vt, 0);
         }
         p = inst->arg.address;
         goto next;
     }
-    case SORCER_OP_TailApply:
+    case SR_OP_TailApply:
     {
         if (rs->length > 0)
         {
-            SORCER_Ret ret = vec_last(rs);
+            SR_Ret ret = vec_last(rs);
             assert(vt->length >= ret.varBase);
-            SORCER_ctxCellVecResize(ctx, vt, ret.varBase);
+            SR_ctxCellVecResize(ctx, vt, ret.varBase);
         }
         else
         {
-            SORCER_ctxCellVecResize(ctx, vt, 0);
+            SR_ctxCellVecResize(ctx, vt, 0);
         }
-        SORCER_Cell top = vec_last(ds);
-        if (top.type.id != SORCER_Type_Block.id)
+        SR_Cell top = vec_last(ds);
+        if (top.type.id != SR_Type_Block.id)
         {
-            errInfo->error = SORCER_RunError_OprArgs;
+            errInfo->error = SR_RunError_OprArgs;
             goto failed;
         }
         vec_pop(ds);
-        p = top.as.address;
+        p = top.value->address;
         goto next;
     }
     default:
@@ -846,7 +846,7 @@ next:
         goto next;
     }
 failed:
-    SORCER_ctxCellVecResize(ctx, vt, 0);
+    SR_ctxCellVecResize(ctx, vt, 0);
     return;
 }
 
@@ -869,12 +869,12 @@ failed:
 
 
 
-u32 SORCER_dsSize(SORCER_Context* ctx)
+u32 SR_dsSize(SR_Context* ctx)
 {
     return ctx->dataStack->length;
 }
 
-const SORCER_Cell* SORCER_dsBase(SORCER_Context* ctx)
+const SR_Cell* SR_dsBase(SR_Context* ctx)
 {
     return ctx->dataStack->data;
 }
@@ -882,16 +882,16 @@ const SORCER_Cell* SORCER_dsBase(SORCER_Context* ctx)
 
 
 
-void SORCER_dsPush(SORCER_Context* ctx, const SORCER_Cell* x)
+void SR_dsPush(SR_Context* ctx, const SR_Cell* x)
 {
     vec_push(ctx->dataStack, *x);
 }
 
-void SORCER_dsPop(SORCER_Context* ctx, u32 n, SORCER_Cell* out)
+void SR_dsPop(SR_Context* ctx, u32 n, SR_Cell* out)
 {
-    SORCER_CellVec* ds = ctx->dataStack;
+    SR_CellVec* ds = ctx->dataStack;
     assert(ds->length >= n);
-    memcpy(out, ds->data + ds->length - n, sizeof(SORCER_Cell)*n);
+    memcpy(out, ds->data + ds->length - n, sizeof(SR_Cell)*n);
     vec_resize(ds, ds->length - n);
 }
 

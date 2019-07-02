@@ -10,7 +10,7 @@
 
 
 
-void SORCER_dsFprint(FILE* f, SORCER_Context* ctx);
+void SR_dsFprint(FILE* f, SR_Context* ctx);
 
 
 

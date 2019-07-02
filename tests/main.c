@@ -34,24 +34,24 @@ static int mainReturn(int r)
 
 static void test(void)
 {
-    SORCER_Context* ctx = SORCER_ctxNew();
-    SORCER_ArithContext arithCtx[1] = { 0 };
-    SORCER_arith(ctx, arithCtx);
-    SORCER_ManaFileInfoVec fileTable[1] = { 0 };
+    SR_Context* ctx = SR_ctxNew();
+    SR_ArithContext arithCtx[1] = { 0 };
+    SR_arith(ctx, arithCtx);
+    SR_ManaFileInfoVec fileTable[1] = { 0 };
 
-    SORCER_ManaErrorInfo compErrInfo[1] = { 0 };
-    SORCER_Block blk = SORCER_blockFromManaFile(ctx, "../1.mana", compErrInfo, fileTable);
-    assert(blk.id != SORCER_Block_Invalid.id);
-    assert(SORCER_ManaError_NONE == compErrInfo->error);
+    SR_ManaErrorInfo compErrInfo[1] = { 0 };
+    SR_Block blk = SR_blockFromManaFile(ctx, "../1.mana", compErrInfo, fileTable);
+    assert(blk.id != SR_Block_Invalid.id);
+    assert(SR_ManaError_NONE == compErrInfo->error);
 
-    SORCER_RunErrorInfo runErrInfo[1];
-    SORCER_run(ctx, blk, runErrInfo);
-    assert(SORCER_RunError_NONE == runErrInfo->error);
+    SR_RunErrorInfo runErrInfo[1];
+    SR_run(ctx, blk, runErrInfo);
+    assert(SR_RunError_NONE == runErrInfo->error);
 
-    SORCER_dsFprint(stdout, ctx);
+    SR_dsFprint(stdout, ctx);
 
     vec_free(fileTable);
-    SORCER_ctxFree(ctx);
+    SR_ctxFree(ctx);
 }
 
 
